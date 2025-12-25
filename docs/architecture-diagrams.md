@@ -5,6 +5,8 @@
 ## 目次
 
 - [全体アーキテクチャ](#全体アーキテクチャ)
+- [Icebergデータフロー（NEW）](#icebergデータフロー)
+- [R2 Data Catalogアーキテクチャ（NEW）](#r2-data-catalogアーキテクチャ)
 - [データフロー詳細](#データフロー詳細)
 - [ETLパイプライン](#etlパイプライン)
 - [リアルタイム処理](#リアルタイム処理)
@@ -38,7 +40,8 @@ graph TB
         R2[(Cloudflare R2<br/>Object Storage)]
         D1[(Cloudflare D1<br/>SQLite)]
         KV[(Cloudflare KV<br/>Key-Value)]
-        Iceberg[Apache Iceberg<br/>Table Format]
+        DataCatalog[R2 Data Catalog<br/>Iceberg REST API]
+        Iceberg[Apache Iceberg<br/>ACID Tables]
     end
 
     subgraph "Transformation Layer"
@@ -71,7 +74,8 @@ graph TB
     Workers --> AnalyticsEngine
     Pipelines --> R2
 
-    R2 --> Iceberg
+    R2 --> DataCatalog
+    DataCatalog --> Iceberg
     Iceberg --> R2
 
     GHA --> dlt
@@ -100,8 +104,264 @@ graph TB
     style Workers fill:#f96,stroke:#333,stroke-width:2px
     style R2 fill:#6cf,stroke:#333,stroke-width:2px
     style Evidence fill:#9f6,stroke:#333,stroke-width:2px
-    style Iceberg fill:#fc6,stroke:#333,stroke-width:2px
+    style DataCatalog fill:#fc6,stroke:#333,stroke-width:3px
+    style Iceberg fill:#f9c,stroke:#333,stroke-width:2px
 ```
+
+---
+
+## Icebergデータフロー
+
+### dlt → Parquet → Iceberg パイプライン
+
+```mermaid
+graph TB
+    subgraph "Data Sources"
+        API[External API<br/>JSONPlaceholder]
+        DB[(External DB)]
+        Files[File Uploads]
+    end
+
+    subgraph "Cloudflare Workers - Ingestion"
+        DltWorker[dlt-iceberg-pipeline<br/>Python Worker]
+        DltPipeline[dlt Pipeline]
+        SchemaInference[Schema Inference]
+    end
+
+    subgraph "R2 Bronze Layer"
+        RawParquet[(R2: data-lake-raw<br/>Parquet Files)]
+        Partitions[Hive Partitions<br/>year/month/day]
+        DltState[dlt State<br/>_pipeline_state/]
+    end
+
+    subgraph "Iceberg Transformation"
+        IcebergWorker[iceberg-converter<br/>Python Worker]
+        PyIceberg[PyIceberg Library]
+        SchemaMap[Schema Mapping]
+        PartitionSpec[Partition Spec<br/>Day Transform]
+    end
+
+    subgraph "R2 Data Catalog"
+        CatalogAPI[REST Catalog API<br/>Cloudflare Managed]
+        Metadata[Iceberg Metadata<br/>metadata/*.json]
+        Snapshots[Snapshots<br/>*.avro]
+        VersionHint[version-hint.text]
+    end
+
+    subgraph "R2 Gold Layer"
+        IcebergTable[(R2: data-lake-curated<br/>Iceberg Tables)]
+        DataFiles[Data Files<br/>*.parquet]
+        ManifestFiles[Manifest Files]
+    end
+
+    subgraph "Query Engines"
+        R2SQL[R2 SQL<br/>Native Query]
+        DuckDB[DuckDB<br/>iceberg_scan]
+        PyIcebergClient[PyIceberg Client<br/>Python/Jupyter]
+    end
+
+    subgraph "Analytics & BI"
+        Evidence[Evidence.dev<br/>Dashboards]
+        dbt[dbt Models<br/>SQL Transform]
+    end
+
+    API --> DltWorker
+    DB --> DltWorker
+    Files --> DltWorker
+
+    DltWorker --> DltPipeline
+    DltPipeline --> SchemaInference
+    SchemaInference --> RawParquet
+    SchemaInference --> DltState
+
+    RawParquet --> Partitions
+    Partitions --> IcebergWorker
+
+    IcebergWorker --> PyIceberg
+    PyIceberg --> SchemaMap
+    SchemaMap --> PartitionSpec
+
+    PartitionSpec --> CatalogAPI
+    CatalogAPI --> Metadata
+    CatalogAPI --> Snapshots
+    CatalogAPI --> VersionHint
+
+    Metadata --> IcebergTable
+    Snapshots --> IcebergTable
+    IcebergTable --> DataFiles
+    IcebergTable --> ManifestFiles
+
+    IcebergTable --> R2SQL
+    IcebergTable --> DuckDB
+    IcebergTable --> PyIcebergClient
+
+    R2SQL --> Evidence
+    DuckDB --> dbt
+    DuckDB --> Evidence
+    PyIcebergClient --> Evidence
+
+    style DltWorker fill:#f96,stroke:#333,stroke-width:2px
+    style IcebergWorker fill:#f96,stroke:#333,stroke-width:2px
+    style CatalogAPI fill:#fc6,stroke:#333,stroke-width:3px
+    style IcebergTable fill:#6cf,stroke:#333,stroke-width:2px
+    style Evidence fill:#9f6,stroke:#333,stroke-width:2px
+```
+
+**フロー説明:**
+
+1. **Ingestion**: dlt-iceberg-pipelineワーカーがAPIからデータを取得
+2. **Bronze Layer**: ParquetファイルとしてR2 Rawバケットに保存（バックアップ）
+3. **Transformation**: iceberg-converterワーカーがParquetをIcebergテーブルに変換
+4. **Catalog Management**: R2 Data CatalogがIcebergメタデータを管理
+5. **Gold Layer**: ACIDトランザクション対応のIcebergテーブルとして保存
+6. **Query**: R2 SQL、DuckDB、PyIcebergから直接クエリ可能
+7. **Analytics**: Evidence.devやdbtでデータ変換・可視化
+
+---
+
+## R2 Data Catalogアーキテクチャ
+
+### Iceberg REST Catalog詳細
+
+```mermaid
+graph TB
+    subgraph "Client Applications"
+        PyIceberg[PyIceberg<br/>Python Client]
+        Spark[Apache Spark<br/>Iceberg Runtime]
+        DuckDBClient[DuckDB<br/>Iceberg Extension]
+        R2SQLClient[R2 SQL<br/>Native Support]
+    end
+
+    subgraph "Cloudflare R2 Data Catalog - REST API"
+        RestAPI[REST Catalog API<br/>https://api.cloudflare.com/.../catalog]
+        Auth[Authentication<br/>API Token]
+
+        subgraph "Catalog Operations"
+            ListTables[List Tables]
+            CreateTable[Create Table]
+            LoadTable[Load Table]
+            UpdateTable[Update Table]
+            DropTable[Drop Table]
+        end
+
+        subgraph "Namespace Management"
+            CreateNS[Create Namespace]
+            ListNS[List Namespaces]
+            DropNS[Drop Namespace]
+        end
+    end
+
+    subgraph "R2 Bucket: data-lake-curated"
+        subgraph "Iceberg Table Structure"
+            Analytics[analytics/<br/>Namespace]
+            TableDir[api_jsonplaceholder/<br/>Database]
+            Posts[posts/<br/>Table]
+
+            subgraph "Metadata Directory"
+                V1[v1.metadata.json]
+                V2[v2.metadata.json]
+                V3[v3.metadata.json]
+                Snap1[snap-001.avro]
+                Snap2[snap-002.avro]
+                VH[version-hint.text]
+            end
+
+            subgraph "Data Directory"
+                Part1[ingestion_date=2025-12-25/]
+                Part2[ingestion_date=2025-12-24/]
+                Data1[00000-0-data.parquet]
+                Data2[00001-1-data.parquet]
+            end
+
+            subgraph "Manifest Files"
+                Manifest1[manifest-001.avro]
+                Manifest2[manifest-002.avro]
+                ManifestList[manifest-list.avro]
+            end
+        end
+
+        CatalogDB[_catalog/<br/>catalog.db<br/>SQLite Catalog]
+    end
+
+    subgraph "Metadata Flow"
+        Schema[Table Schema<br/>Column Types]
+        PartSpec[Partition Spec<br/>Transform Rules]
+        SortOrder[Sort Order]
+        Properties[Table Properties]
+    end
+
+    subgraph "Transaction Flow"
+        T1[Begin Transaction]
+        T2[Snapshot Creation]
+        T3[Metadata Update]
+        T4[Atomic Commit]
+    end
+
+    PyIceberg --> Auth
+    Spark --> Auth
+    DuckDBClient --> Auth
+    R2SQLClient --> Auth
+
+    Auth --> RestAPI
+
+    RestAPI --> ListTables
+    RestAPI --> CreateTable
+    RestAPI --> LoadTable
+    RestAPI --> UpdateTable
+    RestAPI --> DropTable
+    RestAPI --> CreateNS
+    RestAPI --> ListNS
+    RestAPI --> DropNS
+
+    CreateTable --> Analytics
+    Analytics --> TableDir
+    TableDir --> Posts
+
+    Posts --> V1
+    Posts --> V2
+    Posts --> V3
+    Posts --> Snap1
+    Posts --> Snap2
+    Posts --> VH
+
+    Posts --> Part1
+    Posts --> Part2
+    Part1 --> Data1
+    Part2 --> Data2
+
+    Posts --> Manifest1
+    Posts --> Manifest2
+    Posts --> ManifestList
+
+    V2 --> Schema
+    V2 --> PartSpec
+    V2 --> SortOrder
+    V2 --> Properties
+
+    CreateTable --> T1
+    T1 --> T2
+    T2 --> T3
+    T3 --> T4
+    T4 --> V1
+
+    RestAPI -.Manages.-> CatalogDB
+
+    style Auth fill:#fc6,stroke:#333,stroke-width:2px
+    style RestAPI fill:#fc6,stroke:#333,stroke-width:3px
+    style V2 fill:#9cf,stroke:#333,stroke-width:2px
+    style Data1 fill:#6cf,stroke:#333,stroke-width:2px
+    style T4 fill:#9f6,stroke:#333,stroke-width:2px
+```
+
+**アーキテクチャポイント:**
+
+1. **REST Catalog API**: Cloudflare管理のIceberg RESTカタログ
+2. **認証**: Cloudflare APIトークンで認証
+3. **メタデータ管理**: バージョン管理されたメタデータファイル（v1, v2, v3...）
+4. **スナップショット**: 各コミットでスナップショット作成（タイムトラベル対応）
+5. **パーティション**: 日付などで自動パーティション分割
+6. **ACIDトランザクション**: アトミックコミットでデータ整合性保証
+7. **マルチクライアント**: PyIceberg、Spark、DuckDB、R2 SQLから同一テーブルにアクセス
 
 ---
 
@@ -689,16 +949,25 @@ graph TB
 本ドキュメントでは、以下のアーキテクチャ図を提供しました：
 
 1. **全体アーキテクチャ**: Cloudflareデータ基盤の全体像
-2. **データフロー詳細**: レイヤー別のデータフロー
-3. **ETLパイプライン**: バッチ処理ワークフロー
-4. **リアルタイム処理**: イベント駆動アーキテクチャ
-5. **CI/CDパイプライン**: 開発・デプロイフロー
-6. **ストレージ戦略**: Hot/Warm/Coldパスの使い分け
-7. **セキュリティフロー**: 認証・認可・監査
-8. **スケーリング戦略**: トラフィック増加への対応
-9. **コスト最適化**: コスト削減戦略
+2. **Icebergデータフロー** ⭐NEW: dlt → Parquet → Iceberg の詳細フロー
+3. **R2 Data Catalogアーキテクチャ** ⭐NEW: REST Catalog API とメタデータ構造
+4. **データフロー詳細**: レイヤー別のデータフロー
+5. **ETLパイプライン**: バッチ処理ワークフロー
+6. **リアルタイム処理**: イベント駆動アーキテクチャ
+7. **CI/CDパイプライン**: 開発・デプロイフロー
+8. **ストレージ戦略**: Hot/Warm/Coldパスの使い分け
+9. **セキュリティフロー**: 認証・認可・監査
+10. **スケーリング戦略**: トラフィック増加への対応
+11. **コスト最適化**: コスト削減戦略
 
 これらの図は、GitHubやConfluenceなどでMermaidをサポートする環境で自動レンダリングされます。
+
+### 新規追加図（2025-12-25）
+
+- **Icebergデータフロー**: R2 Data Catalog + PyIcebergを使ったエンドツーエンドのデータパイプライン
+- **R2 Data Catalogアーキテクチャ**: Iceberg REST Catalog APIの詳細構造とトランザクションフロー
+
+これらはベータ版のR2 Data Catalogに対応した最新のアーキテクチャです。
 
 ---
 
