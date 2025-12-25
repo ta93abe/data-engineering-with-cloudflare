@@ -12,6 +12,7 @@ Cloudflareのエッジコンピューティングプラットフォームを活�
 - [dlt Workers実装ガイド](./docs/dlt-workers-implementation.md) - Workers上でのdltパイプライン実装
 - [Iceberg実装ガイド](./docs/iceberg-implementation.md) - Apache Iceberg on Cloudflare（PyIceberg + R2 Data Catalog）
 - **[🚀 Icebergセットアップガイド](./docs/iceberg-setup-guide.md)** - R2 Data Catalogを使った実践的なセットアップ手順（ベータ版対応）
+- **[💰 コスト分析](./docs/cost-analysis.md)** - 固定費・変動費の詳細試算とコスト最適化戦略
 - [情報源リンク集](./docs/resources.md) - 公式ドキュメント、ブログ、コミュニティリソース
 
 ## 🚀 Cloudflare データサービス
@@ -151,7 +152,7 @@ graph TB
     style Evidence fill:#9f6
 ```
 
-詳細は[アーキテクチャ図](./docs/architecture-diagrams.md)をご覧ください（9種類のMermaid図を提供）。
+詳細は[アーキテクチャ図](./docs/architecture-diagrams.md)をご覧ください（11種類のMermaid図を提供）。
 
 ## 📖 はじめに
 
