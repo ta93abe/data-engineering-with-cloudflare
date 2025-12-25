@@ -1,0 +1,8 @@
+# Cloudflare Workers Python Runtime - dlt Pipeline Dependencies
+
+# dlt core with filesystem destination support
+dlt[filesystem]>=0.4.0
+
+# S3/R2 compatibility (dlt includes boto3, but we specify for clarity)
+# boto3>=1.34.0
+# botocore>=1.34.0
