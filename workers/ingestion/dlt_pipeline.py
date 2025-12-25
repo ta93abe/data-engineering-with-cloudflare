@@ -103,8 +103,8 @@ async def on_fetch(request, env):
         r2_bucket_name = env.R2_BUCKET_NAME
 
         # タイムスタンプ取得
-        from datetime import datetime
-        now = datetime.utcnow()
+        from datetime import datetime, timezone
+        now = datetime.now(timezone.utc)
 
         # dltパイプラインの設定（R2 Bronze Layer: data-lake-raw）
         # フォルダ構造: sources/{source_name}/{table}/year={YYYY}/month={MM}/day={DD}/
