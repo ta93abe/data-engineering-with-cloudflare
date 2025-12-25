@@ -36,8 +36,8 @@ curl https://dlt-pipeline.your-subdomain.workers.dev
 # usersデータ
 curl "https://dlt-pipeline.your-subdomain.workers.dev?source=users"
 
-# カスタムAPI（API_KEY設定が必要）
-curl "https://dlt-pipeline.your-subdomain.workers.dev?source=custom&endpoint=https://api.example.com/data"
+# カスタムAPI（API_KEY設定が必要・server-sideで定義されたエンドポイントIDを指定）
+curl "https://dlt-pipeline.your-subdomain.workers.dev?source=custom&endpoint_id=my_api"
 ```
 
 ### レスポンス例
