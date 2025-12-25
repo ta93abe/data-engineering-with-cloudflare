@@ -97,11 +97,24 @@ async def on_fetch(request, env):
 
     try:
         # 環境変数から設定を取得
-        r2_access_key = env.R2_ACCESS_KEY_ID
-        r2_secret_key = env.R2_SECRET_ACCESS_KEY
-        r2_account_id = env.R2_ACCOUNT_ID
-        r2_bucket_name = env.R2_BUCKET_NAME
+        required_env_vars = [
+            "R2_ACCESS_KEY_ID",
+            "R2_SECRET_ACCESS_KEY",
+            "R2_ACCOUNT_ID",
+            "R2_BUCKET_NAME",
+        ]
 
+        missing_vars = [name for name in required_env_vars if not hasattr(env, name)]
+        if missing_vars:
+            # 不足している環境変数がある場合は、わかりやすいエラーを発生させる
+            raise ValueError(
+                "Missing required environment variables: " + ", ".join(missing_vars)
+            )
+
+        r2_access_key = getattr(env, "R2_ACCESS_KEY_ID")
+        r2_secret_key = getattr(env, "R2_SECRET_ACCESS_KEY")
+        r2_account_id = getattr(env, "R2_ACCOUNT_ID")
+        r2_bucket_name = getattr(env, "R2_BUCKET_NAME")
         # タイムスタンプ取得
         from datetime import datetime, timezone
         now = datetime.now(timezone.utc)
