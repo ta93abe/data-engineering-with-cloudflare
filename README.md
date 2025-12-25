@@ -11,6 +11,7 @@ Cloudflareのエッジコンピューティングプラットフォームを活�
 - [R2ストレージ設計](./docs/r2-storage-design.md) - バケット戦略とフォルダ構造の詳細設計（4バケット構成）
 - [dlt Workers実装ガイド](./docs/dlt-workers-implementation.md) - Workers上でのdltパイプライン実装
 - [Iceberg実装ガイド](./docs/iceberg-implementation.md) - Apache Iceberg on Cloudflare（PyIceberg + R2 Data Catalog）
+- **[🚀 Icebergセットアップガイド](./docs/iceberg-setup-guide.md)** - R2 Data Catalogを使った実践的なセットアップ手順（ベータ版対応）
 - [情報源リンク集](./docs/resources.md) - 公式ドキュメント、ブログ、コミュニティリソース
 
 ## 🚀 Cloudflare データサービス
@@ -153,6 +154,14 @@ graph TB
 詳細は[アーキテクチャ図](./docs/architecture-diagrams.md)をご覧ください（9種類のMermaid図を提供）。
 
 ## 📖 はじめに
+
+### 🚀 クイックスタート
+
+**R2 Data Catalog + Iceberg環境を15分でセットアップ:**
+
+👉 **[QUICKSTART.md](./QUICKSTART.md)** - 3ステップで即座に始められるガイド
+
+### 📚 詳細ドキュメント
 
 詳細な設計と実装ガイドについては、[アーキテクチャ設計概要](./docs/architecture-design.md)をご覧ください。
 
