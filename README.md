@@ -5,6 +5,7 @@ Cloudflareのエッジコンピューティングプラットフォームを活�
 ## 📚 ドキュメント
 
 - [アーキテクチャ設計概要](./docs/architecture-design.md) - Cloudflareデータ基盤の全体設計
+- [アーキテクチャ図](./docs/architecture-diagrams.md) - Mermaid形式の視覚的なアーキテクチャ図（9種類）
 - [Cloudflareサービスカタログ](./docs/cloudflare-services-catalog.md) - 全サービスの詳細とデータ基盤での活用方法（2025年最新版）
 - [外部サービス統合ガイド](./docs/external-services.md) - dbt、dlt、DuckDB、Evidence.dev等との連携方法
 - [情報源リンク集](./docs/resources.md) - 公式ドキュメント、ブログ、コミュニティリソース
@@ -74,6 +75,79 @@ Cloudflareサービスと組み合わせて、エンドツーエンドのデー�
 - **Slack**: パイプライン実行結果・アラート通知
 
 詳細は[外部サービス統合ガイド](./docs/external-services.md)をご覧ください。
+
+## 📐 アーキテクチャ概要
+
+```mermaid
+graph TB
+    subgraph "Data Sources"
+        API[External APIs]
+        Events[User Events]
+        DB[(External DBs)]
+    end
+
+    subgraph "Ingestion"
+        dlt[dlt]
+        Workers[Workers]
+        Pipelines[Pipelines]
+    end
+
+    subgraph "Storage"
+        R2[(R2 + Iceberg)]
+        D1[(D1)]
+        KV[(KV)]
+    end
+
+    subgraph "Transform"
+        dbt[dbt + DuckDB]
+        WorkersT[Workers]
+    end
+
+    subgraph "Analytics"
+        Evidence[Evidence.dev]
+        R2SQL[R2 SQL]
+        Engine[Analytics Engine]
+    end
+
+    subgraph "Orchestration"
+        GHA[GitHub Actions]
+        WF[Workflows]
+    end
+
+    API --> dlt
+    Events --> Workers
+    Events --> Pipelines
+    DB --> dlt
+
+    dlt --> R2
+    Workers --> D1
+    Workers --> KV
+    Workers --> Engine
+    Pipelines --> R2
+
+    R2 --> dbt
+    D1 --> dbt
+    dbt --> R2
+    dbt --> D1
+
+    R2 --> Evidence
+    R2 --> R2SQL
+    D1 --> Evidence
+    Engine --> Evidence
+
+    GHA --> dlt
+    GHA --> dbt
+    WF --> WorkersT
+
+    Workers -.通知.-> Slack[Slack]
+    GHA -.通知.-> Slack
+
+    style Workers fill:#f96
+    style R2 fill:#6cf
+    style Evidence fill:#9f6
+```
+
+詳細は[アーキテクチャ図](./docs/architecture-diagrams.md)をご覧ください（9種類のMermaid図を提供）。
 
 ## 📖 はじめに
 
