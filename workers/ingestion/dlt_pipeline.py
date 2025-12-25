@@ -84,8 +84,11 @@ async def on_fetch(request, env):
     """
 
     # CORSヘッダー設定
+    # 環境変数 ACCESS_CONTROL_ALLOW_ORIGIN で許可するオリジンを設定可能にする
+    allowed_origin = env.get("ACCESS_CONTROL_ALLOW_ORIGIN", "*")
+
     cors_headers = {
-        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Origin": allowed_origin,
         "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
         "Access-Control-Allow-Headers": "Content-Type",
         "Content-Type": "application/json"
