@@ -146,7 +146,8 @@ curl "http://localhost:8787?source=users"
 
 **カスタムAPI:**
 ```bash
-curl "http://localhost:8787?source=custom&endpoint=https://api.example.com/data"
+# endpoint には Worker 側で許可されたIDのみを指定する (例: "external_api")
+curl "http://localhost:8787?source=custom&endpoint=external_api"
 ```
 
 ## デプロイ
