@@ -5,19 +5,42 @@ Cloudflareのエッジコンピューティングプラットフォームを活�
 ## 📚 ドキュメント
 
 - [アーキテクチャ設計概要](./docs/architecture-design.md) - Cloudflareデータ基盤の全体設計
+- [Cloudflareサービスカタログ](./docs/cloudflare-services-catalog.md) - 全サービスの詳細とデータ基盤での活用方法（2025年最新版）
 
 ## 🚀 Cloudflare データサービス
 
 このプロジェクトでは、以下のCloudflareサービスを活用します：
 
-- **Workers**: サーバーレスコンピューティング
+### コア基盤
+- **Workers**: サーバーレスコンピューティング（フルスタック対応）
+- **Workflows**: 耐久性のある実行エンジン（Python対応 ✨NEW）
+- **Containers**: フルLinuxコンテナ（2025年6月公開予定 🚧）
+
+### ストレージ・データベース
+- **D1**: サーバーレスSQLデータベース（パフォーマンス向上 ⚡）
 - **Workers KV**: キー・バリューストレージ
-- **R2**: S3互換オブジェクトストレージ（エグレス無料）
-- **D1**: サーバーレスSQLデータベース
-- **Analytics Engine**: 時系列データとメトリクス分析
+- **R2**: S3互換オブジェクトストレージ（エグレス無料、R2 SQL対応 ✨NEW）
+- **Vectorize**: ベクトルデータベース（GA ✨NEW）
+- **Hyperdrive**: PostgreSQL/MySQL接続プール
+
+### データ処理・AI
+- **Pipelines**: ストリーミングETL（SQL変換対応 ✨NEW）
+- **Workers AI**: AI推論プラットフォーム（50+モデル）
+- **AI Gateway**: AI制御・監視プレーン
+- **Analytics Engine**: 時系列メトリクスDB
+
+### メッセージング・イベント
 - **Queues**: メッセージキューサービス
+- **R2 Event Notifications**: R2イベント駆動処理（ベータ 🔵）
 - **Durable Objects**: ステートフルアプリケーション
-- **Hyperdrive**: PostgreSQL接続プール
+
+### その他
+- **Calls**: WebRTCリアルタイム通信（ベータ 🔵）
+- **Stream**: 動画ストリーミング
+- **Pages**: フルスタックホスティング
+- **Browser Rendering**: ヘッドレスブラウザ（ベータ 🔵）
+
+詳細は[サービスカタログ](./docs/cloudflare-services-catalog.md)をご覧ください。
 
 ## 🎯 プロジェクト目標
 
