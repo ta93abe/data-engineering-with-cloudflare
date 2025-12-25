@@ -1,0 +1,117 @@
+# Cloudflare Workers Configuration
+# https://developers.cloudflare.com/workers/wrangler/configuration/
+
+name = "data-engineering-cloudflare"
+compatibility_date = "2024-12-01"
+
+# アカウント設定（実際のアカウントIDに置き換えてください）
+# account_id = "your-account-id-here"
+
+# ========================================
+# Workers Python Runtime - dlt Pipeline
+# ========================================
+
+[[workers]]
+name = "dlt-pipeline"
+main = "workers/ingestion/dlt_pipeline.py"
+compatibility_date = "2024-12-01"
+
+# Python Workers設定
+[workers.python]
+# requirements.txtから依存関係を自動インストール
+requirements = "workers/ingestion/requirements.txt"
+
+# 環境変数（本番環境では wrangler secret put コマンドで設定）
+[workers.vars]
+# R2_ACCOUNT_ID = "your-account-id"
+# R2_BUCKET_NAME = "data-lake-raw"
+
+# Secretsは以下のコマンドで設定:
+# wrangler secret put R2_ACCESS_KEY_ID --name dlt-pipeline
+# wrangler secret put R2_SECRET_ACCESS_KEY --name dlt-pipeline
+# wrangler secret put API_KEY --name dlt-pipeline  # オプション
+
+# R2バケットバインディング（オプション: 直接R2にアクセスする場合）
+# [[workers.r2_buckets]]
+# binding = "DATA_LAKE"
+# bucket_name = "data-lake-raw"
+
+# D1データベースバインディング（オプション: メタデータ保存用）
+# [[workers.d1_databases]]
+# binding = "DB"
+# database_name = "pipeline-metadata"
+# database_id = "your-database-id"
+
+# KVバインディング（オプション: 状態管理用）
+# [[workers.kv_namespaces]]
+# binding = "PIPELINE_STATE"
+# id = "your-kv-namespace-id"
+
+# Workers Analytics Engine（オプション: メトリクス記録用）
+# [[workers.analytics_engine_datasets]]
+# binding = "ANALYTICS"
+
+# ========================================
+# 開発環境設定
+# ========================================
+
+# ローカル開発時の設定
+[dev]
+port = 8787
+local_protocol = "http"
+
+# ========================================
+# 制限設定
+# ========================================
+
+# CPU時間制限
+# Free: 10ms, Paid: 30s (Python Workersはデフォルトで30s)
+# limits = { cpu_ms = 30000 }
+
+# ========================================
+# ビルド設定
+# ========================================
+
+[build]
+# カスタムビルドコマンド（必要に応じて）
+# command = "echo 'Building...'"
+
+# ========================================
+# 追加Workers（将来の拡張用）
+# ========================================
+
+# Iceberg Converter Worker
+# [[workers]]
+# name = "iceberg-converter"
+# main = "workers/transformation/iceberg_converter.py"
+# compatibility_date = "2024-12-01"
+#
+# [workers.python]
+# requirements = "workers/transformation/requirements.txt"
+#
+# [workers.vars]
+# R2_ACCOUNT_ID = "your-account-id"
+# R2_BUCKET_CURATED = "data-lake-curated"
+# SOURCE_BUCKET = "data-lake-raw"
+#
+# # Secretsで設定:
+# # wrangler secret put CLOUDFLARE_API_TOKEN --name iceberg-converter
+
+# dlt + Iceberg統合Worker
+# [[workers]]
+# name = "dlt-iceberg-pipeline"
+# main = "workers/ingestion/dlt_iceberg_pipeline.py"
+# compatibility_date = "2024-12-01"
+#
+# [workers.python]
+# requirements = "workers/ingestion/requirements-iceberg.txt"
+#
+# [workers.vars]
+# R2_ACCOUNT_ID = "your-account-id"
+# R2_BUCKET_RAW = "data-lake-raw"
+# R2_BUCKET_CURATED = "data-lake-curated"
+#
+# # Secretsで設定:
+# # wrangler secret put R2_ACCESS_KEY_ID --name dlt-iceberg-pipeline
+# # wrangler secret put R2_SECRET_ACCESS_KEY --name dlt-iceberg-pipeline
+# # wrangler secret put CLOUDFLARE_API_TOKEN --name dlt-iceberg-pipeline

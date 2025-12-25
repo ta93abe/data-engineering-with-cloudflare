@@ -1,0 +1,13 @@
+# Cloudflare Workers Python Runtime - dlt + Iceberg統合パイプライン
+
+# dlt core with filesystem destination
+dlt[filesystem]>=0.4.0
+
+# PyIceberg for Iceberg table creation
+pyiceberg>=0.6.0
+
+# Arrow for Parquet I/O
+pyarrow>=14.0.0
+
+# S3 filesystem support
+s3fs>=2024.2.0

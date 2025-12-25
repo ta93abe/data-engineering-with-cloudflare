@@ -1,0 +1,10 @@
+# Cloudflare Workers Python Runtime - Iceberg Transformation Dependencies
+
+# PyIceberg - Apache Iceberg Python implementation
+pyiceberg>=0.6.0
+
+# Arrow for Parquet I/O
+pyarrow>=14.0.0
+
+# S3 filesystem support
+s3fs>=2024.2.0
