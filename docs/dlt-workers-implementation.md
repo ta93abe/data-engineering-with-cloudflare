@@ -358,7 +358,8 @@ import logging
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-logger.debug(f"Pipeline config: {pipeline.config}")
+# 機密情報を含む pipeline.config 全体はログに出さないようにする
+logger.debug("Pipeline name: %s", pipeline.pipeline_name)
 ```
 
 ### パフォーマンス最適化
