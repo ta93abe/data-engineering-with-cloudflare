@@ -102,7 +102,12 @@ async def on_fetch(request, env):
         r2_account_id = env.R2_ACCOUNT_ID
         r2_bucket_name = env.R2_BUCKET_NAME
 
-        # dltパイプラインの設定
+        # タイムスタンプ取得
+        from datetime import datetime
+        now = datetime.utcnow()
+
+        # dltパイプラインの設定（R2 Bronze Layer: data-lake-raw）
+        # フォルダ構造: sources/{source_name}/{table}/year={YYYY}/month={MM}/day={DD}/
         pipeline = dlt.pipeline(
             pipeline_name="workers_etl_pipeline",
             destination=dlt.destinations.filesystem(
@@ -112,9 +117,11 @@ async def on_fetch(request, env):
                     "aws_secret_access_key": r2_secret_key,
                     "endpoint_url": f"https://{r2_account_id}.r2.cloudflarestorage.com",
                     "region_name": "auto"
-                }
+                },
+                # Hive形式のパーティション構造
+                layout="{table_name}/year={year}/month={month}/day={day}/{load_id}.{file_id}.{ext}"
             ),
-            dataset_name="raw_data"
+            dataset_name=f"sources/api_jsonplaceholder"  # ソース別のフォルダ
         )
 
         # リクエストパラメータでパイプラインソースを選択
@@ -155,6 +162,8 @@ async def on_fetch(request, env):
             "pipeline_name": info.pipeline.pipeline_name,
             "dataset_name": info.pipeline.dataset_name,
             "destination": str(info.pipeline.destination),
+            "bucket": r2_bucket_name,
+            "path_structure": f"s3://{r2_bucket_name}/sources/api_jsonplaceholder/{source_type}/year={now.year}/month={now.month:02d}/day={now.day:02d}/",
             "loads": [
                 {
                     "load_id": load.load_id,
@@ -164,7 +173,7 @@ async def on_fetch(request, env):
                 }
                 for load in (info.loads if hasattr(info, 'loads') else [])
             ],
-            "message": f"Successfully loaded data from {source_type}",
+            "message": f"Successfully loaded data from {source_type} to Bronze Layer (data-lake-raw)",
             "timestamp": str(dlt.common.time.timestamp())
         }
 

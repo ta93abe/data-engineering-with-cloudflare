@@ -8,6 +8,8 @@ Cloudflareのエッジコンピューティングプラットフォームを活�
 - [アーキテクチャ図](./docs/architecture-diagrams.md) - Mermaid形式の視覚的なアーキテクチャ図（9種類）
 - [Cloudflareサービスカタログ](./docs/cloudflare-services-catalog.md) - 全サービスの詳細とデータ基盤での活用方法（2025年最新版）
 - [外部サービス統合ガイド](./docs/external-services.md) - dbt、dlt、DuckDB、Evidence.dev等との連携方法
+- [R2ストレージ設計](./docs/r2-storage-design.md) - バケット戦略とフォルダ構造の詳細設計（4バケット構成）
+- [dlt Workers実装ガイド](./docs/dlt-workers-implementation.md) - Workers上でのdltパイプライン実装
 - [情報源リンク集](./docs/resources.md) - 公式ドキュメント、ブログ、コミュニティリソース
 
 ## 🚀 Cloudflare データサービス

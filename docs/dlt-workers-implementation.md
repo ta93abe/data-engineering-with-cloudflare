@@ -82,9 +82,25 @@ wrangler whoami
 
 ### 5. R2バケットの作成
 
+データレイク階層に応じて4つのバケットを作成します:
+
 ```bash
+# Bronze Layer（生データ）
 wrangler r2 bucket create data-lake-raw
+
+# Silver Layer（変換後データ） - dbt用
+wrangler r2 bucket create data-lake-processed
+
+# Gold Layer（分析用データ） - Evidence/R2 SQL用
+wrangler r2 bucket create data-lake-curated
+
+# Archive Layer（長期保存）
+wrangler r2 bucket create data-lake-archive
 ```
+
+開発時はまず `data-lake-raw` のみ作成すればOKです。
+
+詳細なバケット戦略は [r2-storage-design.md](./r2-storage-design.md) を参照してください。
 
 ### 6. Secretsの設定
 
@@ -186,8 +202,10 @@ curl "https://dlt-pipeline.your-subdomain.workers.dev?source=posts"
 {
   "success": true,
   "pipeline_name": "workers_etl_pipeline",
-  "dataset_name": "raw_data",
+  "dataset_name": "sources/api_jsonplaceholder",
   "destination": "filesystem",
+  "bucket": "data-lake-raw",
+  "path_structure": "s3://data-lake-raw/sources/api_jsonplaceholder/posts/year=2025/month=01/day=15/",
   "loads": [
     {
       "load_id": "1234567890",
@@ -196,8 +214,8 @@ curl "https://dlt-pipeline.your-subdomain.workers.dev?source=posts"
       }
     }
   ],
-  "message": "Successfully loaded data from posts",
-  "timestamp": "2024-12-25T12:00:00"
+  "message": "Successfully loaded data from posts to Bronze Layer (data-lake-raw)",
+  "timestamp": "2025-01-15T12:00:00"
 }
 ```
 
@@ -275,24 +293,44 @@ async def on_scheduled(event, env):
 
 ### R2へのデータ保存形式
 
-dltはデフォルトでParquet形式でR2に保存します:
+dltはParquet形式でR2の**Bronze Layer**（data-lake-raw）に保存します。
+Hive形式のパーティション構造を採用しています:
 
 ```
 s3://data-lake-raw/
-├── raw_data/
-│   ├── posts/
-│   │   ├── load_id_1234567890/
-│   │   │   └── posts.parquet
-│   │   └── _dlt_loads/
-│   │       └── load_id_1234567890.jsonl
-│   └── users/
-│       ├── load_id_1234567891/
-│       │   └── users.parquet
-│       └── _dlt_loads/
-│           └── load_id_1234567891.jsonl
+├── sources/
+│   └── api_jsonplaceholder/           # データソース名
+│       ├── posts/                     # テーブル名
+│       │   └── year=2025/             # Hiveパーティション
+│       │       └── month=01/
+│       │           └── day=15/
+│       │               ├── load_1234567890.0001.parquet
+│       │               ├── load_1234567890.0002.parquet
+│       │               └── _dlt_loads/
+│       │                   └── load_1234567890.jsonl
+│       └── users/
+│           └── year=2025/
+│               └── month=01/
+│                   └── day=15/
+│                       ├── load_1234567891.0001.parquet
+│                       └── _dlt_loads/
+│                           └── load_1234567891.jsonl
+├── _pipeline_state/                   # dlt状態管理
+│   └── api_jsonplaceholder_state.json
+└── _metadata/                         # メタデータ
+    └── schemas/
+        └── api_jsonplaceholder.json
 ```
 
-この構造は、後続のdbt + DuckDBでの処理に最適です。
+**パーティション戦略:**
+- 日次パーティション（`year/month/day`）により効率的なクエリが可能
+- dbt/DuckDBでパーティションプルーニングが効く
+- データライフサイクル管理が容易
+
+この構造は、Bronze → Silver → Goldのデータレイク階層に準拠しており、
+後続のdbt + DuckDBでの処理に最適です。
+
+詳細は [r2-storage-design.md](./r2-storage-design.md) を参照してください。
 
 ## 運用ガイド
 
