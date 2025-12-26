@@ -63,6 +63,8 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: pages deploy marimo/outputs --project-name=marimo-notebooks --branch=main
+        # 注意: デプロイ後、Cloudflare Accessで保護することを推奨
+        # 設定手順: docs/cloudflare-security-zerotrust.md 参照
 
       - name: Notify Slack
         if: success() && github.event_name == 'schedule'

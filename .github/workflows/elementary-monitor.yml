@@ -106,6 +106,8 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: pages deploy dbt/elementary_output --project-name=data-quality-dashboard --branch=main
+        # 注意: デプロイ後、Cloudflare Accessで保護することを推奨
+        # 設定手順: docs/cloudflare-security-zerotrust.md 参照
 
       - name: Comment PR with Report Link
         if: github.event_name == 'pull_request'

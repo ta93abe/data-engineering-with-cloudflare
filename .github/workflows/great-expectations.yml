@@ -60,6 +60,8 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: pages deploy great_expectations/uncommitted/data_docs/cloudflare_pages_site --project-name=gx-data-docs --branch=main
+        # 注意: デプロイ後、Cloudflare Accessで保護することを推奨
+        # 設定手順: docs/cloudflare-security-zerotrust.md 参照
 
       - name: Generate validation summary
         if: always()
