@@ -50,10 +50,9 @@ wrangler r2 bucket create data-lake-curated
 
 #### 3.1 アカウントID取得
 
-```bash
 # アカウントIDをコピー
-wrangler whoami | grep "Account ID"
-```
+wrangler whoami
+# 出力から "Account ID" の値をコピーします
 
 #### 3.2 wrangler.toml編集
 
