@@ -1,0 +1,165 @@
+name: marimo Notebooks
+
+on:
+  # 手動実行
+  workflow_dispatch:
+  # marimo関連の変更時
+  push:
+    branches: [main, claude/*]
+    paths:
+      - 'marimo/**'
+      - '.github/workflows/marimo-notebooks.yml'
+  # 定期実行（週次でレポート生成）
+  schedule:
+    - cron: '0 3 * * 0'  # 毎週日曜日3:00 UTC
+
+jobs:
+  run-notebooks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install marimo and dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r marimo/requirements.txt
+
+      - name: Run R2 Data Exploration notebook
+        env:
+          R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
+        run: |
+          echo "Running R2 Data Exploration notebook..."
+          # Export to HTML
+          marimo export html marimo/notebooks/r2_data_exploration.py -o marimo/outputs/r2_exploration.html
+        continue-on-error: true
+
+      - name: Run Data Quality Dashboard notebook
+        env:
+          R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
+        run: |
+          echo "Running Data Quality Dashboard notebook..."
+          # Export to HTML
+          marimo export html marimo/notebooks/data_quality_dashboard.py -o marimo/outputs/quality_dashboard.html
+        continue-on-error: true
+
+      - name: Upload notebook outputs as artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: marimo-notebooks-${{ github.run_number }}
+          path: marimo/outputs/
+          retention-days: 30
+
+      - name: Deploy notebooks to Cloudflare Pages
+        if: github.ref == 'refs/heads/main' && success()
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy marimo/outputs --project-name=marimo-notebooks --branch=main
+
+      - name: Notify Slack
+        if: success() && github.event_name == 'schedule'
+        uses: slackapi/slack-github-action@v1
+        with:
+          webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          payload: |
+            {
+              "text": "📊 marimo Notebooks Updated",
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "📊 marimo Notebooks Generated"
+                  }
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "Weekly marimo notebooks have been generated and deployed."
+                  }
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Notebooks:*\n• R2 Data Exploration\n• Data Quality Dashboard"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Status:*\n✅ Success"
+                    }
+                  ]
+                },
+                {
+                  "type": "actions",
+                  "elements": [
+                    {
+                      "type": "button",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "View Notebooks"
+                      },
+                      "url": "https://marimo-notebooks.pages.dev"
+                    },
+                    {
+                      "type": "button",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "View Logs"
+                      },
+                      "url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+                    }
+                  ]
+                }
+              ]
+            }
+
+  # ノートブックの lint チェック
+  lint-notebooks:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install marimo ruff
+
+      - name: Check marimo notebooks
+        run: |
+          echo "Checking marimo notebooks syntax..."
+          for notebook in marimo/notebooks/*.py; do
+            echo "Checking $notebook..."
+            python -m py_compile "$notebook"
+          done
+
+      - name: Run ruff linter
+        run: |
+          echo "Running ruff linter..."
+          ruff check marimo/notebooks/
+        continue-on-error: true

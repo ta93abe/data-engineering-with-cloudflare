@@ -73,6 +73,7 @@ Cloudflareサービスと組み合わせて、エンドツーエンドのデー�
 
 ### データ可視化
 - **Evidence.dev**: コードベースのBIツール（Cloudflare Pagesへデプロイ）
+- **marimo**: Git-friendlyなリアクティブPythonノートブック ✨NEW
 
 ### CI/CD・開発
 - **GitHub**: バージョン管理・コラボレーション

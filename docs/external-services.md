@@ -1382,6 +1382,358 @@ export default {
 
 ---
 
+### marimo
+
+**公式サイト**: https://marimo.io/
+**ドキュメント**: https://docs.marimo.io/
+
+#### 概要
+marimoは、リアクティブなPythonノートブックです。Jupyter Notebookの代替として、Git-friendlyで再現性の高いデータ探索・分析環境を提供します。
+
+#### データ基盤での役割
+- **データ探索**: R2データのインタラクティブな探索
+- **アドホック分析**: SQLクエリとPythonを組み合わせた分析
+- **ダッシュボード**: インタラクティブなデータ品質ダッシュボード
+- **レポート生成**: HTMLやPDFとしてエクスポート可能
+- **Webアプリ化**: ノートブックをそのままWebアプリとして公開
+- **Git管理**: .py形式で保存され、差分が見やすい
+
+#### Cloudflareとの統合
+
+##### R2データ探索ノートブック
+
+```python
+import marimo
+
+__generated_with = "0.9.14"
+app = marimo.App(width="medium")
+
+
+@app.cell
+def __():
+    import marimo as mo
+    import duckdb
+    import pandas as pd
+    import plotly.express as px
+    import os
+    return duckdb, mo, os, pd, px
+
+
+@app.cell
+def __(mo):
+    mo.md(
+        """
+        # R2 Data Exploration
+
+        Interactive data exploration for Cloudflare R2
+        """
+    )
+    return
+
+
+@app.cell
+def __(duckdb, os):
+    # Setup DuckDB with R2
+    conn = duckdb.connect(":memory:")
+    conn.execute("INSTALL httpfs; LOAD httpfs;")
+    conn.execute(f"SET s3_endpoint='{os.getenv('R2_ENDPOINT')}';")
+    conn.execute(f"SET s3_access_key_id='{os.getenv('R2_ACCESS_KEY_ID')}';")
+    conn.execute(f"SET s3_secret_access_key='{os.getenv('R2_SECRET_ACCESS_KEY')}';")
+    return (conn,)
+
+
+@app.cell
+def __(conn, mo):
+    # Interactive bucket/path selector
+    bucket = mo.ui.text(label="Bucket", value="data-lake-raw")
+    data_path = mo.ui.text(label="Path", value="sources/**/*.parquet")
+    mo.hstack([bucket, data_path])
+    return bucket, data_path
+
+
+@app.cell
+def __(bucket, conn, data_path):
+    # Load data from R2
+    s3_path = f"s3://{bucket.value}/{data_path.value}"
+    df = conn.execute(f"SELECT * FROM read_parquet('{s3_path}')").fetchdf()
+    return df, s3_path
+
+
+@app.cell
+def __(df, mo):
+    # Display data summary
+    mo.md(f"""
+    **Rows**: {len(df):,} | **Columns**: {len(df.columns)}
+    """)
+    df.head(10)
+    return
+
+
+@app.cell
+def __(df, mo, px):
+    # Interactive column selector
+    column = mo.ui.dropdown(
+        options=list(df.columns),
+        value=df.columns[0],
+        label="Select Column"
+    )
+    column
+    return (column,)
+
+
+@app.cell
+def __(column, df, mo, px):
+    # Visualization based on data type
+    if pd.api.types.is_numeric_dtype(df[column.value]):
+        fig = px.histogram(df, x=column.value, title=f'Distribution of {column.value}')
+        mo.ui.plotly(fig)
+    return (fig,)
+
+
+if __name__ == "__main__":
+    app.run()
+```
+
+##### ノートブックの実行
+
+```bash
+# インタラクティブモードで実行
+marimo edit marimo/notebooks/r2_data_exploration.py
+
+# Webアプリとして実行（読み取り専用）
+marimo run marimo/notebooks/data_quality_dashboard.py --host 0.0.0.0 --port 8080
+
+# HTMLにエクスポート
+marimo export html marimo/notebooks/r2_data_exploration.py -o output.html
+```
+
+##### GitHub Actionsでの自動実行
+
+```yaml
+# .github/workflows/marimo-notebooks.yml
+name: marimo Notebooks
+
+on:
+  schedule:
+    - cron: '0 3 * * 0'  # 週次
+  workflow_dispatch:
+
+jobs:
+  run-notebooks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install marimo
+        run: |
+          pip install marimo duckdb pandas plotly
+
+      - name: Run notebooks
+        env:
+          R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+        run: |
+          marimo export html marimo/notebooks/r2_data_exploration.py -o outputs/exploration.html
+          marimo export html marimo/notebooks/data_quality_dashboard.py -o outputs/dashboard.html
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          command: pages deploy outputs --project-name=marimo-notebooks
+```
+
+##### Cloudflare Pagesへのデプロイ
+
+```bash
+# ノートブックをHTMLにエクスポート
+marimo export html marimo/notebooks/data_quality_dashboard.py -o index.html
+
+# Cloudflare Pagesにデプロイ
+wrangler pages deploy marimo/outputs --project-name=marimo-notebooks
+
+# アクセス: https://marimo-notebooks.pages.dev
+```
+
+##### データ品質ダッシュボード例
+
+```python
+# marimo/notebooks/data_quality_dashboard.py
+import marimo
+
+app = marimo.App(width="full")
+
+
+@app.cell
+def __():
+    import marimo as mo
+    import pandas as pd
+    import plotly.graph_objects as go
+    from datetime import datetime, timedelta
+    return datetime, go, mo, pd, timedelta
+
+
+@app.cell
+def __(mo):
+    mo.md(
+        """
+        # Data Quality Dashboard
+
+        Real-time monitoring of data quality metrics
+        """
+    )
+    return
+
+
+@app.cell
+def __(mo, pd):
+    # Quality metrics summary
+    metrics = pd.DataFrame({
+        'Metric': ['Total Validations', 'Passed', 'Failed', 'Success Rate'],
+        'Value': ['245', '238', '7', '97.1%']
+    })
+
+    mo.hstack([
+        mo.stat(value="97.1%", label="Success Rate", bordered=True),
+        mo.stat(value="7", label="Failed Checks", bordered=True),
+        mo.stat(value="2", label="Active Datasets", bordered=True)
+    ])
+    return (metrics,)
+
+
+@app.cell
+def __(datetime, go, mo, pd, timedelta):
+    # Validation trend
+    dates = pd.date_range(end=datetime.now(), periods=30, freq='D')
+    trend_data = pd.DataFrame({
+        'date': dates,
+        'passed': [235 + (i % 10) for i in range(30)],
+        'failed': [10 - (i % 10) for i in range(30)]
+    })
+
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=trend_data['date'], y=trend_data['passed'], name='Passed', fill='tozeroy'))
+    fig.add_trace(go.Scatter(x=trend_data['date'], y=trend_data['failed'], name='Failed', fill='tozeroy'))
+    fig.update_layout(title='Validation Results Over Time')
+
+    mo.ui.plotly(fig)
+    return dates, fig, trend_data
+
+
+if __name__ == "__main__":
+    app.run()
+```
+
+#### marimoの主な特徴
+
+**1. リアクティブ実行**
+```python
+# セル間の依存関係を自動追跡
+@app.cell
+def __():
+    x = 10
+    return (x,)
+
+@app.cell
+def __(x):
+    y = x * 2  # xが変更されると自動的に再実行
+    return (y,)
+```
+
+**2. Git-friendly**
+- .py形式で保存（.ipynbのJSONではない）
+- 差分が見やすく、レビューしやすい
+- マージコンフリクトが少ない
+
+**3. インタラクティブUI**
+```python
+@app.cell
+def __(mo):
+    slider = mo.ui.slider(0, 100, value=50, label="Threshold")
+    dropdown = mo.ui.dropdown(options=["A", "B", "C"], label="Select")
+    button = mo.ui.button(label="Run")
+    text_area = mo.ui.text_area(label="Query", rows=5)
+
+    mo.hstack([slider, dropdown, button])
+    return button, dropdown, slider, text_area
+```
+
+**4. Webアプリ化**
+```bash
+# 開発モード（編集可能）
+marimo edit notebook.py
+
+# 本番モード（読み取り専用、ダッシュボード）
+marimo run notebook.py --host 0.0.0.0 --port 8080
+```
+
+**5. エクスポート機能**
+```bash
+# 静的HTML
+marimo export html notebook.py -o output.html
+
+# Pythonスクリプト
+marimo export script notebook.py -o output.py
+
+# WASM版（ブラウザで完結）
+marimo export html-wasm notebook.py -o output.html
+```
+
+#### JupyterとMarimoの比較
+
+| 機能 | Jupyter | marimo |
+|-----|---------|--------|
+| **ファイル形式** | .ipynb (JSON) | .py (Python) |
+| **実行モデル** | 順次実行 | リアクティブ実行 |
+| **セル順序** | 重要（依存） | 不要（自動追跡） |
+| **Git差分** | ❌ 見にくい | ✅ 見やすい |
+| **再現性** | ⚠️ セル順序に依存 | ✅ 常に再現可能 |
+| **Webアプリ化** | Voilà等が必要 | ✅ ネイティブサポート |
+| **UI要素** | ipywidgets | marimo.ui |
+| **デプロイ** | 複雑 | ✅ 簡単 |
+
+#### 推奨ユースケース
+
+```
+Bronze Layer (生データ)
+  ↓
+Great Expectations (検証)
+  ↓
+[marimo] ← データ探索・プロファイリング
+  ↓
+Silver Layer (dlt変換)
+  ↓
+[marimo] ← 変換後データの確認
+  ↓
+Gold Layer (dbt変換)
+  ↓
+Elementary (監視)
+  ↓
+[marimo] ← データ品質ダッシュボード
+  ↓
+Evidence.dev (ビジネスダッシュボード)
+```
+
+**marimoの用途:**
+- **EDA**: 探索的データ分析
+- **アドホック分析**: SQL + Python
+- **データ品質レポート**: Great Expectations/Elementaryの結果可視化
+- **プロトタイピング**: ダッシュボードのプロトタイプ作成
+
+**Evidence.devの用途:**
+- **ビジネスダッシュボード**: ステークホルダー向け
+- **定期レポート**: 自動更新される分析レポート
+- **KPIモニタリング**: リアルタイムメトリクス
+
+#### 推奨度
+⭐⭐⭐⭐⭐ - データ探索とアドホック分析に最適
+
+---
+
 ## CI/CD・開発基盤
 
 ### GitHub
