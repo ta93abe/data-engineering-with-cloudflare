@@ -1,0 +1,25 @@
+# Wrangler Configuration for AI Gateway Proxy Worker
+# Deploy: wrangler deploy --config wrangler-ai-gateway-proxy.toml
+
+name = "ai-gateway-proxy"
+main = "workers/ai/ai-gateway-proxy.js"
+compatibility_date = "2024-01-01"
+
+# Analytics Engine binding
+[[analytics_engine_datasets]]
+binding = "ANALYTICS"
+
+# KV namespace for cost tracking
+# Create KV: wrangler kv:namespace create "COST_TRACKING"
+[[kv_namespaces]]
+binding = "COST_TRACKING"
+id = "your-kv-namespace-id"  # Replace with actual KV namespace ID
+
+# Environment variables
+[vars]
+CLOUDFLARE_ACCOUNT_ID = "your-account-id"  # Replace with your Cloudflare account ID
+AI_GATEWAY_ID = "your-gateway-id"  # Replace with your AI Gateway ID
+
+# Secrets (set with: wrangler secret put SECRET_NAME)
+# OPENAI_API_KEY - Set with: wrangler secret put OPENAI_API_KEY --name ai-gateway-proxy
+# ANTHROPIC_API_KEY - Set with: wrangler secret put ANTHROPIC_API_KEY --name ai-gateway-proxy

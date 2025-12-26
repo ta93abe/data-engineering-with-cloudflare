@@ -1,0 +1,24 @@
+# Wrangler Configuration for Image Generation Worker
+# Deploy: wrangler deploy --config wrangler-image-generation.toml
+
+name = "image-generation"
+main = "workers/ai/image-generation.js"
+compatibility_date = "2024-01-01"
+
+# Workers AI binding
+[ai]
+binding = "AI"
+
+# Analytics Engine binding
+[[analytics_engine_datasets]]
+binding = "ANALYTICS"
+
+# R2 binding (optional - for saving generated images)
+# Create bucket first: wrangler r2 bucket create generated-images
+[[r2_buckets]]
+binding = "R2_BUCKET"
+bucket_name = "generated-images"
+
+# Public R2 URL (if using public bucket)
+[vars]
+R2_PUBLIC_URL = "https://pub-xxxxx.r2.dev"
