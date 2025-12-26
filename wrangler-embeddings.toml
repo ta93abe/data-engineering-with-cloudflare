@@ -1,0 +1,16 @@
+# Wrangler Configuration for Embeddings Worker
+# Deploy: wrangler deploy --config wrangler-embeddings.toml
+
+name = "embeddings"
+main = "workers/ai/embeddings.js"
+compatibility_date = "2024-01-01"
+
+# Workers AI binding
+[ai]
+binding = "AI"
+
+# Vectorize binding
+# Create index first: wrangler vectorize create rag-documents --dimensions=768 --metric=cosine
+[[vectorize]]
+binding = "VECTORIZE"
+index_name = "rag-documents"

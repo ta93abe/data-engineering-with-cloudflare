@@ -66,11 +66,16 @@ Cloudflareサービスと組み合わせて、エンドツーエンドのデー�
 - **dlt**: Pythonベースのデータ抽出・ロードツール
 - **DuckDB**: R2上のParquet/Icebergファイルを直接クエリ
 
+### データ品質
+- **Elementary**: dbt向けデータ品質監視・オブザーバビリティツール ✨NEW
+- **Great Expectations**: Pythonベースのデータ検証・プロファイリングツール ✨NEW
+
 ### データフォーマット
 - **Apache Iceberg**: R2上でのACIDトランザクション対応テーブルフォーマット
 
 ### データ可視化
 - **Evidence.dev**: コードベースのBIツール（Cloudflare Pagesへデプロイ）
+- **marimo**: Git-friendlyなリアクティブPythonノートブック ✨NEW
 
 ### CI/CD・開発
 - **GitHub**: バージョン管理・コラボレーション

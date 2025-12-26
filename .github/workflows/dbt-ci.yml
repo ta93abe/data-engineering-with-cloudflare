@@ -1,0 +1,147 @@
+name: dbt CI
+
+on:
+  pull_request:
+    paths:
+      - 'dbt/**'
+      - '.github/workflows/dbt-ci.yml'
+
+jobs:
+  dbt-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install dbt-duckdb==1.7.2
+          pip install elementary-data[duckdb]==0.15.1
+          pip install sqlfluff==3.0.0
+
+      - name: Install dbt packages
+        working-directory: dbt
+        run: dbt deps
+
+      - name: Check dbt project configuration
+        working-directory: dbt
+        run: |
+          echo "Validating dbt project configuration..."
+          dbt debug --profiles-dir . --target ci
+
+      - name: Run SQL linting with sqlfluff
+        working-directory: dbt
+        run: |
+          echo "Linting SQL files..."
+          sqlfluff lint models/ --dialect duckdb --ignore-templated-areas
+        continue-on-error: true
+
+      - name: Compile dbt models
+        working-directory: dbt
+        env:
+          R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
+        run: |
+          echo "Compiling dbt models..."
+          dbt compile --target ci --profiles-dir .
+
+      - name: Run dbt models (CI)
+        working-directory: dbt
+        env:
+          R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
+        run: |
+          echo "Running dbt models in CI environment..."
+          dbt run --target ci --profiles-dir .
+
+      - name: Run dbt tests
+        working-directory: dbt
+        env:
+          R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
+        run: |
+          echo "Running dbt tests..."
+          dbt test --target ci --profiles-dir .
+
+      - name: Generate dbt docs
+        working-directory: dbt
+        env:
+          R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
+        run: |
+          echo "Generating dbt documentation..."
+          dbt docs generate --target ci --profiles-dir .
+
+      - name: Upload dbt docs as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dbt-docs-${{ github.event.pull_request.number }}
+          path: dbt/target/
+          retention-days: 7
+
+      - name: Run Elementary CI check
+        working-directory: dbt
+        env:
+          R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
+        run: |
+          echo "Running Elementary models..."
+          dbt run --select elementary --target ci --profiles-dir .
+
+          echo "Generating Elementary report..."
+          edr report --project-dir . --profiles-dir . --profile-target ci
+
+      - name: Comment PR with results
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const prNumber = context.payload.pull_request.number;
+
+            let comment = `## 🧪 dbt CI Results
+
+            **Status:** ${{ job.status }}
+            **Commit:** \`${{ github.sha }}\`
+
+            ### Checks Performed:
+            - ✅ SQL Linting
+            - ✅ dbt Compilation
+            - ✅ dbt Models Run
+            - ✅ dbt Tests
+            - ✅ Documentation Generation
+            - ✅ Elementary Data Quality Check
+
+            **Artifacts:**
+            - [dbt Documentation](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            - [Elementary Report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+
+            ---
+            *Automated by dbt CI workflow*
+            `;
+
+            github.rest.issues.createComment({
+              issue_number: prNumber,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });

@@ -1,0 +1,54 @@
+# Daily Data Quality Checkpoint
+# This checkpoint validates all critical datasets
+
+name: daily_data_quality_checkpoint
+config_version: 1.0
+
+class_name: Checkpoint
+
+# Validation configurations
+validations:
+  - batch_request:
+      datasource_name: r2_bronze
+      data_connector_name: r2_parquet_connector
+      data_asset_name: api_posts
+    expectation_suite_name: api_posts_suite
+
+  - batch_request:
+      datasource_name: r2_bronze
+      data_connector_name: r2_parquet_connector
+      data_asset_name: api_users
+    expectation_suite_name: api_users_suite
+
+# Actions to take after validation
+action_list:
+  - name: store_validation_result
+    action:
+      class_name: StoreValidationResultAction
+
+  - name: store_evaluation_params
+    action:
+      class_name: StoreEvaluationParametersAction
+
+  - name: update_data_docs
+    action:
+      class_name: UpdateDataDocsAction
+      site_names:
+        - local_site
+        - cloudflare_pages_site
+
+  # Slack notification (optional)
+  - name: send_slack_notification_on_validation_result
+    action:
+      class_name: SlackNotificationAction
+      slack_webhook: ${slack_webhook_url}
+      notify_on: failure
+      renderer:
+        module_name: great_expectations.render.renderer.slack_renderer
+        class_name: SlackRenderer
+
+# Runtime configuration
+runtime_configuration:
+  result_format:
+    result_format: COMPLETE
+    include_unexpected_rows: true

@@ -1,0 +1,127 @@
+version: 2
+
+models:
+  - name: stg_api_posts
+    description: "Staging layer for JSONPlaceholder API posts data"
+    config:
+      elementary_enabled: true
+      elementary_schema_changes: true
+
+    columns:
+      - name: post_id
+        description: "Unique identifier for the post"
+        tests:
+          - unique
+          - not_null
+          # Elementary: ボリューム異常検知
+          - elementary.volume_anomalies:
+              timestamp_column: loaded_at
+              sensitivity: 3
+              where_expression: "loaded_at > CURRENT_DATE - INTERVAL '30 days'"
+
+      - name: user_id
+        description: "Foreign key to users table"
+        tests:
+          - not_null
+          # Elementary: ディメンション異常検知（user_id分布の変化を検知）
+          - elementary.dimension_anomalies:
+              dimensions:
+                - user_id
+              timestamp_column: loaded_at
+              where_expression: "loaded_at > CURRENT_DATE - INTERVAL '30 days'"
+
+      - name: title
+        description: "Post title"
+        tests:
+          - not_null
+          # 空文字列チェック
+          - dbt_utils.not_empty_string
+          # Elementary: カラム値の異常検知（文字列長の変化など）
+          - elementary.column_anomalies:
+              column_anomalies:
+                - length(title)
+              timestamp_column: loaded_at
+
+      - name: body
+        description: "Post body content"
+        tests:
+          - not_null
+          - dbt_utils.not_empty_string
+
+      - name: loaded_at
+        description: "Timestamp when data was loaded"
+        tests:
+          - not_null
+
+  - name: stg_api_users
+    description: "Staging layer for JSONPlaceholder API users data"
+    config:
+      elementary_enabled: true
+      elementary_schema_changes: true
+
+    columns:
+      - name: user_id
+        description: "Unique identifier for the user"
+        tests:
+          - unique
+          - not_null
+          # Elementary: ボリューム異常検知
+          - elementary.volume_anomalies:
+              timestamp_column: loaded_at
+              sensitivity: 3
+
+      - name: user_name
+        description: "User's full name"
+        tests:
+          - not_null
+
+      - name: username
+        description: "User's username"
+        tests:
+          - not_null
+          - unique
+
+      - name: email
+        description: "User's email address"
+        tests:
+          - not_null
+          - unique
+          # dbt_expectations: メールフォーマット検証
+          - dbt_expectations.expect_column_values_to_match_regex:
+              regex: '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$'
+
+      - name: phone
+        description: "User's phone number"
+
+      - name: website
+        description: "User's website"
+
+      - name: address_json
+        description: "User's address information (JSON)"
+
+      - name: company_json
+        description: "User's company information (JSON)"
+
+      - name: loaded_at
+        description: "Timestamp when data was loaded"
+        tests:
+          - not_null
+
+# ソース定義（将来的にR2 Rawレイヤーをソースとして定義）
+sources:
+  - name: api_jsonplaceholder
+    description: "Raw data from JSONPlaceholder API stored in R2"
+    schema: raw
+    tables:
+      - name: posts
+        description: "Raw posts data from JSONPlaceholder API"
+        # フレッシュネスチェック（データが古くなっていないか）
+        freshness:
+          warn_after: {count: 24, period: hour}
+          error_after: {count: 48, period: hour}
+
+      - name: users
+        description: "Raw users data from JSONPlaceholder API"
+        freshness:
+          warn_after: {count: 24, period: hour}
+          error_after: {count: 48, period: hour}

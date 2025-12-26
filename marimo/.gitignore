@@ -1,0 +1,23 @@
+# Marimo Outputs
+outputs/
+*.html
+*.pdf
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+
+# marimo
+.marimo/
+
+# Jupyter (if converting)
+.ipynb_checkpoints/
+*.ipynb
+
+# Data
+*.csv
+*.parquet
+*.duckdb
+*.duckdb.wal

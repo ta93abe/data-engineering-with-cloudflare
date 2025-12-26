@@ -1,0 +1,85 @@
+version: 2
+
+models:
+  - name: fct_user_posts
+    description: "Fact table containing user post metrics for analytics"
+    config:
+      elementary_enabled: true
+      elementary_schema_changes: true
+
+    columns:
+      - name: user_id
+        description: "Unique identifier for the user"
+        tests:
+          - unique
+          - not_null
+
+      - name: user_name
+        description: "User's full name"
+        tests:
+          - not_null
+
+      - name: username
+        description: "User's username"
+        tests:
+          - not_null
+          - unique
+
+      - name: email
+        description: "User's email address"
+        tests:
+          - not_null
+          - unique
+
+      - name: total_posts
+        description: "Total number of posts by the user"
+        tests:
+          - not_null
+          # 0以上であることを確認
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+          # Elementary: メトリクス値の異常検知
+          - elementary.all_columns_anomalies:
+              column_anomalies:
+                - total_posts
+              timestamp_column: calculated_at
+              sensitivity: 3
+
+      - name: avg_post_length
+        description: "Average length of user's posts"
+        tests:
+          # Elementary: 平均投稿長の異常検知
+          - elementary.column_anomalies:
+              column_anomalies:
+                - avg_post_length
+              timestamp_column: calculated_at
+
+      - name: max_post_length
+        description: "Maximum length of user's posts"
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 10000
+
+      - name: min_post_length
+        description: "Minimum length of user's posts"
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 10000
+
+      - name: last_post_loaded_at
+        description: "Timestamp of the last post loaded"
+
+      - name: calculated_at
+        description: "Timestamp when this mart was calculated"
+        tests:
+          - not_null
+
+# テーブルレベルのテスト
+tests:
+  # 各ユーザーは1レコードのみ存在すること
+  - name: unique_users_in_fact_table
+    description: "Ensure each user appears exactly once in the fact table"
+    config:
+      severity: error

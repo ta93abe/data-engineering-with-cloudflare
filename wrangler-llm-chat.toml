@@ -1,0 +1,19 @@
+# Wrangler Configuration for LLM Chat Worker
+# Deploy: wrangler deploy --config wrangler-llm-chat.toml
+
+name = "llm-chat"
+main = "workers/ai/llm-chat.js"
+compatibility_date = "2024-01-01"
+
+# Workers AI binding
+[ai]
+binding = "AI"
+
+# Analytics Engine binding (optional)
+[[analytics_engine_datasets]]
+binding = "ANALYTICS"
+
+# Route configuration (optional)
+# routes = [
+#   { pattern = "llm-chat.example.com/*", zone_name = "example.com" }
+# ]

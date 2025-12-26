@@ -289,6 +289,8 @@ console.log(JSON.stringify({
 - [ ] ストレージ層の実装
 - [ ] Analytics Engine統合
 - [ ] 基本的なダッシュボード
+- [x] dbtプロジェクトセットアップ
+- [x] Elementaryデータ品質監視統合
 
 ### Phase 3: 拡張機能
 - [ ] リアルタイム処理（Durable Objects）

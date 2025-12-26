@@ -64,6 +64,775 @@
 
 ## データ変換・処理
 
+### Elementary
+
+**公式サイト**: https://www.elementary-data.com/
+**ドキュメント**: https://docs.elementary-data.com/
+
+#### 概要
+Elementaryは、dbtプロジェクトのためのデータ品質監視およびオブザーバビリティプラットフォームです。dbtパッケージとして統合され、データの異常検知、スキーマ変更の追跡、データ品質テストの監視を自動化します。
+
+#### データ基盤での役割
+- **データ品質監視**: dbtテストの実行結果を追跡・可視化
+- **異常検知**: 機械学習ベースのデータ異常検知
+- **スキーマ監視**: テーブルスキーマの変更を自動検知
+- **データリネージュ**: モデル間の依存関係を可視化
+- **アラート**: Slackへのリアルタイム通知
+- **ダッシュボード**: データ品質の統合ビュー
+
+#### Cloudflareとの統合
+
+##### dbtプロジェクトへの追加
+```yaml
+# dbt/packages.yml
+packages:
+  - package: elementary-data/elementary
+    version: 0.15.1  # 最新バージョンを確認
+```
+
+##### profiles.yml設定（DuckDB + R2）
+```yaml
+# dbt/profiles.yml
+elementary_project:
+  target: prod
+  outputs:
+    prod:
+      type: duckdb
+      path: ':memory:'
+      extensions:
+        - httpfs
+      settings:
+        s3_endpoint: '<account-id>.r2.cloudflarestorage.com'
+        s3_access_key_id: '{{ env_var("R2_ACCESS_KEY_ID") }}'
+        s3_secret_access_key: '{{ env_var("R2_SECRET_ACCESS_KEY") }}'
+        # Elementary用のローカルDB（メタデータ保存）
+        elementary_database_path: 'elementary.duckdb'
+```
+
+##### dbtモデルでのElementaryテスト
+```sql
+-- models/staging/stg_events.sql
+{{
+  config(
+    materialized='incremental',
+    unique_key='event_id',
+    # Elementaryの異常検知テストを有効化
+    elementary_enabled=true
+  )
+}}
+
+SELECT
+  event_id,
+  user_id,
+  event_type,
+  event_timestamp,
+  event_count
+FROM read_parquet('s3://my-bucket/events/*.parquet')
+{% if is_incremental() %}
+WHERE event_timestamp > (SELECT MAX(event_timestamp) FROM {{ this }})
+{% endif %}
+```
+
+```yaml
+# models/staging/schema.yml
+version: 2
+
+models:
+  - name: stg_events
+    description: Staging layer for event data
+    columns:
+      - name: event_id
+        description: Unique event identifier
+        tests:
+          - unique
+          - not_null
+          # Elementary異常検知テスト
+          - elementary.volume_anomalies:
+              timestamp_column: event_timestamp
+              sensitivity: 3
+          - elementary.dimension_anomalies:
+              dimensions:
+                - event_type
+              timestamp_column: event_timestamp
+
+      - name: event_count
+        description: Event count value
+        tests:
+          # 数値範囲の異常検知
+          - elementary.all_columns_anomalies:
+              column_anomalies:
+                - event_count
+              timestamp_column: event_timestamp
+```
+
+##### スキーマ変更監視
+```yaml
+# dbt_project.yml
+models:
+  my_project:
+    staging:
+      +elementary_enabled: true
+      # スキーマ変更を自動検知
+      +elementary_schema_changes: true
+```
+
+##### GitHub Actionsでの実行
+```yaml
+# .github/workflows/elementary-monitor.yml
+name: Elementary Data Quality Monitor
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'  # 6時間ごと
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'dbt/**'
+
+jobs:
+  dbt-test-and-monitor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install dbt-duckdb
+          pip install elementary-data
+
+      - name: Install dbt packages
+        working-directory: dbt
+        run: dbt deps
+
+      - name: Run dbt models
+        working-directory: dbt
+        env:
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+        run: |
+          dbt run
+          dbt test
+
+      - name: Run Elementary monitoring
+        working-directory: dbt
+        env:
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+        run: |
+          # Elementary モデルを実行（メタデータ収集）
+          dbt run --select elementary
+
+          # Elementary レポート生成
+          edr monitor --slack-webhook ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Generate Elementary Report
+        working-directory: dbt
+        run: |
+          # HTMLレポート生成
+          edr report
+
+      - name: Upload Elementary Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: elementary-report
+          path: dbt/elementary_report.html
+
+      - name: Deploy Report to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dbt/elementary_output --project-name=data-quality-dashboard
+```
+
+##### Slackとの統合
+```bash
+# Elementary CLIでSlack通知を設定
+edr monitor \
+  --slack-webhook $SLACK_WEBHOOK_URL \
+  --slack-channel data-quality \
+  --timezone UTC
+
+# または設定ファイルで管理
+# dbt/elementary_config.yml
+slack:
+  webhook_url: ${SLACK_WEBHOOK_URL}
+  channel: data-quality
+  workflows:
+    - name: daily_monitor
+      schedule: '0 8 * * *'
+      alerts:
+        - test_failures
+        - schema_changes
+        - volume_anomalies
+```
+
+##### Cloudflare Workersでの通知
+```javascript
+// workers/elementary-webhook.js
+// ElementaryからのWebhookを受けてCloudflare環境で処理
+
+export default {
+  async fetch(request, env) {
+    if (request.method !== 'POST') {
+      return new Response('Method not allowed', { status: 405 });
+    }
+
+    const alert = await request.json();
+
+    // D1にアラート履歴を保存
+    await env.DB.prepare(`
+      INSERT INTO data_quality_alerts (
+        alert_type,
+        model_name,
+        test_name,
+        status,
+        severity,
+        message,
+        timestamp
+      ) VALUES (?, ?, ?, ?, ?, ?, ?)
+    `).bind(
+      alert.type,
+      alert.model,
+      alert.test,
+      alert.status,
+      alert.severity,
+      alert.message,
+      new Date().toISOString()
+    ).run();
+
+    // Slackに通知
+    await fetch(env.SLACK_WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        text: `🚨 Data Quality Alert: ${alert.message}`,
+        blocks: [
+          {
+            type: 'header',
+            text: {
+              type: 'plain_text',
+              text: `${alert.severity === 'high' ? '🔴' : '⚠️'} ${alert.type}`
+            }
+          },
+          {
+            type: 'section',
+            fields: [
+              {
+                type: 'mrkdwn',
+                text: `*Model:*\n${alert.model}`
+              },
+              {
+                type: 'mrkdwn',
+                text: `*Test:*\n${alert.test}`
+              },
+              {
+                type: 'mrkdwn',
+                text: `*Status:*\n${alert.status}`
+              },
+              {
+                type: 'mrkdwn',
+                text: `*Severity:*\n${alert.severity}`
+              }
+            ]
+          },
+          {
+            type: 'section',
+            text: {
+              type: 'mrkdwn',
+              text: `*Message:*\n${alert.message}`
+            }
+          },
+          {
+            type: 'actions',
+            elements: [
+              {
+                type: 'button',
+                text: {
+                  type: 'plain_text',
+                  text: 'View Report'
+                },
+                url: 'https://data-quality-dashboard.pages.dev'
+              }
+            ]
+          }
+        ]
+      })
+    });
+
+    return new Response('Alert processed', { status: 200 });
+  }
+}
+```
+
+##### R2でのElementaryレポート永続化
+```python
+# scripts/upload_elementary_report.py
+import boto3
+from datetime import datetime
+
+def upload_report_to_r2(report_path: str):
+    """
+    ElementaryレポートをR2にアップロード
+    """
+    s3_client = boto3.client(
+        's3',
+        endpoint_url=f"https://{R2_ACCOUNT_ID}.r2.cloudflarestorage.com",
+        aws_access_key_id=R2_ACCESS_KEY_ID,
+        aws_secret_access_key=R2_SECRET_ACCESS_KEY,
+        region_name='auto'
+    )
+
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    s3_key = f"elementary/reports/{timestamp}/report.html"
+
+    s3_client.upload_file(
+        report_path,
+        'data-lake-gold',  # Gold Layer
+        s3_key,
+        ExtraArgs={'ContentType': 'text/html'}
+    )
+
+    print(f"Report uploaded to: s3://data-lake-gold/{s3_key}")
+```
+
+#### Elementary CLI 主要コマンド
+
+```bash
+# レポート生成
+edr report
+
+# モニタリング実行（Slack通知付き）
+edr monitor --slack-webhook <webhook-url>
+
+# レポートをWebサーバーで起動
+edr report --serve
+
+# 特定期間のデータを分析
+edr report --days-back 7
+
+# レポートのカスタマイズ
+edr report \
+  --project-dir ./dbt \
+  --profiles-dir ./dbt \
+  --profile-target prod \
+  --output ./reports
+```
+
+#### Elementary ダッシュボードの機能
+
+1. **テスト結果**: すべてのdbtテストの実行履歴と結果
+2. **モデル実行**: モデルのビルド時間、成功率、エラー
+3. **スキーマ変更**: カラムの追加・削除・型変更の履歴
+4. **データリネージュ**: モデル間の依存関係グラフ
+5. **異常検知**: 機械学習による異常検知結果
+6. **カバレッジ**: テストカバレッジの可視化
+
+#### Cloudflare Pagesへのデプロイ例
+
+```yaml
+# .github/workflows/deploy-elementary-ui.yml
+name: Deploy Elementary UI
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install dbt-duckdb elementary-data
+
+      - name: Generate Elementary report
+        working-directory: dbt
+        env:
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+        run: |
+          dbt deps
+          dbt run --select elementary
+          edr report --file-path ../elementary_report.html
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy elementary_output --project-name=elementary-dashboard
+```
+
+#### 推奨度
+⭐⭐⭐⭐⭐ - dbtを使用するデータ基盤では必須のデータ品質監視ツール
+
+---
+
+### Great Expectations
+
+**公式サイト**: https://greatexpectations.io/
+**ドキュメント**: https://docs.greatexpectations.io/
+
+#### 概要
+Great Expectationsは、データの品質を検証し、プロファイリングし、ドキュメント化するPythonベースのオープンソースツールです。「期待値（Expectations）」を定義することで、データが期待通りであることを継続的に検証します。
+
+#### データ基盤での役割
+- **データ検証**: データが定義された期待値を満たしているか検証
+- **データプロファイリング**: データの統計情報を自動生成
+- **Data Docs**: HTMLベースのデータドキュメント自動生成
+- **アラート**: 検証失敗時のSlack/メール通知
+- **バージョン管理**: 期待値定義をGitで管理
+- **R2統合**: DuckDB経由でR2上のデータを直接検証
+
+#### Cloudflareとの統合
+
+##### R2 + DuckDB データソース設定
+
+```yaml
+# great_expectations/great_expectations.yml
+datasources:
+  r2_bronze:
+    class_name: Datasource
+    execution_engine:
+      class_name: SqlAlchemyExecutionEngine
+      connection_string: duckdb:///:memory:
+    data_connectors:
+      r2_parquet_connector:
+        class_name: InferredAssetFilesystemDataConnector
+        base_directory: /tmp/gx_data/bronze/
+        default_regex:
+          pattern: (.+)/(.+)\.parquet
+```
+
+##### R2データの検証（Python）
+
+```python
+import os
+import duckdb
+import great_expectations as gx
+
+# DuckDB + R2接続
+conn = duckdb.connect(":memory:")
+conn.execute("INSTALL httpfs; LOAD httpfs;")
+conn.execute(f"SET s3_endpoint='{os.getenv('R2_ENDPOINT')}';")
+conn.execute(f"SET s3_access_key_id='{os.getenv('R2_ACCESS_KEY_ID')}';")
+conn.execute(f"SET s3_secret_access_key='{os.getenv('R2_SECRET_ACCESS_KEY')}';")
+
+# R2からデータ読み込み
+df = conn.execute("""
+    SELECT * FROM read_parquet('s3://my-bucket/data/**/*.parquet')
+""").fetchdf()
+
+# Great Expectations Context
+context = gx.get_context()
+
+# データフレームを検証
+validator = context.sources.pandas_default.read_dataframe(df)
+
+# Expectationsを定義
+validator.expect_table_row_count_to_be_between(min_value=1, max_value=1000000)
+validator.expect_column_values_to_not_be_null(column="user_id")
+validator.expect_column_values_to_be_unique(column="email")
+validator.expect_column_values_to_match_regex(
+    column="email",
+    regex="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
+)
+
+# 検証実行
+results = validator.validate()
+
+if not results["success"]:
+    print("❌ Validation failed!")
+else:
+    print("✅ All validations passed!")
+```
+
+##### Expectation Suite（JSON定義）
+
+```json
+{
+  "expectation_suite_name": "api_users_suite",
+  "expectations": [
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "user_id"
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_unique",
+      "kwargs": {
+        "column": "user_id"
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_match_regex",
+      "kwargs": {
+        "column": "email",
+        "regex": "^[a-zA-Z0-9._%+-]+@.*"
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "age",
+        "min_value": 0,
+        "max_value": 120
+      }
+    }
+  ]
+}
+```
+
+##### Checkpoint設定（複数検証の実行）
+
+```yaml
+# great_expectations/checkpoints/daily_checkpoint.yml
+name: daily_data_quality_checkpoint
+config_version: 1.0
+class_name: Checkpoint
+
+validations:
+  - batch_request:
+      datasource_name: r2_bronze
+      data_asset_name: api_posts
+    expectation_suite_name: api_posts_suite
+
+  - batch_request:
+      datasource_name: r2_bronze
+      data_asset_name: api_users
+    expectation_suite_name: api_users_suite
+
+action_list:
+  - name: store_validation_result
+    action:
+      class_name: StoreValidationResultAction
+  - name: update_data_docs
+    action:
+      class_name: UpdateDataDocsAction
+  - name: send_slack_notification
+    action:
+      class_name: SlackNotificationAction
+      slack_webhook: ${SLACK_WEBHOOK_URL}
+      notify_on: failure
+```
+
+##### GitHub Actionsでの自動検証
+
+```yaml
+# .github/workflows/great-expectations.yml
+name: Great Expectations Data Validation
+
+on:
+  schedule:
+    - cron: '0 2 * * *'  # 毎日2:00 UTC
+  workflow_dispatch:
+
+jobs:
+  validate-data:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Great Expectations
+        run: |
+          pip install great-expectations==0.18.12
+          pip install duckdb
+
+      - name: Run validation
+        env:
+          R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+        run: |
+          python scripts/run_great_expectations.py
+
+      - name: Deploy Data Docs to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          command: pages deploy great_expectations/uncommitted/data_docs --project-name=gx-data-docs
+```
+
+##### Cloudflare PagesへのData Docsデプロイ
+
+```bash
+# Data Docs生成
+great_expectations docs build
+
+# Cloudflare Pagesにデプロイ
+wrangler pages deploy great_expectations/uncommitted/data_docs/cloudflare_pages_site \
+  --project-name=gx-data-docs \
+  --branch=main
+
+# アクセス: https://gx-data-docs.pages.dev
+```
+
+##### Cloudflare Workers統合（カスタムアラート）
+
+```javascript
+// workers/gx-alert-handler.js
+// Great ExpectationsからのWebhookを処理
+
+export default {
+  async fetch(request, env) {
+    if (request.method !== 'POST') {
+      return new Response('Method not allowed', { status: 405 });
+    }
+
+    const validation = await request.json();
+
+    // D1に検証結果を保存
+    await env.DB.prepare(`
+      INSERT INTO data_quality_validations (
+        suite_name,
+        success,
+        statistics,
+        timestamp
+      ) VALUES (?, ?, ?, ?)
+    `).bind(
+      validation.meta.expectation_suite_name,
+      validation.success,
+      JSON.stringify(validation.statistics),
+      new Date().toISOString()
+    ).run();
+
+    // 失敗時はSlack通知
+    if (!validation.success) {
+      await fetch(env.SLACK_WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text: `🚨 Data Quality Alert: ${validation.meta.expectation_suite_name}`,
+          blocks: [
+            {
+              type: 'section',
+              text: {
+                type: 'mrkdwn',
+                text: `*Failed Expectations:* ${validation.statistics.unsuccessful_expectations}\n*Success Rate:* ${validation.statistics.success_percent}%`
+              }
+            }
+          ]
+        })
+      });
+    }
+
+    return new Response('Validation processed', { status: 200 });
+  }
+}
+```
+
+#### 主要なExpectation Types
+
+```python
+# テーブルレベル
+expect_table_row_count_to_be_between(min_value=1, max_value=1000000)
+expect_table_columns_to_match_ordered_list(column_list=["id", "name", "email"])
+
+# カラム存在確認
+expect_column_to_exist(column="user_id")
+
+# NULL値
+expect_column_values_to_not_be_null(column="email")
+
+# ユニーク性
+expect_column_values_to_be_unique(column="email")
+
+# データ型
+expect_column_values_to_be_in_type_list(column="age", type_list=["INTEGER"])
+
+# 値の範囲
+expect_column_values_to_be_between(column="price", min_value=0, max_value=10000)
+expect_column_values_to_be_in_set(column="status", value_set=["active", "inactive"])
+
+# 文字列
+expect_column_value_lengths_to_be_between(column="title", min_value=1, max_value=500)
+expect_column_values_to_match_regex(column="phone", regex="^\\d{3}-\\d{4}-\\d{4}$")
+
+# 統計
+expect_column_mean_to_be_between(column="score", min_value=50, max_value=100)
+expect_column_median_to_be_between(column="age", min_value=20, max_value=60)
+expect_column_stdev_to_be_between(column="price", min_value=0, max_value=1000)
+
+# 日付
+expect_column_values_to_be_dateutil_parseable(column="created_at")
+expect_column_values_to_be_increasing(column="timestamp")
+```
+
+#### Data Docs（HTMLレポート）
+
+Great Expectationsは自動的にHTMLレポートを生成します：
+
+**特徴:**
+- 検証結果の可視化
+- データプロファイル（統計情報）
+- Expectation Suite一覧
+- 失敗したExpectationsの詳細
+- タイムトラベル（過去の検証結果）
+
+**構造:**
+```
+data_docs/
+├── index.html                    # トップページ
+├── expectations/                 # Expectation Suite詳細
+│   ├── api_posts_suite.html
+│   └── api_users_suite.html
+├── validations/                  # 検証結果
+│   ├── api_posts_suite/
+│   │   └── 20251226T020000.html
+│   └── api_users_suite/
+│       └── 20251226T020000.html
+└── static/                       # CSS/JS
+```
+
+#### ElementaryとGreat Expectationsの使い分け
+
+| 観点 | Elementary | Great Expectations |
+|------|-----------|-------------------|
+| **焦点** | dbt特化、リネージュ | 汎用データ検証 |
+| **統合** | dbtパッケージ | Pythonライブラリ |
+| **テストタイプ** | 異常検知、スキーマ変更 | 期待値ベース検証 |
+| **プロファイリング** | 限定的 | 包括的 |
+| **学習曲線** | 低（dbt知識で可） | 中（Pythonが必要） |
+| **ユースケース** | dbtモデルの監視 | 生データ検証、EDA |
+
+**推奨の組み合わせ:**
+- **Great Expectations**: Bronze層（生データ）の検証
+- **Elementary**: Silver/Gold層（dbtモデル）の監視
+
+```mermaid
+graph LR
+    Raw[Raw Data in R2] -->|Great Expectations| Bronze[Bronze Layer]
+    Bronze -->|dlt| Silver[Silver Layer]
+    Silver -->|dbt + Elementary| Gold[Gold Layer]
+
+    style Raw fill:#fdd
+    style Bronze fill:#ffd
+    style Silver fill:#dfd
+    style Gold fill:#ddf
+```
+
+#### 推奨度
+⭐⭐⭐⭐⭐ - データ品質検証とプロファイリングに必須
+
+---
+
 ### dbt (data build tool)
 
 **公式サイト**: https://www.getdbt.com/
@@ -610,6 +1379,358 @@ export default {
 
 #### 推奨度
 ⭐⭐⭐⭐⭐ - コードベースのBIツールとして最適
+
+---
+
+### marimo
+
+**公式サイト**: https://marimo.io/
+**ドキュメント**: https://docs.marimo.io/
+
+#### 概要
+marimoは、リアクティブなPythonノートブックです。Jupyter Notebookの代替として、Git-friendlyで再現性の高いデータ探索・分析環境を提供します。
+
+#### データ基盤での役割
+- **データ探索**: R2データのインタラクティブな探索
+- **アドホック分析**: SQLクエリとPythonを組み合わせた分析
+- **ダッシュボード**: インタラクティブなデータ品質ダッシュボード
+- **レポート生成**: HTMLやPDFとしてエクスポート可能
+- **Webアプリ化**: ノートブックをそのままWebアプリとして公開
+- **Git管理**: .py形式で保存され、差分が見やすい
+
+#### Cloudflareとの統合
+
+##### R2データ探索ノートブック
+
+```python
+import marimo
+
+__generated_with = "0.9.14"
+app = marimo.App(width="medium")
+
+
+@app.cell
+def __():
+    import marimo as mo
+    import duckdb
+    import pandas as pd
+    import plotly.express as px
+    import os
+    return duckdb, mo, os, pd, px
+
+
+@app.cell
+def __(mo):
+    mo.md(
+        """
+        # R2 Data Exploration
+
+        Interactive data exploration for Cloudflare R2
+        """
+    )
+    return
+
+
+@app.cell
+def __(duckdb, os):
+    # Setup DuckDB with R2
+    conn = duckdb.connect(":memory:")
+    conn.execute("INSTALL httpfs; LOAD httpfs;")
+    conn.execute(f"SET s3_endpoint='{os.getenv('R2_ENDPOINT')}';")
+    conn.execute(f"SET s3_access_key_id='{os.getenv('R2_ACCESS_KEY_ID')}';")
+    conn.execute(f"SET s3_secret_access_key='{os.getenv('R2_SECRET_ACCESS_KEY')}';")
+    return (conn,)
+
+
+@app.cell
+def __(conn, mo):
+    # Interactive bucket/path selector
+    bucket = mo.ui.text(label="Bucket", value="data-lake-raw")
+    data_path = mo.ui.text(label="Path", value="sources/**/*.parquet")
+    mo.hstack([bucket, data_path])
+    return bucket, data_path
+
+
+@app.cell
+def __(bucket, conn, data_path):
+    # Load data from R2
+    s3_path = f"s3://{bucket.value}/{data_path.value}"
+    df = conn.execute(f"SELECT * FROM read_parquet('{s3_path}')").fetchdf()
+    return df, s3_path
+
+
+@app.cell
+def __(df, mo):
+    # Display data summary
+    mo.md(f"""
+    **Rows**: {len(df):,} | **Columns**: {len(df.columns)}
+    """)
+    df.head(10)
+    return
+
+
+@app.cell
+def __(df, mo, px):
+    # Interactive column selector
+    column = mo.ui.dropdown(
+        options=list(df.columns),
+        value=df.columns[0],
+        label="Select Column"
+    )
+    column
+    return (column,)
+
+
+@app.cell
+def __(column, df, mo, px):
+    # Visualization based on data type
+    if pd.api.types.is_numeric_dtype(df[column.value]):
+        fig = px.histogram(df, x=column.value, title=f'Distribution of {column.value}')
+        mo.ui.plotly(fig)
+    return (fig,)
+
+
+if __name__ == "__main__":
+    app.run()
+```
+
+##### ノートブックの実行
+
+```bash
+# インタラクティブモードで実行
+marimo edit marimo/notebooks/r2_data_exploration.py
+
+# Webアプリとして実行（読み取り専用）
+marimo run marimo/notebooks/data_quality_dashboard.py --host 0.0.0.0 --port 8080
+
+# HTMLにエクスポート
+marimo export html marimo/notebooks/r2_data_exploration.py -o output.html
+```
+
+##### GitHub Actionsでの自動実行
+
+```yaml
+# .github/workflows/marimo-notebooks.yml
+name: marimo Notebooks
+
+on:
+  schedule:
+    - cron: '0 3 * * 0'  # 週次
+  workflow_dispatch:
+
+jobs:
+  run-notebooks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install marimo
+        run: |
+          pip install marimo duckdb pandas plotly
+
+      - name: Run notebooks
+        env:
+          R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+        run: |
+          marimo export html marimo/notebooks/r2_data_exploration.py -o outputs/exploration.html
+          marimo export html marimo/notebooks/data_quality_dashboard.py -o outputs/dashboard.html
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          command: pages deploy outputs --project-name=marimo-notebooks
+```
+
+##### Cloudflare Pagesへのデプロイ
+
+```bash
+# ノートブックをHTMLにエクスポート
+marimo export html marimo/notebooks/data_quality_dashboard.py -o index.html
+
+# Cloudflare Pagesにデプロイ
+wrangler pages deploy marimo/outputs --project-name=marimo-notebooks
+
+# アクセス: https://marimo-notebooks.pages.dev
+```
+
+##### データ品質ダッシュボード例
+
+```python
+# marimo/notebooks/data_quality_dashboard.py
+import marimo
+
+app = marimo.App(width="full")
+
+
+@app.cell
+def __():
+    import marimo as mo
+    import pandas as pd
+    import plotly.graph_objects as go
+    from datetime import datetime, timedelta
+    return datetime, go, mo, pd, timedelta
+
+
+@app.cell
+def __(mo):
+    mo.md(
+        """
+        # Data Quality Dashboard
+
+        Real-time monitoring of data quality metrics
+        """
+    )
+    return
+
+
+@app.cell
+def __(mo, pd):
+    # Quality metrics summary
+    metrics = pd.DataFrame({
+        'Metric': ['Total Validations', 'Passed', 'Failed', 'Success Rate'],
+        'Value': ['245', '238', '7', '97.1%']
+    })
+
+    mo.hstack([
+        mo.stat(value="97.1%", label="Success Rate", bordered=True),
+        mo.stat(value="7", label="Failed Checks", bordered=True),
+        mo.stat(value="2", label="Active Datasets", bordered=True)
+    ])
+    return (metrics,)
+
+
+@app.cell
+def __(datetime, go, mo, pd, timedelta):
+    # Validation trend
+    dates = pd.date_range(end=datetime.now(), periods=30, freq='D')
+    trend_data = pd.DataFrame({
+        'date': dates,
+        'passed': [235 + (i % 10) for i in range(30)],
+        'failed': [10 - (i % 10) for i in range(30)]
+    })
+
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=trend_data['date'], y=trend_data['passed'], name='Passed', fill='tozeroy'))
+    fig.add_trace(go.Scatter(x=trend_data['date'], y=trend_data['failed'], name='Failed', fill='tozeroy'))
+    fig.update_layout(title='Validation Results Over Time')
+
+    mo.ui.plotly(fig)
+    return dates, fig, trend_data
+
+
+if __name__ == "__main__":
+    app.run()
+```
+
+#### marimoの主な特徴
+
+**1. リアクティブ実行**
+```python
+# セル間の依存関係を自動追跡
+@app.cell
+def __():
+    x = 10
+    return (x,)
+
+@app.cell
+def __(x):
+    y = x * 2  # xが変更されると自動的に再実行
+    return (y,)
+```
+
+**2. Git-friendly**
+- .py形式で保存（.ipynbのJSONではない）
+- 差分が見やすく、レビューしやすい
+- マージコンフリクトが少ない
+
+**3. インタラクティブUI**
+```python
+@app.cell
+def __(mo):
+    slider = mo.ui.slider(0, 100, value=50, label="Threshold")
+    dropdown = mo.ui.dropdown(options=["A", "B", "C"], label="Select")
+    button = mo.ui.button(label="Run")
+    text_area = mo.ui.text_area(label="Query", rows=5)
+
+    mo.hstack([slider, dropdown, button])
+    return button, dropdown, slider, text_area
+```
+
+**4. Webアプリ化**
+```bash
+# 開発モード（編集可能）
+marimo edit notebook.py
+
+# 本番モード（読み取り専用、ダッシュボード）
+marimo run notebook.py --host 0.0.0.0 --port 8080
+```
+
+**5. エクスポート機能**
+```bash
+# 静的HTML
+marimo export html notebook.py -o output.html
+
+# Pythonスクリプト
+marimo export script notebook.py -o output.py
+
+# WASM版（ブラウザで完結）
+marimo export html-wasm notebook.py -o output.html
+```
+
+#### JupyterとMarimoの比較
+
+| 機能 | Jupyter | marimo |
+|-----|---------|--------|
+| **ファイル形式** | .ipynb (JSON) | .py (Python) |
+| **実行モデル** | 順次実行 | リアクティブ実行 |
+| **セル順序** | 重要（依存） | 不要（自動追跡） |
+| **Git差分** | ❌ 見にくい | ✅ 見やすい |
+| **再現性** | ⚠️ セル順序に依存 | ✅ 常に再現可能 |
+| **Webアプリ化** | Voilà等が必要 | ✅ ネイティブサポート |
+| **UI要素** | ipywidgets | marimo.ui |
+| **デプロイ** | 複雑 | ✅ 簡単 |
+
+#### 推奨ユースケース
+
+```
+Bronze Layer (生データ)
+  ↓
+Great Expectations (検証)
+  ↓
+[marimo] ← データ探索・プロファイリング
+  ↓
+Silver Layer (dlt変換)
+  ↓
+[marimo] ← 変換後データの確認
+  ↓
+Gold Layer (dbt変換)
+  ↓
+Elementary (監視)
+  ↓
+[marimo] ← データ品質ダッシュボード
+  ↓
+Evidence.dev (ビジネスダッシュボード)
+```
+
+**marimoの用途:**
+- **EDA**: 探索的データ分析
+- **アドホック分析**: SQL + Python
+- **データ品質レポート**: Great Expectations/Elementaryの結果可視化
+- **プロトタイピング**: ダッシュボードのプロトタイプ作成
+
+**Evidence.devの用途:**
+- **ビジネスダッシュボード**: ステークホルダー向け
+- **定期レポート**: 自動更新される分析レポート
+- **KPIモニタリング**: リアルタイムメトリクス
+
+#### 推奨度
+⭐⭐⭐⭐⭐ - データ探索とアドホック分析に最適
 
 ---
 
