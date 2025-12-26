@@ -64,6 +64,423 @@
 
 ## データ変換・処理
 
+### Elementary
+
+**公式サイト**: https://www.elementary-data.com/
+**ドキュメント**: https://docs.elementary-data.com/
+
+#### 概要
+Elementaryは、dbtプロジェクトのためのデータ品質監視およびオブザーバビリティプラットフォームです。dbtパッケージとして統合され、データの異常検知、スキーマ変更の追跡、データ品質テストの監視を自動化します。
+
+#### データ基盤での役割
+- **データ品質監視**: dbtテストの実行結果を追跡・可視化
+- **異常検知**: 機械学習ベースのデータ異常検知
+- **スキーマ監視**: テーブルスキーマの変更を自動検知
+- **データリネージュ**: モデル間の依存関係を可視化
+- **アラート**: Slackへのリアルタイム通知
+- **ダッシュボード**: データ品質の統合ビュー
+
+#### Cloudflareとの統合
+
+##### dbtプロジェクトへの追加
+```yaml
+# dbt/packages.yml
+packages:
+  - package: elementary-data/elementary
+    version: 0.15.1  # 最新バージョンを確認
+```
+
+##### profiles.yml設定（DuckDB + R2）
+```yaml
+# dbt/profiles.yml
+elementary_project:
+  target: prod
+  outputs:
+    prod:
+      type: duckdb
+      path: ':memory:'
+      extensions:
+        - httpfs
+      settings:
+        s3_endpoint: '<account-id>.r2.cloudflarestorage.com'
+        s3_access_key_id: '{{ env_var("R2_ACCESS_KEY_ID") }}'
+        s3_secret_access_key: '{{ env_var("R2_SECRET_ACCESS_KEY") }}'
+        # Elementary用のローカルDB（メタデータ保存）
+        elementary_database_path: 'elementary.duckdb'
+```
+
+##### dbtモデルでのElementaryテスト
+```sql
+-- models/staging/stg_events.sql
+{{
+  config(
+    materialized='incremental',
+    unique_key='event_id',
+    # Elementaryの異常検知テストを有効化
+    elementary_enabled=true
+  )
+}}
+
+SELECT
+  event_id,
+  user_id,
+  event_type,
+  event_timestamp,
+  event_count
+FROM read_parquet('s3://my-bucket/events/*.parquet')
+{% if is_incremental() %}
+WHERE event_timestamp > (SELECT MAX(event_timestamp) FROM {{ this }})
+{% endif %}
+```
+
+```yaml
+# models/staging/schema.yml
+version: 2
+
+models:
+  - name: stg_events
+    description: Staging layer for event data
+    columns:
+      - name: event_id
+        description: Unique event identifier
+        tests:
+          - unique
+          - not_null
+          # Elementary異常検知テスト
+          - elementary.volume_anomalies:
+              timestamp_column: event_timestamp
+              sensitivity: 3
+          - elementary.dimension_anomalies:
+              dimensions:
+                - event_type
+              timestamp_column: event_timestamp
+
+      - name: event_count
+        description: Event count value
+        tests:
+          # 数値範囲の異常検知
+          - elementary.all_columns_anomalies:
+              column_anomalies:
+                - event_count
+              timestamp_column: event_timestamp
+```
+
+##### スキーマ変更監視
+```yaml
+# dbt_project.yml
+models:
+  my_project:
+    staging:
+      +elementary_enabled: true
+      # スキーマ変更を自動検知
+      +elementary_schema_changes: true
+```
+
+##### GitHub Actionsでの実行
+```yaml
+# .github/workflows/elementary-monitor.yml
+name: Elementary Data Quality Monitor
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'  # 6時間ごと
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'dbt/**'
+
+jobs:
+  dbt-test-and-monitor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install dbt-duckdb
+          pip install elementary-data
+
+      - name: Install dbt packages
+        working-directory: dbt
+        run: dbt deps
+
+      - name: Run dbt models
+        working-directory: dbt
+        env:
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+        run: |
+          dbt run
+          dbt test
+
+      - name: Run Elementary monitoring
+        working-directory: dbt
+        env:
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+        run: |
+          # Elementary モデルを実行（メタデータ収集）
+          dbt run --select elementary
+
+          # Elementary レポート生成
+          edr monitor --slack-webhook ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Generate Elementary Report
+        working-directory: dbt
+        run: |
+          # HTMLレポート生成
+          edr report
+
+      - name: Upload Elementary Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: elementary-report
+          path: dbt/elementary_report.html
+
+      - name: Deploy Report to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dbt/elementary_output --project-name=data-quality-dashboard
+```
+
+##### Slackとの統合
+```bash
+# Elementary CLIでSlack通知を設定
+edr monitor \
+  --slack-webhook $SLACK_WEBHOOK_URL \
+  --slack-channel data-quality \
+  --timezone UTC
+
+# または設定ファイルで管理
+# dbt/elementary_config.yml
+slack:
+  webhook_url: ${SLACK_WEBHOOK_URL}
+  channel: data-quality
+  workflows:
+    - name: daily_monitor
+      schedule: '0 8 * * *'
+      alerts:
+        - test_failures
+        - schema_changes
+        - volume_anomalies
+```
+
+##### Cloudflare Workersでの通知
+```javascript
+// workers/elementary-webhook.js
+// ElementaryからのWebhookを受けてCloudflare環境で処理
+
+export default {
+  async fetch(request, env) {
+    if (request.method !== 'POST') {
+      return new Response('Method not allowed', { status: 405 });
+    }
+
+    const alert = await request.json();
+
+    // D1にアラート履歴を保存
+    await env.DB.prepare(`
+      INSERT INTO data_quality_alerts (
+        alert_type,
+        model_name,
+        test_name,
+        status,
+        severity,
+        message,
+        timestamp
+      ) VALUES (?, ?, ?, ?, ?, ?, ?)
+    `).bind(
+      alert.type,
+      alert.model,
+      alert.test,
+      alert.status,
+      alert.severity,
+      alert.message,
+      new Date().toISOString()
+    ).run();
+
+    // Slackに通知
+    await fetch(env.SLACK_WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        text: `🚨 Data Quality Alert: ${alert.message}`,
+        blocks: [
+          {
+            type: 'header',
+            text: {
+              type: 'plain_text',
+              text: `${alert.severity === 'high' ? '🔴' : '⚠️'} ${alert.type}`
+            }
+          },
+          {
+            type: 'section',
+            fields: [
+              {
+                type: 'mrkdwn',
+                text: `*Model:*\n${alert.model}`
+              },
+              {
+                type: 'mrkdwn',
+                text: `*Test:*\n${alert.test}`
+              },
+              {
+                type: 'mrkdwn',
+                text: `*Status:*\n${alert.status}`
+              },
+              {
+                type: 'mrkdwn',
+                text: `*Severity:*\n${alert.severity}`
+              }
+            ]
+          },
+          {
+            type: 'section',
+            text: {
+              type: 'mrkdwn',
+              text: `*Message:*\n${alert.message}`
+            }
+          },
+          {
+            type: 'actions',
+            elements: [
+              {
+                type: 'button',
+                text: {
+                  type: 'plain_text',
+                  text: 'View Report'
+                },
+                url: 'https://data-quality-dashboard.pages.dev'
+              }
+            ]
+          }
+        ]
+      })
+    });
+
+    return new Response('Alert processed', { status: 200 });
+  }
+}
+```
+
+##### R2でのElementaryレポート永続化
+```python
+# scripts/upload_elementary_report.py
+import boto3
+from datetime import datetime
+
+def upload_report_to_r2(report_path: str):
+    """
+    ElementaryレポートをR2にアップロード
+    """
+    s3_client = boto3.client(
+        's3',
+        endpoint_url=f"https://{R2_ACCOUNT_ID}.r2.cloudflarestorage.com",
+        aws_access_key_id=R2_ACCESS_KEY_ID,
+        aws_secret_access_key=R2_SECRET_ACCESS_KEY,
+        region_name='auto'
+    )
+
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    s3_key = f"elementary/reports/{timestamp}/report.html"
+
+    s3_client.upload_file(
+        report_path,
+        'data-lake-gold',  # Gold Layer
+        s3_key,
+        ExtraArgs={'ContentType': 'text/html'}
+    )
+
+    print(f"Report uploaded to: s3://data-lake-gold/{s3_key}")
+```
+
+#### Elementary CLI 主要コマンド
+
+```bash
+# レポート生成
+edr report
+
+# モニタリング実行（Slack通知付き）
+edr monitor --slack-webhook <webhook-url>
+
+# レポートをWebサーバーで起動
+edr report --serve
+
+# 特定期間のデータを分析
+edr report --days-back 7
+
+# レポートのカスタマイズ
+edr report \
+  --project-dir ./dbt \
+  --profiles-dir ./dbt \
+  --profile-target prod \
+  --output ./reports
+```
+
+#### Elementary ダッシュボードの機能
+
+1. **テスト結果**: すべてのdbtテストの実行履歴と結果
+2. **モデル実行**: モデルのビルド時間、成功率、エラー
+3. **スキーマ変更**: カラムの追加・削除・型変更の履歴
+4. **データリネージュ**: モデル間の依存関係グラフ
+5. **異常検知**: 機械学習による異常検知結果
+6. **カバレッジ**: テストカバレッジの可視化
+
+#### Cloudflare Pagesへのデプロイ例
+
+```yaml
+# .github/workflows/deploy-elementary-ui.yml
+name: Deploy Elementary UI
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install dbt-duckdb elementary-data
+
+      - name: Generate Elementary report
+        working-directory: dbt
+        env:
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+        run: |
+          dbt deps
+          dbt run --select elementary
+          edr report --file-path ../elementary_report.html
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy elementary_output --project-name=elementary-dashboard
+```
+
+#### 推奨度
+⭐⭐⭐⭐⭐ - dbtを使用するデータ基盤では必須のデータ品質監視ツール
+
+---
+
 ### dbt (data build tool)
 
 **公式サイト**: https://www.getdbt.com/

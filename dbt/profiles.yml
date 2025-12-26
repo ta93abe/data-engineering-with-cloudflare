@@ -1,0 +1,58 @@
+# dbt profiles.yml
+# Cloudflare R2 + DuckDBを使用したプロファイル設定
+
+cloudflare_data_platform:
+  target: dev
+  outputs:
+    # 開発環境: ローカルDuckDB
+    dev:
+      type: duckdb
+      path: 'dev.duckdb'
+      extensions:
+        - httpfs
+        - parquet
+      settings:
+        # R2接続設定（環境変数から取得）
+        s3_endpoint: "{{ env_var('R2_ENDPOINT', 'ACCOUNT_ID.r2.cloudflarestorage.com') }}"
+        s3_access_key_id: "{{ env_var('R2_ACCESS_KEY_ID') }}"
+        s3_secret_access_key: "{{ env_var('R2_SECRET_ACCESS_KEY') }}"
+        s3_region: 'auto'
+        threads: 4
+
+    # 本番環境: インメモリDuckDB + R2
+    prod:
+      type: duckdb
+      path: ':memory:'
+      extensions:
+        - httpfs
+        - parquet
+        - iceberg
+      settings:
+        s3_endpoint: "{{ env_var('R2_ENDPOINT') }}"
+        s3_access_key_id: "{{ env_var('R2_ACCESS_KEY_ID') }}"
+        s3_secret_access_key: "{{ env_var('R2_SECRET_ACCESS_KEY') }}"
+        s3_region: 'auto'
+        threads: 8
+        # 本番用の最適化設定
+        memory_limit: '4GB'
+        temp_directory: '/tmp/duckdb'
+
+    # CI/CD環境
+    ci:
+      type: duckdb
+      path: ':memory:'
+      extensions:
+        - httpfs
+        - parquet
+      settings:
+        s3_endpoint: "{{ env_var('R2_ENDPOINT') }}"
+        s3_access_key_id: "{{ env_var('R2_ACCESS_KEY_ID') }}"
+        s3_secret_access_key: "{{ env_var('R2_SECRET_ACCESS_KEY') }}"
+        s3_region: 'auto'
+        threads: 2
+
+# Elementary用の設定
+# ElementaryはdbtプロジェクトのメタデータをDuckDBに保存します
+elementary:
+  # Elementaryメタデータ用のデータベース
+  database_path: 'elementary.duckdb'

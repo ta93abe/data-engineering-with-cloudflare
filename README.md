@@ -63,6 +63,7 @@ Cloudflareサービスと組み合わせて、エンドツーエンドのデー�
 - **dbt**: SQLベースのデータ変換・モデリング
 - **dlt**: Pythonベースのデータ抽出・ロードツール
 - **DuckDB**: R2上のParquet/Icebergファイルを直接クエリ
+- **Elementary**: dbt向けデータ品質監視・オブザーバビリティツール ✨NEW
 
 ### データフォーマット
 - **Apache Iceberg**: R2上でのACIDトランザクション対応テーブルフォーマット

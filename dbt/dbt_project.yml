@@ -1,0 +1,67 @@
+name: 'cloudflare_data_platform'
+version: '1.0.0'
+config-version: 2
+
+# プロジェクト設定
+profile: 'cloudflare_data_platform'
+
+# モデルパス設定
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+clean-targets:
+  - "target"
+  - "dbt_packages"
+  - "logs"
+
+# モデル設定
+models:
+  cloudflare_data_platform:
+    # Staging層: Bronze -> Silver変換
+    staging:
+      +materialized: view
+      +schema: staging
+      +tags: ["staging"]
+      +elementary_enabled: true
+      +elementary_schema_changes: true
+
+    # Marts層: Silver -> Gold変換
+    marts:
+      +materialized: table
+      +schema: marts
+      +tags: ["marts"]
+      +elementary_enabled: true
+      +elementary_schema_changes: true
+
+# Elementary設定
+vars:
+  # Elementary用の設定
+  elementary:
+    # タイムゾーン
+    timezone: 'UTC'
+    # 異常検知の感度（1-5、5が最も厳しい）
+    anomaly_sensitivity: 3
+    # データ保持期間（日数）
+    days_back: 30
+
+# テスト設定
+tests:
+  +store_failures: true
+  +schema: test_results
+
+# スナップショット設定
+snapshots:
+  +target_schema: snapshots
+  +strategy: timestamp
+  +updated_at: updated_at
+
+# ドキュメント設定
+on-run-start:
+  - "{{ log('Starting dbt run for Cloudflare Data Platform', info=True) }}"
+
+on-run-end:
+  - "{{ log('Completed dbt run for Cloudflare Data Platform', info=True) }}"
