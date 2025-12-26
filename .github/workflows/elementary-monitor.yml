@@ -11,23 +11,25 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.11'
-          cache: 'pip'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
 
       - name: Install dependencies
         run: |
-          pip install --upgrade pip
-          pip install dbt-duckdb==1.7.2
-          pip install elementary-data[duckdb]==0.15.1
+          uv sync
 
       - name: Install dbt packages
         working-directory: dbt
-        run: dbt deps
+        run: uv run dbt deps
 
       - name: Run dbt models
         working-directory: dbt
@@ -38,7 +40,7 @@ jobs:
           R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
         run: |
           echo "Running dbt models..."
-          dbt run --target prod --profiles-dir .
+          uv run dbt run --target prod --profiles-dir .
 
       - name: Run dbt tests
         working-directory: dbt
@@ -49,7 +51,7 @@ jobs:
           R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
         run: |
           echo "Running dbt tests..."
-          dbt test --target prod --profiles-dir .
+          uv run dbt test --target prod --profiles-dir .
         continue-on-error: true
 
       - name: Run Elementary models
@@ -61,13 +63,13 @@ jobs:
           R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
         run: |
           echo "Running Elementary models for metadata collection..."
-          dbt run --select elementary --target prod --profiles-dir .
+          uv run dbt run --select elementary --target prod --profiles-dir .
 
       - name: Generate Elementary Report
         working-directory: dbt
         run: |
           echo "Generating Elementary HTML report..."
-          edr report \
+          uv run edr report \
             --project-dir . \
             --profiles-dir . \
             --profile-target prod \
@@ -88,7 +90,7 @@ jobs:
         run: |
           if [ -n "$SLACK_WEBHOOK_URL" ]; then
             echo "Sending Elementary monitor results to Slack..."
-            edr monitor \
+            uv run edr monitor \
               --project-dir . \
               --profiles-dir . \
               --profile-target prod \
@@ -111,7 +113,7 @@ jobs:
 
       - name: Comment PR with Report Link
         if: github.event_name == 'pull_request'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const fs = require('fs');
@@ -140,7 +142,7 @@ jobs:
 
       - name: Notify on Failure
         if: failure()
-        uses: slackapi/slack-github-action@v1
+        uses: slackapi/slack-github-action@v2
         with:
           webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
           payload: |

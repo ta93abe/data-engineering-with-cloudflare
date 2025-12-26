@@ -11,18 +11,21 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.11'
-          cache: 'pip'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
 
       - name: Install marimo and dependencies
         run: |
-          pip install --upgrade pip
-          pip install -r marimo/requirements.txt
+          uv sync
 
       - name: Run R2 Data Exploration notebook
         env:
@@ -33,7 +36,7 @@ jobs:
         run: |
           echo "Running R2 Data Exploration notebook..."
           # Export to HTML
-          marimo export html marimo/notebooks/r2_data_exploration.py -o marimo/outputs/r2_exploration.html
+          uv run marimo export html marimo/notebooks/r2_data_exploration.py -o marimo/outputs/r2_exploration.html
         continue-on-error: true
 
       - name: Run Data Quality Dashboard notebook
@@ -45,7 +48,7 @@ jobs:
         run: |
           echo "Running Data Quality Dashboard notebook..."
           # Export to HTML
-          marimo export html marimo/notebooks/data_quality_dashboard.py -o marimo/outputs/quality_dashboard.html
+          uv run marimo export html marimo/notebooks/data_quality_dashboard.py -o marimo/outputs/quality_dashboard.html
         continue-on-error: true
 
       - name: Upload notebook outputs as artifacts
@@ -68,7 +71,7 @@ jobs:
 
       - name: Notify Slack
         if: success() && github.event_name == 'schedule'
-        uses: slackapi/slack-github-action@v1
+        uses: slackapi/slack-github-action@v2
         with:
           webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
           payload: |
@@ -132,27 +135,32 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.11'
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
       - name: Install dependencies
         run: |
-          pip install marimo ruff
+          uv sync --only-dev
 
       - name: Check marimo notebooks
         run: |
           echo "Checking marimo notebooks syntax..."
           for notebook in marimo/notebooks/*.py; do
             echo "Checking $notebook..."
-            python -m py_compile "$notebook"
+            uv run python -m py_compile "$notebook"
           done
 
       - name: Run ruff linter
         run: |
           echo "Running ruff linter..."
-          ruff check marimo/notebooks/
+          uv run ruff check marimo/notebooks/
         continue-on-error: true
