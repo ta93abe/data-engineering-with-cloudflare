@@ -63,8 +63,8 @@ BUCKETS=("data-lake-raw" "data-lake-processed" "data-lake-curated" "data-lake-ar
 for BUCKET in "${BUCKETS[@]}"; do
     echo "Creating bucket: $BUCKET"
 
-    # バケットが既に存在するか確認
-    if wrangler r2 bucket list 2>&1 | grep -q "$BUCKET"; then
+    # バケットが既に存在するか確認（正確な名前一致でチェック）
+    if wrangler r2 bucket list 2>&1 | awk 'NR>1 {print $1}' | grep -Fxq "$BUCKET"; then
         warning "バケット '$BUCKET' は既に存在します（スキップ）"
     else
         if wrangler r2 bucket create "$BUCKET"; then
