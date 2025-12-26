@@ -1,0 +1,131 @@
+{
+  "data_asset_type": "Dataset",
+  "expectation_suite_name": "api_posts_suite",
+  "expectations": [
+    {
+      "expectation_type": "expect_table_row_count_to_be_between",
+      "kwargs": {
+        "min_value": 1,
+        "max_value": 1000000
+      },
+      "meta": {
+        "notes": "Posts table should contain at least 1 row and not exceed 1M rows"
+      }
+    },
+    {
+      "expectation_type": "expect_table_columns_to_match_ordered_list",
+      "kwargs": {
+        "column_list": [
+          "post_id",
+          "user_id",
+          "title",
+          "body",
+          "loaded_at"
+        ]
+      },
+      "meta": {
+        "notes": "Posts table must have these exact columns in order"
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "post_id"
+      },
+      "meta": {
+        "notes": "post_id should never be null"
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_unique",
+      "kwargs": {
+        "column": "post_id"
+      },
+      "meta": {
+        "notes": "post_id must be unique (primary key)"
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "user_id"
+      },
+      "meta": {
+        "notes": "user_id should never be null (foreign key)"
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_in_type_list",
+      "kwargs": {
+        "column": "user_id",
+        "type_list": ["INTEGER", "BIGINT", "int64", "int32"]
+      },
+      "meta": {
+        "notes": "user_id should be an integer type"
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "title"
+      },
+      "meta": {
+        "notes": "title should never be null"
+      }
+    },
+    {
+      "expectation_type": "expect_column_value_lengths_to_be_between",
+      "kwargs": {
+        "column": "title",
+        "min_value": 1,
+        "max_value": 500
+      },
+      "meta": {
+        "notes": "title length should be between 1 and 500 characters"
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "body"
+      },
+      "meta": {
+        "notes": "body should never be null"
+      }
+    },
+    {
+      "expectation_type": "expect_column_value_lengths_to_be_between",
+      "kwargs": {
+        "column": "body",
+        "min_value": 1,
+        "max_value": 10000
+      },
+      "meta": {
+        "notes": "body length should be between 1 and 10000 characters"
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "loaded_at"
+      },
+      "meta": {
+        "notes": "loaded_at timestamp should never be null"
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_of_type",
+      "kwargs": {
+        "column": "loaded_at",
+        "type_": "TIMESTAMP"
+      },
+      "meta": {
+        "notes": "loaded_at should be a timestamp type"
+      }
+    }
+  ],
+  "meta": {
+    "great_expectations_version": "0.18.0",
+    "notes": "Expectation Suite for API Posts data from JSONPlaceholder"
+  }
+}

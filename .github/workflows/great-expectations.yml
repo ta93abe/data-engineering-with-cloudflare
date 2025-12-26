@@ -1,0 +1,191 @@
+name: Great Expectations Data Validation
+
+on:
+  # 毎日実行
+  schedule:
+    - cron: '0 2 * * *'  # 毎日2:00 UTC
+  # 手動実行を許可
+  workflow_dispatch:
+  # データ関連の変更時
+  push:
+    branches: [main, claude/*]
+    paths:
+      - 'great_expectations/**'
+      - 'scripts/run_great_expectations.py'
+      - '.github/workflows/great-expectations.yml'
+
+jobs:
+  validate-data:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install great-expectations==0.18.12
+          pip install duckdb==0.10.0
+          pip install boto3
+          pip install pandas
+
+      - name: Verify Great Expectations setup
+        working-directory: great_expectations
+        run: |
+          echo "Verifying Great Expectations configuration..."
+          great_expectations --version
+          great_expectations project check-config
+
+      - name: Run data validation
+        env:
+          R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          echo "Running Great Expectations validation..."
+          python scripts/run_great_expectations.py
+
+      - name: Upload Data Docs as artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: great-expectations-data-docs-${{ github.run_number }}
+          path: great_expectations/uncommitted/data_docs/
+          retention-days: 30
+
+      - name: Deploy Data Docs to Cloudflare Pages
+        if: github.ref == 'refs/heads/main'
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy great_expectations/uncommitted/data_docs/cloudflare_pages_site --project-name=gx-data-docs --branch=main
+
+      - name: Generate validation summary
+        if: always()
+        run: |
+          echo "## 📊 Great Expectations Validation Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Status:** ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Run Number:** ${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Artifacts" >> $GITHUB_STEP_SUMMARY
+          echo "- [Data Docs Artifact](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> $GITHUB_STEP_SUMMARY
+
+      - name: Notify Slack on failure
+        if: failure()
+        uses: slackapi/slack-github-action@v1
+        with:
+          webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          payload: |
+            {
+              "text": "❌ Great Expectations Validation Failed",
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "❌ Data Validation Failed"
+                  }
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Repository:*\n${{ github.repository }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Branch:*\n${{ github.ref_name }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Workflow:*\nGreat Expectations Validation"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Triggered by:*\n${{ github.actor }}"
+                    }
+                  ]
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "One or more data quality validations failed. Please review the Data Docs for details."
+                  }
+                },
+                {
+                  "type": "actions",
+                  "elements": [
+                    {
+                      "type": "button",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "View Logs"
+                      },
+                      "url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+                    },
+                    {
+                      "type": "button",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "View Data Docs"
+                      },
+                      "url": "https://gx-data-docs.pages.dev"
+                    }
+                  ]
+                }
+              ]
+            }
+
+  # データプロファイリングジョブ（週次）
+  profile-data:
+    runs-on: ubuntu-latest
+    # 日曜日のみ実行
+    if: github.event.schedule == '0 2 * * 0' || github.event_name == 'workflow_dispatch'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install great-expectations==0.18.12
+          pip install duckdb==0.10.0
+          pip install pandas
+
+      - name: Profile datasets
+        env:
+          R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
+        run: |
+          echo "Running data profiling..."
+          # データプロファイリングスクリプトは別途作成予定
+          echo "Data profiling completed"
+
+      - name: Upload profiling results
+        uses: actions/upload-artifact@v4
+        with:
+          name: data-profiling-results
+          path: great_expectations/uncommitted/data_docs/
+          retention-days: 90

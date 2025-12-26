@@ -1,0 +1,110 @@
+# Great Expectations Configuration for Cloudflare Data Platform
+# See: https://docs.greatexpectations.io/docs/guides/setup/configuring_data_contexts/
+
+config_version: 3.0
+
+# Datasources: R2 via DuckDB
+datasources:
+  r2_bronze:
+    class_name: Datasource
+    module_name: great_expectations.datasource
+    execution_engine:
+      class_name: SqlAlchemyExecutionEngine
+      module_name: great_expectations.execution_engine
+      connection_string: duckdb:///:memory:
+      # DuckDB初期化SQL（R2接続設定）
+      create_temp_table: false
+    data_connectors:
+      r2_parquet_connector:
+        class_name: InferredAssetFilesystemDataConnector
+        module_name: great_expectations.datasource.data_connector
+        base_directory: /tmp/gx_data/bronze/
+        default_regex:
+          group_names:
+            - source_name
+            - table_name
+          pattern: (.+)/(.+)\.parquet
+
+  r2_silver:
+    class_name: Datasource
+    module_name: great_expectations.datasource
+    execution_engine:
+      class_name: SqlAlchemyExecutionEngine
+      module_name: great_expectations.execution_engine
+      connection_string: duckdb:///:memory:
+    data_connectors:
+      r2_parquet_connector:
+        class_name: InferredAssetFilesystemDataConnector
+        module_name: great_expectations.datasource.data_connector
+        base_directory: /tmp/gx_data/silver/
+        default_regex:
+          group_names:
+            - table_name
+          pattern: (.+)\.parquet
+
+# Data Docs（HTMLレポート）の設定
+data_docs_sites:
+  local_site:
+    class_name: SiteBuilder
+    store_backend:
+      class_name: TupleFilesystemStoreBackend
+      base_directory: uncommitted/data_docs/local_site/
+    site_index_builder:
+      class_name: DefaultSiteIndexBuilder
+
+  cloudflare_pages_site:
+    class_name: SiteBuilder
+    store_backend:
+      class_name: TupleFilesystemStoreBackend
+      base_directory: uncommitted/data_docs/cloudflare_pages/
+    site_index_builder:
+      class_name: DefaultSiteIndexBuilder
+      show_cta_footer: true
+
+# ストア設定
+stores:
+  expectations_store:
+    class_name: ExpectationsStore
+    store_backend:
+      class_name: TupleFilesystemStoreBackend
+      base_directory: expectations/
+
+  validations_store:
+    class_name: ValidationsStore
+    store_backend:
+      class_name: TupleFilesystemStoreBackend
+      base_directory: uncommitted/validations/
+
+  evaluation_parameter_store:
+    class_name: EvaluationParameterStore
+
+  checkpoint_store:
+    class_name: CheckpointStore
+    store_backend:
+      class_name: TupleFilesystemStoreBackend
+      base_directory: checkpoints/
+
+  profiler_store:
+    class_name: ProfilerStore
+    store_backend:
+      class_name: TupleFilesystemStoreBackend
+      base_directory: profilers/
+
+expectations_store_name: expectations_store
+validations_store_name: validations_store
+evaluation_parameter_store_name: evaluation_parameter_store
+checkpoint_store_name: checkpoint_store
+
+# Data Context設定
+config_variables_file_path: uncommitted/config_variables.yml
+
+# プラグイン設定
+plugins_directory: plugins/
+
+# 匿名使用統計の無効化
+anonymous_usage_statistics:
+  enabled: false
+  data_context_id: cloudflare-data-platform
+
+# Validation Operatorの設定（古い設定）
+# v3では Checkpointsを使用
