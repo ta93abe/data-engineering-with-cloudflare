@@ -1,18 +1,8 @@
 name: Great Expectations Data Validation
 
 on:
-  # 毎日実行
-  schedule:
-    - cron: '0 2 * * *'  # 毎日2:00 UTC
-  # 手動実行を許可
+  # 手動実行のみ（本番環境未設定のため）
   workflow_dispatch:
-  # データ関連の変更時
-  push:
-    branches: [main, claude/*]
-    paths:
-      - 'great_expectations/**'
-      - 'scripts/run_great_expectations.py'
-      - '.github/workflows/great-expectations.yml'
 
 jobs:
   validate-data:
@@ -151,11 +141,11 @@ jobs:
               ]
             }
 
-  # データプロファイリングジョブ（週次）
+  # データプロファイリングジョブ
   profile-data:
     runs-on: ubuntu-latest
-    # 日曜日のみ実行
-    if: github.event.schedule == '0 2 * * 0' || github.event_name == 'workflow_dispatch'
+    # 手動実行時のみ
+    if: github.event_name == 'workflow_dispatch'
 
     steps:
       - name: Checkout repository

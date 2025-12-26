@@ -1,17 +1,8 @@
 name: marimo Notebooks
 
 on:
-  # 手動実行
+  # 手動実行のみ（本番環境未設定のため）
   workflow_dispatch:
-  # marimo関連の変更時
-  push:
-    branches: [main, claude/*]
-    paths:
-      - 'marimo/**'
-      - '.github/workflows/marimo-notebooks.yml'
-  # 定期実行（週次でレポート生成）
-  schedule:
-    - cron: '0 3 * * 0'  # 毎週日曜日3:00 UTC
 
 jobs:
   run-notebooks:

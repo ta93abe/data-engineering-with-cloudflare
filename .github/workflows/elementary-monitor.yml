@@ -1,17 +1,8 @@
 name: Elementary Data Quality Monitor
 
 on:
-  # 6時間ごとに実行
-  schedule:
-    - cron: '0 */6 * * *'
-  # 手動実行を許可
+  # 手動実行のみ（本番環境未設定のため）
   workflow_dispatch:
-  # dbtディレクトリの変更時に実行
-  push:
-    branches: [main, claude/*]
-    paths:
-      - 'dbt/**'
-      - '.github/workflows/elementary-monitor.yml'
 
 jobs:
   dbt-test-and-monitor:
