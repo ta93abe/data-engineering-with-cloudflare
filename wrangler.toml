@@ -5,7 +5,9 @@ name = "data-engineering-cloudflare"
 compatibility_date = "2024-12-01"
 
 # アカウント設定（実際のアカウントIDに置き換えてください）
+# TODO: 以下のコメントを解除して、実際のアカウントIDに置き換えてください
 # account_id = "your-account-id-here"
+# アカウントIDは `wrangler whoami` で確認できます
 
 # ========================================
 # Workers Python Runtime - dlt Pipeline
@@ -80,38 +82,46 @@ local_protocol = "http"
 # 追加Workers（将来の拡張用）
 # ========================================
 
+# ========================================
 # Iceberg Converter Worker
-# [[workers]]
-# name = "iceberg-converter"
-# main = "workers/transformation/iceberg_converter.py"
-# compatibility_date = "2024-12-01"
-#
-# [workers.python]
-# requirements = "workers/transformation/requirements.txt"
-#
-# [workers.vars]
-# R2_ACCOUNT_ID = "your-account-id"
-# R2_BUCKET_CURATED = "data-lake-curated"
-# SOURCE_BUCKET = "data-lake-raw"
-#
-# # Secretsで設定:
-# # wrangler secret put CLOUDFLARE_API_TOKEN --name iceberg-converter
+# ========================================
 
+[[workers]]
+name = "iceberg-converter"
+main = "workers/transformation/iceberg_converter.py"
+compatibility_date = "2024-12-01"
+
+[workers.python]
+requirements = "workers/transformation/requirements.txt"
+
+[workers.vars]
+# TODO: 実際のアカウントIDに置き換えてください
+R2_ACCOUNT_ID = "your-account-id"
+R2_BUCKET_CURATED = "data-lake-curated"
+SOURCE_BUCKET = "data-lake-raw"
+
+# Secretsで設定:
+# wrangler secret put CLOUDFLARE_API_TOKEN --name iceberg-converter
+
+# ========================================
 # dlt + Iceberg統合Worker
-# [[workers]]
-# name = "dlt-iceberg-pipeline"
-# main = "workers/ingestion/dlt_iceberg_pipeline.py"
-# compatibility_date = "2024-12-01"
-#
-# [workers.python]
-# requirements = "workers/ingestion/requirements-iceberg.txt"
-#
-# [workers.vars]
-# R2_ACCOUNT_ID = "your-account-id"
-# R2_BUCKET_RAW = "data-lake-raw"
-# R2_BUCKET_CURATED = "data-lake-curated"
-#
-# # Secretsで設定:
-# # wrangler secret put R2_ACCESS_KEY_ID --name dlt-iceberg-pipeline
-# # wrangler secret put R2_SECRET_ACCESS_KEY --name dlt-iceberg-pipeline
-# # wrangler secret put CLOUDFLARE_API_TOKEN --name dlt-iceberg-pipeline
+# ========================================
+
+[[workers]]
+name = "dlt-iceberg-pipeline"
+main = "workers/ingestion/dlt_iceberg_pipeline.py"
+compatibility_date = "2024-12-01"
+
+[workers.python]
+requirements = "workers/ingestion/requirements-iceberg.txt"
+
+[workers.vars]
+# TODO: 実際のアカウントIDに置き換えてください
+R2_ACCOUNT_ID = "your-account-id"
+R2_BUCKET_RAW = "data-lake-raw"
+R2_BUCKET_CURATED = "data-lake-curated"
+
+# Secretsで設定:
+# wrangler secret put R2_ACCESS_KEY_ID --name dlt-iceberg-pipeline
+# wrangler secret put R2_SECRET_ACCESS_KEY --name dlt-iceberg-pipeline
+# wrangler secret put CLOUDFLARE_API_TOKEN --name dlt-iceberg-pipeline
