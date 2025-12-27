@@ -1,0 +1,114 @@
+# Cloudflare Terraform Configuration Example
+# Copy this file to terraform.tfvars and fill in your actual values
+# WARNING: Never commit terraform.tfvars to version control!
+
+# ========================================
+# Required Variables
+# ========================================
+
+# Cloudflare API Token
+# Create at: https://dash.cloudflare.com/profile/api-tokens
+# Required permissions:
+# - Account: Cloudflare Workers Scripts (Edit)
+# - Account: Workers R2 Storage (Edit)
+# - Account: Workers KV Storage (Edit)
+# - Account: D1 (Edit)
+# - Account: Queues (Edit)
+cloudflare_api_token = "your-cloudflare-api-token-here"
+
+# Cloudflare Account ID
+# Find at: https://dash.cloudflare.com/ (in the URL or sidebar)
+# Or run: wrangler whoami
+cloudflare_account_id = "your-account-id-here"
+
+# Cloudflare Zone ID (optional, only needed for Workers Routes/DNS)
+# Find at: https://dash.cloudflare.com/ -> Select your domain -> Overview
+cloudflare_zone_id = "your-zone-id-here"
+
+# ========================================
+# Environment Configuration
+# ========================================
+
+environment = "dev"  # Options: dev, staging, prod
+
+project_name = "data-engineering"
+
+# ========================================
+# R2 Buckets Configuration
+# ========================================
+
+r2_buckets = {
+  "data-lake-raw" = {
+    location = "apac"
+  }
+  "data-lake-curated" = {
+    location = "apac"
+  }
+  "data-lake-bronze" = {
+    location = "apac"
+  }
+  "data-lake-silver" = {
+    location = "apac"
+  }
+  "data-lake-gold" = {
+    location = "apac"
+  }
+  "terraform-state" = {
+    location = "apac"
+  }
+}
+
+# ========================================
+# D1 Databases Configuration
+# ========================================
+
+d1_databases = {
+  "pipeline-metadata" = {}
+  "data-quality"      = {}
+  "user-profiles"     = {}
+}
+
+# ========================================
+# KV Namespaces Configuration
+# ========================================
+
+kv_namespaces = {
+  "pipeline-state" = {}
+  "session-store"  = {}
+  "config-cache"   = {}
+}
+
+# ========================================
+# Analytics Engine Configuration
+# ========================================
+
+analytics_engine_datasets = [
+  "pipeline-metrics",
+  "user-events",
+  "application-logs"
+]
+
+# ========================================
+# Queues Configuration
+# ========================================
+
+queues = {
+  "data-processing" = {
+    max_retries       = 3
+    max_batch_size    = 100
+    max_batch_timeout = 30
+  }
+  "pipeline-tasks" = {
+    max_retries       = 5
+    max_batch_size    = 50
+    max_batch_timeout = 60
+  }
+}
+
+# ========================================
+# Workers Configuration
+# ========================================
+
+workers_compatibility_date = "2024-12-01"
+
+workers_python_enabled = true
