@@ -276,7 +276,7 @@ terraform apply  # 変更を適用
 
 ```bash
 # 例: data-lake-bronze バケットを削除
-terraform destroy -target=cloudflare_r2_bucket.buckets[\"data-lake-bronze\"]
+terraform destroy -target='cloudflare_r2_bucket.buckets["data-lake-bronze"]'
 ```
 
 ### すべてのリソースを削除
