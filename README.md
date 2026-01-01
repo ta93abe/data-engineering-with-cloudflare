@@ -167,6 +167,35 @@ graph TB
 
 👉 **[QUICKSTART.md](./QUICKSTART.md)** - 3ステップで即座に始められるガイド
 
+### 🏗️ インフラストラクチャ管理（Terraform）
+
+CloudflareリソースをInfrastructure as Code (IaC) で管理するためのTerraform設定を提供しています：
+
+**管理対象リソース:**
+- **R2 Buckets**: データレイク（Bronze/Silver/Gold）、Terraformステート
+- **D1 Databases**: パイプラインメタデータ、データ品質、ユーザープロファイル
+- **Workers KV**: パイプライン状態、セッション、設定キャッシュ
+- **Cloudflare Queues**: データ処理、パイプラインタスク
+- **Workers Scripts**: （オプション）dlt pipeline、Iceberg converter等
+
+**セットアップ:**
+
+```bash
+cd terraform
+cp terraform.tfvars.example terraform.tfvars
+# terraform.tfvarsを編集（API Token、Account IDを設定）
+
+terraform init
+terraform plan
+terraform apply
+```
+
+**デプロイ戦略:**
+- **推奨**: Terraform（インフラ）+ Wrangler（Workersデプロイ）
+- **オプション**: 完全Terraform管理
+
+詳細は [terraform/README.md](./terraform/README.md) をご覧ください。
+
 ### 📚 詳細ドキュメント
 
 詳細な設計と実装ガイドについては、[アーキテクチャ設計概要](./docs/architecture-design.md)をご覧ください。

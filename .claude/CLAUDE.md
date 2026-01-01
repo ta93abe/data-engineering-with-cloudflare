@@ -41,6 +41,15 @@ data-engineering-with-cloudflare/
 │   └── CLAUDE.md              # このファイル
 ├── docs/                       # ドキュメント
 │   └── architecture-design.md  # アーキテクチャ設計
+├── terraform/                  # Terraform IaC設定
+│   ├── main.tf                # Provider設定
+│   ├── variables.tf           # 変数定義
+│   ├── outputs.tf             # 出力定義
+│   ├── storage.tf             # R2、D1、KVリソース
+│   ├── queues.tf              # Cloudflare Queues
+│   ├── workers.tf             # Workers設定（オプション）
+│   ├── terraform.tfvars.example  # 設定例
+│   └── README.md              # Terraform利用ガイド
 ├── src/                        # ソースコード（今後追加）
 │   ├── workers/               # Workers実装
 │   ├── schemas/               # D1スキーマ定義
@@ -144,6 +153,37 @@ env.ANALYTICS.writeDataPoint({
 4. **Analytics Engineのサンプリング**: 必要に応じてデータをサンプリング
 
 ## デプロイメント
+
+### インフラストラクチャ管理（Terraform）
+
+Cloudflareリソース（R2、D1、KV、Queues）をTerraformで管理できます。
+
+**推奨デプロイ戦略**: Terraform（インフラ）+ Wrangler（Workersデプロイ）
+
+```bash
+# 1. Terraformでインフラをプロビジョニング
+cd terraform
+terraform init
+terraform apply
+
+# 2. リソースIDを確認
+terraform output kv_namespace_ids
+terraform output d1_database_ids
+
+# 3. wrangler.toml にリソースIDを設定
+# 4. Wranglerでデプロイ
+cd ..
+wrangler deploy
+```
+
+**管理対象リソース**:
+- R2 Buckets: データレイク（Bronze/Silver/Gold）、Terraformステート
+- D1 Databases: パイプラインメタデータ、データ品質、ユーザープロファイル
+- Workers KV: パイプライン状態、セッション、設定キャッシュ
+- Cloudflare Queues: データ処理、パイプラインタスク
+- Workers Scripts（オプション）
+
+詳細は [terraform/README.md](../terraform/README.md) を参照してください。
 
 ### Wranglerを使ったデプロイ
 
