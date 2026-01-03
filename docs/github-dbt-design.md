@@ -2,7 +2,7 @@
 
 **ステータス**: 設計フェーズ
 **作成日**: 2025-01-03
-**対象**: GitHub API データを dbt で Bronze → Silver → Gold に変換
+**対象**: GitHub API データを dbt で Raw → Staging → Marts に変換
 
 ## 📋 目次
 
@@ -10,8 +10,8 @@
 2. [データアーキテクチャ](#データアーキテクチャ)
 3. [レイヤー設計](#レイヤー設計)
 4. [ソース定義](#ソース定義)
-5. [Staging モデル (Silver)](#staging-モデル-silver)
-6. [Marts モデル (Gold)](#marts-モデル-gold)
+5. [Staging モデル (Staging)](#staging-モデル-silver)
+6. [Marts モデル (Marts)](#marts-モデル-gold)
 7. [テスト戦略](#テスト戦略)
 8. [インクリメンタルモデル](#インクリメンタルモデル)
 9. [メトリクス・KPI](#メトリクスkpi)
@@ -24,15 +24,15 @@
 
 ### 目的
 
-GitHub API から収集した Raw データ (Bronze Layer) を dbt で変換し、分析・可視化に最適化された Silver/Gold Layer を構築する。
+GitHub API から収集した Raw データ (Raw Layer) を dbt で変換し、分析・可視化に最適化された Staging/Marts Layer を構築する。
 
 ### データフロー
 
 ```mermaid
 graph LR
-    A[GitHub API] -->|Workers/dlt| B[Bronze Layer<br/>R2 Parquet]
-    B -->|dbt Staging| C[Silver Layer<br/>R2 Parquet]
-    C -->|dbt Marts| D[Gold Layer<br/>R2 Parquet]
+    A[GitHub API] -->|Workers/dlt| B[Raw Layer<br/>R2 Parquet]
+    B -->|dbt Staging| C[Staging Layer<br/>R2 Parquet]
+    C -->|dbt Marts| D[Marts Layer<br/>R2 Parquet]
     D -->|Query| E[Evidence.dev]
     D -->|Query| F[marimo]
     D -->|Query| G[DuckDB SQL]
@@ -46,9 +46,9 @@ graph LR
 
 | Layer | 役割 | フォーマット | マテリアライゼーション |
 |-------|------|------------|-------------------|
-| **Bronze** | Raw データ保存 | Parquet (Hiveパーティション) | - |
-| **Silver** | クレンジング、標準化 | Parquet | View |
-| **Gold** | 集計、ビジネスロジック | Parquet | Table |
+| **Raw** | Raw データ保存 | Parquet (Hiveパーティション) | - |
+| **Staging** | クレンジング、標準化 | Parquet | View |
+| **Marts** | 集計、ビジネスロジック | Parquet | Table |
 
 ---
 
@@ -58,7 +58,7 @@ graph LR
 
 ```
 s3://data-lake-raw/
-├── sources/github/                    # Bronze Layer (Workers/dlt出力)
+├── sources/github/                    # Raw Layer (Workers/dlt出力)
 │   ├── repositories/year=2025/month=01/day=03/*.parquet
 │   ├── issues/year=2025/month=01/day=03/*.parquet
 │   ├── pull_requests/year=2025/month=01/day=03/*.parquet
@@ -67,7 +67,7 @@ s3://data-lake-raw/
 │   ├── releases/year=2025/month=01/day=03/*.parquet
 │   └── workflow_runs/year=2025/month=01/day=03/*.parquet
 │
-├── staging/github/                    # Silver Layer (dbt出力)
+├── staging/github/                    # Staging Layer (dbt出力)
 │   ├── stg_github__repositories.parquet
 │   ├── stg_github__issues.parquet
 │   ├── stg_github__pull_requests.parquet
@@ -76,7 +76,7 @@ s3://data-lake-raw/
 │   ├── stg_github__releases.parquet
 │   └── stg_github__workflow_runs.parquet
 │
-└── marts/github/                      # Gold Layer (dbt出力)
+└── marts/github/                      # Marts Layer (dbt出力)
     ├── fct_repository_activity.parquet
     ├── fct_issue_lifecycle.parquet
     ├── fct_pr_metrics.parquet
@@ -101,7 +101,7 @@ FROM read_parquet(
 
 ## レイヤー設計
 
-### Bronze Layer (Raw Data)
+### Raw Layer (Raw Data)
 
 **特徴**:
 - GitHub API からの生データ
@@ -111,7 +111,7 @@ FROM read_parquet(
 
 **データソース**: Workers または dlt パイプラインが書き込み
 
-### Silver Layer (Staging)
+### Staging Layer (Staging)
 
 **特徴**:
 - クレンジング、型変換、標準化
@@ -122,7 +122,7 @@ FROM read_parquet(
 
 **命名規則**: `stg_github__<resource>`
 
-### Gold Layer (Marts)
+### Marts Layer (Marts)
 
 **特徴**:
 - ビジネスロジック適用
@@ -147,7 +147,7 @@ version: 2
 
 sources:
   - name: github_raw
-    description: "GitHub API データ (Bronze Layer)"
+    description: "GitHub API データ (Raw Layer)"
     database: data-lake-raw
     schema: sources/github
     loader: cloudflare_workers  # または dlt
@@ -223,7 +223,7 @@ sources:
 
 ---
 
-## Staging モデル (Silver)
+## Staging モデル (Staging)
 
 ### 1. `stg_github__repositories.sql`
 
@@ -457,7 +457,7 @@ select * from deduped
 
 ---
 
-## Marts モデル (Gold)
+## Marts モデル (Marts)
 
 ### ディメンションテーブル
 

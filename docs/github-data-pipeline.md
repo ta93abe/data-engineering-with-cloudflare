@@ -4,7 +4,7 @@
 
 ## 📊 概要
 
-dltのGitHub公式ソースを使用して、GitHubリポジトリの包括的なデータを収集し、Cloudflare R2のBronze Layer (`data-lake-raw`)に保存します。
+dltのGitHub公式ソースを使用して、GitHubリポジトリの包括的なデータを収集し、Cloudflare R2のRaw Layer (`data-lake-raw`)に保存します。
 
 ### 取得データ
 
@@ -29,7 +29,7 @@ dltのGitHub公式ソースを使用して、GitHubリポジトリの包括的�
 ```mermaid
 graph LR
     A[GitHub API] -->|dlt| B[Python Script]
-    B -->|Parquet| C[R2 Bronze Layer]
+    B -->|Parquet| C[R2 Raw Layer]
     C -->|Partition| D[sources/github/]
 
     style A fill:#24292e,color:#fff
@@ -186,7 +186,7 @@ GROUP BY workflow_name;
 
 ### dbt での変換
 
-Bronze Layer のデータをdbtでSilver/Goldレイヤーに変換できます:
+Raw Layer のデータをdbtでStaging/Martsレイヤーに変換できます:
 
 ```sql
 -- models/silver/github_issues_enriched.sql
