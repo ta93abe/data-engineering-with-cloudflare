@@ -20,6 +20,7 @@ Cloudflareのエッジコンピューティングプラットフォームを活�
 - **[🎯 GitHub実装計画](./docs/github-implementation-plan.md)** - 6週間MVP実装ロードマップ、フェーズ別タスク（実装開始）
 - **[🛠️ GitHub Workersセットアップガイド](./docs/github-workers-setup.md)** - Workers実装のセットアップとデプロイ手順
 - **[🧪 GitHub Workersテストガイド](./docs/github-workers-testing.md)** - Vitestを使ったユニット/統合テスト、カバレッジ測定
+- **[📋 セットアップTODOリスト](./docs/SETUP_TODO.md)** - 手動セットアップ手順とチェックリスト（Terraform + Secrets設定）
 - [情報源リンク集](./docs/resources.md) - 公式ドキュメント、ブログ、コミュニティリソース
 
 ## 🚀 Cloudflare データサービス
@@ -165,6 +166,69 @@ graph TB
 ```
 
 詳細は[アーキテクチャ図](./docs/architecture-diagrams.md)をご覧ください（11種類のMermaid図を提供）。
+
+## 🏗️ Infrastructure as Code (IaC)
+
+このプロジェクトでは **Terraform** と **Makefile** を使ってインフラとデプロイを自動化しています。
+
+### Terraform で管理されるリソース:
+
+- ✅ **R2 Buckets** (data-lake-raw, data-lake-raw-preview)
+- ✅ **Queues** (github-fetch-queue, github-fetch-dlq)
+- ✅ **KV Namespaces** (METADATA_KV, METADATA_KV_PRODUCTION)
+- ✅ **Workers** (github-scheduler, github-fetcher)
+- ✅ **Queue Consumers** (Fetcher Worker バインディング)
+- ✅ **Cron Triggers** (毎日 2:00 AM UTC)
+
+### クイックセットアップ:
+
+```bash
+# 1. 初期セットアップ
+make setup
+
+# 2. terraform.tfvars を編集
+nano terraform/terraform.tfvars
+
+# 3. Cloudflare API Token を設定
+export CLOUDFLARE_API_TOKEN="your-api-token"
+
+# 4. インフラ作成
+make init
+make plan
+make apply
+
+# 5. Secrets 設定（手動）
+make setup-secrets
+
+# 6. テスト実行
+make test
+
+# 7. デプロイ（本番の場合のみ）
+make deploy
+```
+
+### 便利なコマンド:
+
+```bash
+make help           # 利用可能なコマンド一覧
+make test           # 全テスト実行
+make test-coverage  # カバレッジレポート生成
+make logs-scheduler # Scheduler Worker のログ確認
+make logs-fetcher   # Fetcher Worker のログ確認
+make trigger        # Scheduler 手動実行
+make status         # デプロイ状況確認
+```
+
+### 手動設定が必要なもの:
+
+- ❌ **GitHub Personal Access Token** (セキュリティ上 Terraform 管理外)
+- ❌ **Cloudflare API Token** (初回のみ)
+- ❌ **wrangler.toml の ID 更新** (Terraform outputs から取得)
+
+詳細は以下を参照:
+- **[📋 SETUP_TODO.md](./docs/SETUP_TODO.md)** - 手動セットアップ手順（TODO リスト）
+- **[📖 terraform/README.md](./terraform/README.md)** - Terraform 設定ガイド
+- **[🛠️ Makefile](./Makefile)** - 自動化コマンド一覧
 
 ## 📖 はじめに
 
