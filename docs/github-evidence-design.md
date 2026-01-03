@@ -27,7 +27,7 @@ Evidence.dev は **コードベースのBI (Business Intelligence) ツール** �
 **特徴**:
 - マークダウン + SQL でダッシュボード作成
 - Git でバージョン管理
-- Cloudflare Pages にデプロイ可能
+- Cloudflare Workers でホスティング可能
 - リアクティブなチャート・テーブル
 - 静的サイト生成 (SSG) で高速
 
@@ -37,8 +37,8 @@ Evidence.dev は **コードベースのBI (Business Intelligence) ツール** �
 |-----|-------------|-------------|
 | **バージョン管理** | Git で管理 | ✗ |
 | **コードレビュー** | PR でレビュー可能 | ✗ |
-| **デプロイ** | Cloudflare Pages | 専用サーバー |
-| **コスト** | 無料 (Pages) | 月額課金 |
+| **デプロイ** | Cloudflare Workers | 専用サーバー |
+| **コスト** | 無料 (Workers) | 月額課金 |
 | **カスタマイズ** | 完全制御 | 制限あり |
 | **学習コスト** | Markdown + SQL | 専用UI |
 
@@ -61,8 +61,8 @@ graph LR
     B -->|dbt| C[R2 Staging Layer]
     C -->|dbt| D[R2 Marts Layer]
     D -->|DuckDB| E[Evidence.dev]
-    E -->|Build| F[Static Site]
-    F -->|Deploy| G[Cloudflare Pages]
+    E -->|Build| F[Workers + R2]
+    F -->|Deploy| G[Cloudflare Workers]
 
     style E fill:#9f6,color:#000
     style G fill:#f96,color:#fff
@@ -76,7 +76,7 @@ graph LR
 | **ストレージ** | Cloudflare R2 (Parquet) |
 | **変換** | dbt + DuckDB |
 | **可視化** | Evidence.dev |
-| **ホスティング** | Cloudflare Pages |
+| **ホスティング** | Cloudflare Workers |
 
 ### アクセスパターン
 
@@ -789,47 +789,213 @@ ORDER BY metric_date
 
 ## デプロイ戦略
 
-### Cloudflare Pages デプロイ
+### Cloudflare Workers + R2 ホスティング
 
-#### 1. プロジェクト設定
+Evidence.devの静的ファイルをR2に保存し、Workersでサービスします。
 
-**`wrangler.toml`** (Pages用):
-```toml
-name = "github-analytics"
-pages_build_output_dir = "build"
+#### アーキテクチャ
 
-[env.production]
-vars = { NODE_ENV = "production" }
-
-[[env.production.r2_buckets]]
-binding = "DATA_BUCKET"
-bucket_name = "data-lake-raw"
+```
+Evidence Build
+    ↓
+Static Files (HTML/CSS/JS)
+    ↓
+R2 Bucket (github-analytics-static)
+    ↓
+Cloudflare Workers (プロキシ)
+    ↓ (Cache API)
+Users
 ```
 
-#### 2. ビルドコマンド
+#### 利点
 
-**`package.json`**:
-```json
-{
-  "scripts": {
-    "dev": "evidence dev",
-    "build": "evidence build",
-    "deploy": "wrangler pages deploy build"
+| 項目 | Workers + R2 | Workers |
+|-----|-------------|-------|
+| **カスタマイズ** | 完全制御 | 制限あり |
+| **コスト** | 無料枠内 | 無料枠内 |
+| **キャッシング** | Cache API | 自動CDN |
+| **認証** | カスタムロジック | Cloudflare Access |
+| **SSR** | 可能 | 不可 |
+
+### 1. R2バケット作成
+
+```bash
+# 静的ファイル用バケット作成
+wrangler r2 bucket create github-analytics-static
+```
+
+### 2. Workers実装
+
+**`workers/evidence-host/index.ts`**:
+
+```typescript
+export interface Env {
+  STATIC_BUCKET: R2Bucket;
+}
+
+export default {
+  async fetch(request: Request, env: Env): Promise<Response> {
+    const url = new URL(request.url);
+    let pathname = url.pathname;
+
+    // デフォルトファイル
+    if (pathname === '/' || pathname.endsWith('/')) {
+      pathname = pathname + 'index.html';
+    }
+
+    // Cache API チェック
+    const cache = caches.default;
+    let response = await cache.match(request);
+
+    if (!response) {
+      // R2からファイル取得
+      const object = await env.STATIC_BUCKET.get(pathname.slice(1));
+
+      if (!object) {
+        // 404: index.htmlを返す (SPA対応)
+        const indexObject = await env.STATIC_BUCKET.get('index.html');
+        if (!indexObject) {
+          return new Response('Not Found', { status: 404 });
+        }
+
+        response = new Response(indexObject.body, {
+          headers: {
+            'Content-Type': 'text/html',
+            'Cache-Control': 'public, max-age=3600',
+          },
+        });
+      } else {
+        // Content-Type設定
+        const contentType = getContentType(pathname);
+
+        response = new Response(object.body, {
+          headers: {
+            'Content-Type': contentType,
+            'Cache-Control': getCacheControl(pathname),
+            'ETag': object.httpEtag,
+          },
+        });
+      }
+
+      // Cache API に保存
+      await cache.put(request, response.clone());
+    }
+
+    return response;
+  },
+};
+
+function getContentType(pathname: string): string {
+  const ext = pathname.split('.').pop();
+  const types: Record<string, string> = {
+    html: 'text/html',
+    css: 'text/css',
+    js: 'application/javascript',
+    json: 'application/json',
+    png: 'image/png',
+    jpg: 'image/jpeg',
+    svg: 'image/svg+xml',
+    woff: 'font/woff',
+    woff2: 'font/woff2',
+  };
+  return types[ext || ''] || 'application/octet-stream';
+}
+
+function getCacheControl(pathname: string): string {
+  // 静的アセット: 長期キャッシュ
+  if (pathname.includes('/_app/')) {
+    return 'public, max-age=31536000, immutable';
   }
+  // HTML: 短期キャッシュ
+  if (pathname.endsWith('.html')) {
+    return 'public, max-age=3600';
+  }
+  // その他: 中期キャッシュ
+  return 'public, max-age=86400';
 }
 ```
 
-#### 3. GitHub Actions デプロイ
+### 3. wrangler.toml
+
+**`workers/evidence-host/wrangler.toml`**:
+
+```toml
+name = "github-analytics"
+main = "index.ts"
+compatibility_date = "2025-01-01"
+
+[[r2_buckets]]
+binding = "STATIC_BUCKET"
+bucket_name = "github-analytics-static"
+
+[env.production]
+route = "analytics.example.com/*"
+
+[env.development]
+route = "analytics-dev.example.com/*"
+```
+
+### 4. ビルド & デプロイスクリプト
+
+**`scripts/deploy-evidence.sh`**:
+
+```bash
+#!/bin/bash
+set -e
+
+echo "📦 Building Evidence..."
+cd evidence
+npm run build
+
+echo "📤 Uploading to R2..."
+cd build
+
+# R2にアップロード (wranglerまたはaws-cli使用)
+for file in $(find . -type f); do
+  # パスからの相対パスを取得
+  key="${file#./}"
+  
+  # Content-Typeを設定
+  case "$key" in
+    *.html) content_type="text/html" ;;
+    *.css) content_type="text/css" ;;
+    *.js) content_type="application/javascript" ;;
+    *.json) content_type="application/json" ;;
+    *.png) content_type="image/png" ;;
+    *.jpg|*.jpeg) content_type="image/jpeg" ;;
+    *.svg) content_type="image/svg+xml" ;;
+    *) content_type="application/octet-stream" ;;
+  esac
+
+  # wrangler r2 object put
+  wrangler r2 object put github-analytics-static/"$key" \
+    --file="$file" \
+    --content-type="$content_type"
+done
+
+cd ../..
+
+echo "🚀 Deploying Worker..."
+cd workers/evidence-host
+wrangler deploy
+
+echo "✅ Deployment complete!"
+echo "🌐 Access: https://analytics.example.com"
+```
+
+### 5. GitHub Actions
 
 **`.github/workflows/deploy-evidence.yml`**:
+
 ```yaml
-name: Deploy Evidence to Cloudflare Pages
+name: Deploy Evidence to Workers
 
 on:
   push:
     branches: [main]
     paths:
       - 'evidence/**'
+      - 'workers/evidence-host/**'
   workflow_dispatch:
 
 jobs:
@@ -842,7 +1008,7 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install dependencies
+      - name: Install Evidence dependencies
         working-directory: evidence
         run: npm ci
 
@@ -854,35 +1020,129 @@ jobs:
           R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
         run: npm run build
 
-      - name: Deploy to Cloudflare Pages
+      - name: Upload to R2
+        working-directory: evidence/build
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          npm install -g wrangler
+          
+          # すべてのファイルをR2にアップロード
+          find . -type f | while read file; do
+            key="${file#./}"
+            wrangler r2 object put github-analytics-static/"$key" --file="$file"
+          done
+
+      - name: Deploy Worker
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy evidence/build --project-name=github-analytics
+          workingDirectory: 'workers/evidence-host'
+          command: deploy
+
+      - name: Send Slack notification
+        if: always()
+        uses: slackapi/slack-github-action@v2
+        with:
+          webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          payload: |
+            {
+              "text": "${{ job.status == 'success' && '✅' || '❌' }} Evidence デプロイ ${{ job.status }}",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Evidence Dashboard Deployment*\nStatus: ${{ job.status }}\nURL: https://analytics.example.com"
+                  }
+                }
+              ]
+            }
 ```
 
-#### 4. 環境変数設定
+### 6. 認証・アクセス制御
 
-Cloudflare Pages ダッシュボードで設定:
-- `R2_ENDPOINT`
-- `R2_ACCESS_KEY_ID`
-- `R2_SECRET_ACCESS_KEY`
+#### Cloudflare Access
+
+Workers ルートに Cloudflare Access を設定:
+
+```bash
+# Cloudflare ダッシュボードで設定
+Access > Applications > Add an application
+- Application type: Self-hosted
+- Application domain: analytics.example.com
+- Policy: Allow email domain @example.com
+```
+
+#### カスタム認証 (Workers内)
+
+```typescript
+// workers/evidence-host/index.ts に追加
+
+async function authenticate(request: Request): Promise<boolean> {
+  const authHeader = request.headers.get('Authorization');
+  
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return false;
+  }
+
+  const token = authHeader.substring(7);
+  // トークン検証ロジック
+  // 例: JWTトークン、セッション、APIキーなど
+  
+  return true; // 認証成功
+}
+
+export default {
+  async fetch(request: Request, env: Env): Promise<Response> {
+    // 認証チェック
+    const isAuthenticated = await authenticate(request);
+    
+    if (!isAuthenticated) {
+      return new Response('Unauthorized', {
+        status: 401,
+        headers: {
+          'WWW-Authenticate': 'Bearer realm="GitHub Analytics"',
+        },
+      });
+    }
+
+    // 静的ファイルサービス処理...
+  },
+};
+```
 
 ### セキュリティ
 
-#### アクセス制御
+#### CORS設定
 
-**Cloudflare Access** で認証:
-```yaml
-# Evidence サイトを Cloudflare Access で保護
-policies:
-  - name: GitHub Analytics Access
-    decision: allow
-    include:
-      - email_domain: example.com
+```typescript
+const corsHeaders = {
+  'Access-Control-Allow-Origin': 'https://analytics.example.com',
+  'Access-Control-Allow-Methods': 'GET, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+};
+
+// OPTIONSリクエスト処理
+if (request.method === 'OPTIONS') {
+  return new Response(null, { headers: corsHeaders });
+}
 ```
 
+#### CSP (Content Security Policy)
+
+```typescript
+const cspHeaders = {
+  'Content-Security-Policy': [
+    "default-src 'self'",
+    "script-src 'self' 'unsafe-inline'",
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data: https:",
+  ].join('; '),
+};
+```
+
+---
 ---
 
 ## 実装計画
@@ -918,7 +1178,7 @@ policies:
 
 ### Phase 5: デプロイ・運用 (Week 5)
 
-- [ ] Cloudflare Pages デプロイ
+- [ ] Workers + R2 デプロイ
 - [ ] GitHub Actions CI/CD
 - [ ] Cloudflare Access 設定
 - [ ] ドキュメント整備
@@ -942,7 +1202,7 @@ SELECT * FROM read_parquet('s3://data-lake-raw/marts/github/fct_repository_activ
 
 Evidence は静的サイト生成なので、ビルド時にクエリ実行:
 - データ更新頻度に応じて再ビルド (1日1回など)
-- Cloudflare Pages の CDN でキャッシュ
+- Cloudflare Workers の CDN でキャッシュ
 
 ### 3. データサイズ削減
 
@@ -1003,9 +1263,9 @@ npm run build
 - [Evidence GitHub](https://github.com/evidence-dev/evidence)
 - [Component Library](https://docs.evidence.dev/components/)
 
-### Cloudflare Pages
+### Cloudflare Workers
 
-- [Pages Documentation](https://developers.cloudflare.com/pages/)
+- [Workers Documentation](https://developers.cloudflare.com/pages/)
 - [Wrangler CLI](https://developers.cloudflare.com/workers/wrangler/)
 
 ### DuckDB
