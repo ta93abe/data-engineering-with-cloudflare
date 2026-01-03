@@ -839,59 +839,6 @@ for (const page of pages) {
 
 ---
 
-## 実装計画
-
-### Phase 1: 基本実装 (Week 1)
-
-- [x] 設計ドキュメント作成
-- [ ] Scheduler Worker 実装
-  - [ ] GitHub API クライアント
-  - [ ] リポジトリ一覧取得
-  - [ ] Queue メッセージ送信
-  - [ ] KV メタデータ保存
-- [ ] Fetcher Worker 基本実装
-  - [ ] Queue Consumer セットアップ
-  - [ ] Issues 取得
-  - [ ] R2 保存 (JSON形式)
-- [ ] Cron Trigger 設定
-- [ ] ローカルテスト (Miniflare)
-
-### Phase 2: データリソース拡張 (Week 2)
-
-- [ ] Pull Requests 取得
-- [ ] Commits 取得
-- [ ] Stargazers 取得
-- [ ] Releases 取得
-- [ ] Workflow Runs 取得
-- [ ] Reactions 取得
-- [ ] Parquet 変換実装
-
-### Phase 3: エラーハンドリング・最適化 (Week 3)
-
-- [ ] Rate Limit ハンドリング
-- [ ] リトライロジック
-- [ ] Dead Letter Queue 処理
-- [ ] インクリメンタル取得 (KV ベース)
-- [ ] 並列処理最適化
-
-### Phase 4: 監視・運用 (Week 4)
-
-- [ ] Analytics Engine 統合
-- [ ] Slack 通知
-- [ ] ダッシュボード (Grafana/Evidence.dev)
-- [ ] アラート設定
-- [ ] ドキュメント整備
-
-### Phase 5: 本番デプロイ
-
-- [ ] 本番環境セットアップ
-- [ ] Secrets 設定
-- [ ] 段階的ロールアウト
-- [ ] モニタリング
-- [ ] 運用ハンドブック作成
-
----
-
 ## 参考資料
 
 ### Cloudflare ドキュメント

@@ -1213,57 +1213,6 @@ mo.ui.plotly(px.bar(df, x='repository_full_name', y='stars'))
 
 ---
 
-## 実装計画
-
-### Phase 1: ソース・Staging (Week 1)
-
-- [ ] ソース定義 (`sources/github.yml`)
-- [ ] Staging モデル実装
-  - [ ] `stg_github__repositories`
-  - [ ] `stg_github__issues`
-  - [ ] `stg_github__pull_requests`
-  - [ ] `stg_github__commits`
-  - [ ] `stg_github__stargazers`
-  - [ ] `stg_github__releases`
-  - [ ] `stg_github__workflow_runs`
-- [ ] 基本テスト追加
-
-### Phase 2: Marts - Dimensions (Week 2)
-
-- [ ] ディメンションテーブル
-  - [ ] `dim_repositories`
-  - [ ] `dim_contributors`
-- [ ] テスト・ドキュメント
-
-### Phase 3: Marts - Facts (Week 3)
-
-- [ ] ファクトテーブル
-  - [ ] `fct_repository_activity`
-  - [ ] `fct_issue_lifecycle`
-  - [ ] `fct_pr_metrics`
-  - [ ] `fct_commit_stats`
-- [ ] テスト・ドキュメント
-
-### Phase 4: 集計・可視化 (Week 4)
-
-- [ ] 集計テーブル
-  - [ ] `agg_daily_metrics`
-  - [ ] `agg_weekly_metrics`
-  - [ ] `agg_monthly_metrics`
-- [ ] Evidence.dev ダッシュボード
-- [ ] marimo ノートブック
-- [ ] Elementary 統合
-
-### Phase 5: 最適化・運用 (Week 5)
-
-- [ ] インクリメンタルモデル最適化
-- [ ] パフォーマンスチューニング
-- [ ] CI/CD 統合
-- [ ] ドキュメント整備
-- [ ] 運用ハンドブック
-
----
-
 ## 参考資料
 
 ### dbt
