@@ -1,320 +1,680 @@
-# Cloudflare Data Infrastructure Project
+# GitHub Analytics Platform on Cloudflare
 
-このドキュメントは、Cloudflareをベースとしたデータ基盤プロジェクトの開発ガイドです。
+CloudflareをベースとしたGitHubデータ分析プラットフォームの開発ガイド
 
 ## プロジェクト概要
 
-Cloudflareのエッジコンピューティングプラットフォームを活用し、グローバルに分散された低レイテンシ、高スケーラビリティなデータ基盤を構築するプロジェクトです。
+GitHubリポジトリのメトリクスを自動収集・変換・可視化する、フルマネージドなデータ基盤です。
+
+### アーキテクチャ
+
+```
+┌─────────────────┐
+│ GitHub API      │
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────────────────────────────────────────┐
+│ Cloudflare Workers (Data Ingestion)                │
+│  ┌──────────────┐      ┌──────────────────────────┐│
+│  │  Scheduler   │──┬──►│ Queue                    ││
+│  │  (Cron)      │  │   └──────┬───────────────────┘│
+│  └──────────────┘  │          │                     │
+│                    │          ▼                     │
+│                    │   ┌──────────────────────────┐│
+│                    │   │ Fetcher (Consumer x N)   ││
+│                    │   └──────┬───────────────────┘│
+│                    │          │                     │
+│                    ▼          ▼                     │
+│            ┌──────────────────────────────┐        │
+│            │ Workers KV (Metadata Cache)  │        │
+│            └──────────────────────────────┘        │
+└────────────────────────┬────────────────────────────┘
+                         │
+                         ▼
+                ┌─────────────────┐
+                │ R2 (Data Lake)  │
+                │ Raw JSON        │
+                │ Hive Partition  │
+                └────────┬────────┘
+                         │
+                         ▼
+                ┌─────────────────┐
+                │ dbt Transform   │
+                │ Raw → Staging   │
+                │     → Marts     │
+                └────────┬────────┘
+                         │
+                         ▼
+                ┌─────────────────┐
+                │ DuckDB          │
+                │ (Analytics DB)  │
+                └────────┬────────┘
+                         │
+                         ▼
+                ┌─────────────────┐
+                │ Evidence.dev    │
+                │ (BI Dashboard)  │
+                └─────────────────┘
+```
 
 ### 主な特徴
 
-- **エッジファースト**: Cloudflareのグローバルネットワークを活用した低レイテンシ処理
-- **サーバーレス**: 自動スケーリングと運用負荷の削減
-- **コスト最適化**: R2のエグレス無料など、従来のクラウドより低コスト
-- **統合プラットフォーム**: Workers、KV、R2、D1など、統合されたサービス群
+- **エッジファースト**: Workers上でスケーラブルなデータ取り込み
+- **Queue駆動**: 並列処理による高速データ収集
+- **Hiveパーティション**: `year=YYYY/month=MM/day=DD` 形式でR2に効率的に保存
+- **Medallion Architecture**: Raw → Staging → Marts の3層データモデル
+- **コード化**: Infrastructure as Code (Terraform) + Data as Code (dbt)
+- **データ品質**: dbt testsによる品質保証
 
 ## 技術スタック
 
-### コアテクノロジー
+### データ取り込み層
 
-- **Cloudflare Workers**: JavaScriptランタイムでのエッジコンピューティング
-- **TypeScript**: 型安全な開発
-- **Wrangler**: Cloudflare Workers用CLI
+| 技術 | 用途 | 実装状況 |
+|------|------|---------|
+| **Cloudflare Workers** | Scheduler + Fetcher | ✅ 実装済み |
+| **Cloudflare Queues** | メッセージキュー | ✅ 実装済み |
+| **Workers KV** | メタデータキャッシュ | ✅ 実装済み |
+| **R2** | Data Lake (Raw JSON) | ✅ 実装済み |
+| **Analytics Engine** | パイプラインメトリクス | ✅ 実装済み |
+| **TypeScript** | Workers実装言語 | ✅ 実装済み |
+| **Vitest** | ユニットテスト | ✅ 実装済み |
 
-### データストレージ
+### インフラ管理
 
-| サービス | 用途 | 特徴 |
-|---------|------|------|
-| **Workers KV** | キー・バリューストア | 低レイテンシ読み取り、最終的整合性 |
-| **R2** | オブジェクトストレージ | S3互換、エグレス無料 |
-| **D1** | SQLデータベース | SQLite、リレーショナルデータ |
-| **Analytics Engine** | 時系列データ | 高カーディナリティ、SQL分析 |
-| **Durable Objects** | ステートフル処理 | 強整合性、WebSocket対応 |
-| **Queues** | メッセージキュー | 非同期処理、リトライ機能 |
-| **Hyperdrive** | DB接続プール | PostgreSQL高速接続 |
+| 技術 | 用途 | 実装状況 |
+|------|------|---------|
+| **Terraform** | IaC (全リソース定義) | ✅ 実装済み |
+| **Makefile** | タスク自動化 | ✅ 実装済み |
+| **Wrangler** | Workers CLI | ✅ 実装済み |
+
+### データ変換層
+
+| 技術 | 用途 | 実装状況 |
+|------|------|---------|
+| **dbt-core** | データ変換フレームワーク | ✅ 実装済み |
+| **dbt-duckdb** | DuckDBアダプター | ✅ 実装済み |
+| **DuckDB** | 分析用データベース | ✅ 実装済み |
+| **dbt seeds** | 開発用ダミーデータ | ✅ 実装済み |
+
+### 可視化層
+
+| 技術 | 用途 | 実装状況 |
+|------|------|---------|
+| **Evidence.dev** | BIダッシュボード | ✅ 実装済み |
+| **pnpm** | パッケージマネージャー | ✅ 実装済み |
 
 ## プロジェクト構造
 
 ```
 data-engineering-with-cloudflare/
-├── .claude/                    # Claude Code設定
-│   └── CLAUDE.md              # このファイル
-├── docs/                       # ドキュメント
-│   └── architecture-design.md  # アーキテクチャ設計
-├── src/                        # ソースコード（今後追加）
-│   ├── workers/               # Workers実装
-│   ├── schemas/               # D1スキーマ定義
-│   └── utils/                 # ユーティリティ
-├── scripts/                    # スクリプト（今後追加）
-│   ├── deploy/                # デプロイスクリプト
-│   └── migrations/            # D1マイグレーション
-├── tests/                      # テストコード（今後追加）
-├── wrangler.toml              # Wrangler設定（今後追加）
-└── README.md                  # プロジェクト概要
+├── .claude/
+│   └── CLAUDE.md                      # このファイル
+│
+├── docs/
+│   ├── architecture-design.md         # アーキテクチャ詳細設計
+│   ├── github-workers-testing.md      # テスト戦略ガイド
+│   └── SETUP_TODO.md                  # セットアップ手順（手動作業）
+│
+├── workers/
+│   ├── github-scheduler/              # スケジューラーWorker
+│   │   ├── src/index.ts              # メインロジック
+│   │   ├── test/index.test.ts        # Vitestテスト
+│   │   ├── wrangler.toml             # Wrangler設定
+│   │   ├── package.json              # 依存関係
+│   │   └── vitest.config.ts          # テスト設定
+│   │
+│   └── github-fetcher/                # フェッチャーWorker
+│       ├── src/index.ts              # メインロジック
+│       ├── test/index.test.ts        # Vitestテスト
+│       ├── wrangler.toml             # Wrangler設定
+│       ├── package.json              # 依存関係
+│       └── vitest.config.ts          # テスト設定
+│
+├── terraform/
+│   ├── main.tf                        # Cloudflareリソース定義
+│   ├── variables.tf                   # 変数定義
+│   ├── outputs.tf                     # 出力定義
+│   ├── terraform.tfvars.example       # 設定例
+│   └── .terraform.lock.hcl           # ロックファイル
+│
+├── dbt_github/
+│   ├── dbt_project.yml               # dbtプロジェクト設定
+│   ├── packages.yml                   # dbt依存パッケージ
+│   ├── profiles.yml                   # DB接続設定
+│   │
+│   ├── seeds/                         # 開発用シードデータ
+│   │   ├── repositories.csv
+│   │   ├── issues.csv
+│   │   ├── pull_requests.csv
+│   │   ├── commits.csv
+│   │   ├── stargazers.csv
+│   │   ├── releases.csv
+│   │   └── workflow_runs.csv
+│   │
+│   ├── models/
+│   │   ├── staging/                   # Stagingレイヤー（View）
+│   │   │   ├── _sources.yml          # Rawデータソース定義
+│   │   │   ├── stg_github__repositories.sql
+│   │   │   ├── stg_github__issues.sql
+│   │   │   ├── stg_github__pull_requests.sql
+│   │   │   ├── stg_github__commits.sql
+│   │   │   ├── stg_github__stargazers.sql
+│   │   │   ├── stg_github__releases.sql
+│   │   │   └── stg_github__workflow_runs.sql
+│   │   │
+│   │   └── marts/                     # Martsレイヤー（Table）
+│   │       ├── dimensions/
+│   │       │   ├── dim_repositories.sql
+│   │       │   └── dim_contributors.sql
+│   │       │
+│   │       ├── facts/
+│   │       │   ├── fct_repository_activity.sql
+│   │       │   ├── fct_issue_lifecycle.sql
+│   │       │   ├── fct_pr_metrics.sql
+│   │       │   └── fct_commit_stats.sql
+│   │       │
+│   │       └── aggregations/
+│   │           └── agg_daily_metrics.sql  # Incremental
+│   │
+│   └── target/
+│       └── github_analytics.duckdb    # 生成されるDuckDBファイル
+│
+├── evidence_dashboard/
+│   ├── package.json                   # Evidence.dev設定
+│   ├── evidence.config.yaml           # データソース設定
+│   │
+│   └── pages/                         # ダッシュボードページ
+│       ├── index.md                   # 概要ダッシュボード
+│       ├── repositories.md            # リポジトリ分析
+│       ├── issues.md                  # Issue分析
+│       ├── pull-requests.md           # PR分析
+│       ├── contributors.md            # コントリビューター分析
+│       ├── cicd.md                    # CI/CD分析
+│       └── growth.md                  # 成長トレンド分析
+│
+├── .github/
+│   └── workflows/
+│       └── test-workers.yml           # CI/CD: テスト自動実行
+│
+├── Makefile                           # タスク自動化
+└── README.md                          # プロジェクト概要
+```
+
+## クイックスタート
+
+### 1. ローカルでダッシュボードを確認（最速）
+
+```bash
+# dbt: シードデータロード & モデル実行
+cd dbt_github
+dbt deps
+dbt seed
+dbt run
+
+# Evidence.dev: ダッシュボード起動
+cd ../evidence_dashboard
+pnpm install
+pnpm dev
+# → http://localhost:3000 でダッシュボード確認
+```
+
+### 2. Workers開発環境セットアップ
+
+```bash
+# 依存関係インストール
+cd workers/github-scheduler
+npm install
+
+cd ../github-fetcher
+npm install
+
+# テスト実行
+npm test
+
+# ローカル開発サーバー起動
+wrangler dev
+```
+
+### 3. 本番環境デプロイ
+
+詳細は `docs/SETUP_TODO.md` を参照:
+
+```bash
+# 1. API Token取得（Cloudflare + GitHub）
+# 2. Terraform実行
+cd terraform
+terraform init
+terraform apply
+
+# 3. Secrets登録
+cd ../workers/github-scheduler
+wrangler secret put GITHUB_TOKEN
+
+cd ../github-fetcher
+wrangler secret put GITHUB_TOKEN
+
+# 4. Workers デプロイ
+make deploy-prod
 ```
 
 ## 開発ガイドライン
 
-### コーディング規約
+### Workers開発
 
-1. **TypeScript優先**: 型安全性を確保するため、TypeScriptを使用
-2. **エラーハンドリング**: すべての非同期処理で適切なエラーハンドリングを実装
-3. **レスポンス時間**: Workers実行時間は50ms以内を目標（CPU time制限考慮）
-4. **セキュリティ**: APIキーや認証情報は環境変数で管理、コードに埋め込まない
-
-### Workersベストプラクティス
+#### Scheduler Worker の役割
 
 ```typescript
-// ✅ Good: 環境変数からの読み取り
+// 1. GitHub APIから全リポジトリリストを取得
+const repos = await fetchAllRepositories(env.GITHUB_TOKEN);
+
+// 2. 各リポジトリをQueueにバッチ送信
+await env.GITHUB_QUEUE.sendBatch(messages);
+
+// 3. メタデータをKVに保存
+await env.METADATA_KV.put(`last_run`, timestamp);
+
+// 4. Analytics Engineにメトリクス記録
+env.ANALYTICS.writeDataPoint({ ... });
+```
+
+#### Fetcher Worker の役割
+
+```typescript
+// 1. Queueからメッセージ受信
 export default {
-  async fetch(request: Request, env: Env) {
-    const apiKey = env.API_KEY;
-    // ...
+  async queue(batch, env) {
+    for (const message of batch.messages) {
+      // 2. GitHub APIから詳細データ取得
+      const data = await fetchRepositoryDetails(repo);
+
+      // 3. R2にHive形式で保存
+      // data-lake-raw/repositories/year=2025/month=01/day=03/repo_123.json
+      await env.DATA_LAKE_RAW.put(key, JSON.stringify(data));
+    }
   }
 }
+```
 
-// ❌ Bad: ハードコード
-const apiKey = "sk-xxx...";
+#### ベストプラクティス
+
+```typescript
+// ✅ Good: 環境変数から読み取り
+const token = env.GITHUB_TOKEN;
 
 // ✅ Good: 適切なエラーハンドリング
 try {
-  const data = await env.DB.prepare("SELECT * FROM users").all();
-  return new Response(JSON.stringify(data), { status: 200 });
+  const response = await fetch(url, { headers });
+  if (!response.ok) {
+    throw new Error(`GitHub API error: ${response.status}`);
+  }
 } catch (error) {
-  console.error("Database error:", error);
-  return new Response("Internal Server Error", { status: 500 });
+  console.error('Fetch error:', error);
+  message.retry(); // Queue再試行
 }
+
+// ✅ Good: レート制限対応
+const remaining = response.headers.get('X-RateLimit-Remaining');
+if (parseInt(remaining) < 100) {
+  await env.METADATA_KV.put('rate_limit_warning', 'true');
+}
+
+// ✅ Good: Hiveパーティション
+const date = new Date();
+const key = `repositories/year=${date.getFullYear()}/month=${String(date.getMonth() + 1).padStart(2, '0')}/day=${String(date.getDate()).padStart(2, '0')}/repo_${id}.json`;
 ```
 
-### ストレージ選択の判断基準
+### テスト戦略
 
-```typescript
-// KV: 頻繁な読み取り、更新頻度が低い
-await env.KV.put("config:theme", "dark");
-const theme = await env.KV.get("config:theme");
-
-// D1: リレーショナルデータ、トランザクション
-const result = await env.DB.prepare(
-  "INSERT INTO users (name, email) VALUES (?, ?)"
-).bind(name, email).run();
-
-// R2: 大容量ファイル
-await env.BUCKET.put("uploads/file.pdf", fileData);
-
-// Analytics Engine: メトリクス、イベント
-env.ANALYTICS.writeDataPoint({
-  blobs: ["user_action", userId],
-  doubles: [responseTime],
-  indexes: ["action_timestamp"]
-});
-```
-
-### パフォーマンス考慮事項
-
-1. **KVのキャッシュ活用**
-   - 頻繁にアクセスするデータはKVでキャッシュ
-   - TTL（Time To Live）を適切に設定
-
-2. **バッチ処理**
-   - Queuesを使った非同期処理
-   - Cron Triggersでの定期実行
-
-3. **データローカリティ**
-   - エッジで完結できる処理は最大限エッジで実行
-   - 外部API呼び出しは最小限に
-
-## Cloudflare固有の考慮事項
-
-### 制限値
-
-| リソース | 制限 | 備考 |
-|---------|------|------|
-| Workers CPU時間 | 50ms（Free）/ 30秒（Paid） | CPU集約的な処理に注意 |
-| Workers メモリ | 128MB | 大きなオブジェクトの処理に注意 |
-| KV キーサイズ | 512バイト | |
-| KV バリューサイズ | 25MB | |
-| D1 データベースサイズ | 10GB（有料プラン） | |
-| R2 オブジェクトサイズ | 5TB | マルチパートアップロード使用 |
-
-### コスト最適化
-
-1. **R2の活用**: S3からのマイグレーションでエグレス料金削減
-2. **KVの書き込み制限**: 書き込みは有料なので、更新頻度を最小化
-3. **Workers実行時間**: 処理を効率化してCPU時間を削減
-4. **Analytics Engineのサンプリング**: 必要に応じてデータをサンプリング
-
-## デプロイメント
-
-### Wranglerを使ったデプロイ
+#### テスト実行
 
 ```bash
-# 開発環境での実行
-wrangler dev
+# 全テスト実行
+npm test
 
-# プロダクションへのデプロイ
-wrangler deploy
+# watchモード
+npm run test:watch
 
-# 環境変数の設定
-wrangler secret put API_KEY
-
-# D1マイグレーション
-wrangler d1 migrations apply <DATABASE_NAME>
+# カバレッジ
+npm run test:coverage
 ```
 
-### CI/CDパイプライン
-
-GitHub Actionsを使用した自動デプロイ（推奨）:
-
-```yaml
-name: Deploy to Cloudflare Workers
-
-on:
-  push:
-    branches:
-      - main
-
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-```
-
-## テスト戦略
-
-1. **ユニットテスト**: Vitest または Jest
-2. **統合テスト**: Miniflare（ローカルWorkersシミュレータ）
-3. **E2Eテスト**: 本番環境でのスモークテスト
+#### テスト例
 
 ```typescript
-// テスト例（Vitest）
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 
-describe('User API', () => {
-  it('should return user data', async () => {
-    const response = await handleRequest(mockRequest);
+describe('GitHub Scheduler', () => {
+  it('should fetch repositories and send to queue', async () => {
+    const mockEnv = createMockEnv();
+    const request = new Request('https://example.com/trigger');
+
+    const response = await worker.fetch(request, mockEnv);
+
     expect(response.status).toBe(200);
+    expect(mockEnv.GITHUB_QUEUE.sendBatch).toHaveBeenCalled();
   });
 });
 ```
 
-## セキュリティ
+カバレッジ目標:
+- **Lines**: 80%+
+- **Functions**: 80%+
+- **Branches**: 75%+
 
-### 認証・認可
+### dbt開発
 
-- **API認証**: Workers SecretsでAPIキー管理
-- **ユーザー認証**: Cloudflare Access または外部IdP連携
-- **CORS**: 適切なCORSヘッダー設定
+#### プロジェクト構成
 
-### データ保護
+1. **Staging Layer** (View)
+   - Rawデータのクレンジング・正規化
+   - 重複排除（`qualify row_number()`）
+   - カラムリネーム
 
-- **暗号化**: R2はデフォルトで保存時暗号化
-- **アクセス制御**: Service BindingsでWorkers間通信を制限
-- **監査ログ**: Analytics Engineで重要なイベントを記録
+2. **Marts Layer** (Table)
+   - **Dimensions**: マスターテーブル（リポジトリ、コントリビューター）
+   - **Facts**: トランザクションテーブル（アクティビティ、Issue、PR、コミット）
+   - **Aggregations**: 集計テーブル（日次メトリクス）
 
-## 監視とオブザーバビリティ
+#### 開発ワークフロー
 
-### メトリクス
+```bash
+# モデル作成・変更後
+dbt run --select stg_github__new_model
 
-- **Workers Analytics**: リクエスト数、レイテンシ、エラー率
-- **Analytics Engine**: カスタムメトリクスの記録
-- **外部ツール連携**: Grafana、Datadog、Sentryなど
+# テスト実行
+dbt test --select stg_github__new_model
 
-### ログ管理
-
-```typescript
-// 構造化ログの推奨
-console.log(JSON.stringify({
-  level: "info",
-  message: "User created",
-  userId: userId,
-  timestamp: new Date().toISOString()
-}));
+# ドキュメント生成
+dbt docs generate
+dbt docs serve
 ```
 
-### アラート設定
+#### モデル例
 
-- エラー率が閾値を超えた場合
-- レスポンス時間の異常
-- ストレージ容量の警告
+```sql
+-- models/staging/stg_github__repositories.sql
+with source as (
+    select * from {{ source('github_raw', 'repositories') }}
+),
+renamed as (
+    select
+        id as repository_id,
+        full_name as repository_full_name,
+        -- ... カラムリネーム
+    from source
+),
+deduped as (
+    select *
+    from renamed
+    qualify row_number() over (
+        partition by repository_id
+        order by extracted_at desc
+    ) = 1
+)
+select * from deduped
+```
+
+### Evidence.dev開発
+
+#### ページ作成
+
+```markdown
+---
+title: New Analysis Page
+---
+
+# New Analysis
+
+\```sql repos_summary
+select
+  count(*) as total_repos,
+  avg(current_stars) as avg_stars
+from marts.dim_repositories
+\```
+
+<BigValue
+  data={repos_summary}
+  value=total_repos
+  title="Total Repositories"
+/>
+
+<LineChart
+  data={daily_trend}
+  x=date
+  y=stars
+  title="Star Growth"
+/>
+```
+
+#### 開発サーバー
+
+```bash
+cd evidence_dashboard
+pnpm dev  # http://localhost:3000
+
+# ビルド
+pnpm build
+```
+
+## Cloudflare固有の考慮事項
+
+### リソース制限
+
+| リソース | 制限値 | 本プロジェクトでの対策 |
+|---------|--------|---------------------|
+| Workers CPU時間 | 50ms (Free) / 30秒 (Paid) | Queue使用で処理分散 |
+| Workers メモリ | 128MB | ページネーション処理 |
+| Queue メッセージサイズ | 128KB | リポジトリIDのみ送信 |
+| R2 オブジェクトサイズ | 5TB | 個別JSONファイル保存 |
+| KV 読み取り | 無制限（低レイテンシ） | メタデータキャッシュ |
+| KV 書き込み | 課金対象 | 最小限の更新頻度 |
+
+### コスト最適化
+
+1. **R2のエグレス無料**: S3比較で大幅コスト削減
+2. **Queue活用**: Workers実行時間を最小化
+3. **KV読み取り重視**: キャッシュで外部API呼び出し削減
+4. **Hiveパーティション**: 効率的なデータスキャン
+
+## Makefileコマンド
+
+```bash
+# セットアップ
+make setup              # 初期セットアップ
+make install            # 依存関係インストール
+
+# テスト
+make test               # 全Worker テスト
+make test-scheduler     # Schedulerテスト
+make test-fetcher       # Fetcherテスト
+make test-coverage      # カバレッジ
+
+# Terraform
+make tf-init            # Terraform初期化
+make tf-plan            # 実行計画確認
+make tf-apply           # リソース作成
+make tf-destroy         # リソース削除
+
+# デプロイ
+make deploy-dev         # 開発環境デプロイ
+make deploy-prod        # 本番環境デプロイ
+make deploy-scheduler   # Schedulerのみ
+make deploy-fetcher     # Fetcherのみ
+
+# dbt
+make dbt-run            # dbtモデル実行
+make dbt-test           # dbtテスト
+
+# 監視
+make logs-scheduler     # Schedulerログ
+make logs-fetcher       # Fetcherログ
+make tail-scheduler     # リアルタイムログ
+
+# クリーンアップ
+make clean              # ビルドアーティファクト削除
+```
 
 ## トラブルシューティング
 
-### よくある問題
+### Workers CPU時間超過
 
-1. **Workers CPU時間超過**
-   - 解決策: 処理を分割、Queuesで非同期化
+**症状**: `Error: CPU time limit exceeded`
 
-2. **KV整合性の問題**
-   - 解決策: 最終的整合性を考慮した設計、D1への移行検討
+**解決策**:
+```typescript
+// ❌ Bad: 同期的な大量処理
+for (const repo of repos) {
+  await processRepository(repo);
+}
 
-3. **D1接続エラー**
-   - 解決策: リトライロジック実装、エラーハンドリング強化
+// ✅ Good: Queue経由で並列処理
+await env.GITHUB_QUEUE.sendBatch(
+  repos.map(repo => ({ body: { repo } }))
+);
+```
+
+### GitHub API Rate Limit
+
+**症状**: `403 rate limit exceeded`
+
+**解決策**:
+```typescript
+// Personal Access Tokenを使用（5000 req/hour）
+// wrangler secret put GITHUB_TOKEN
+
+// レート制限チェック
+const remaining = response.headers.get('X-RateLimit-Remaining');
+if (parseInt(remaining) < 100) {
+  console.warn('Rate limit approaching');
+}
+```
+
+### dbt DuckDB接続エラー
+
+**症状**: `DuckDB database not found`
+
+**解決策**:
+```bash
+# dbtを先に実行してDBを生成
+cd dbt_github
+dbt seed
+dbt run
+
+# Evidence.devはそのDBを参照
+cd ../evidence_dashboard
+pnpm dev
+```
+
+### R2 Access Denied
+
+**症状**: `R2 bucket access denied`
+
+**解決策**:
+```bash
+# Terraform出力のバケットIDを確認
+terraform output
+
+# wrangler.tomlのbucket_nameを更新
+[[r2_buckets]]
+binding = "DATA_LAKE_RAW"
+bucket_name = "data-lake-raw"  # Terraform出力値
+```
+
+## プロジェクト進捗状況
+
+### ✅ Phase 1: データ取り込み基盤（完了）
+
+- [x] アーキテクチャ設計 (`docs/architecture-design.md`)
+- [x] Scheduler Worker実装
+- [x] Fetcher Worker実装
+- [x] Queue駆動アーキテクチャ
+- [x] R2 Hiveパーティション
+- [x] Workers KVメタデータ管理
+- [x] Analytics Engine統合
+- [x] Vitestテスト実装（80%+ coverage）
+- [x] Terraform IaC
+- [x] Makefile自動化
+- [x] CI/CD (GitHub Actions)
+
+### ✅ Phase 2: データ変換（完了）
+
+- [x] dbtプロジェクトセットアップ
+- [x] DuckDB統合
+- [x] Seedデータ作成（7種類）
+- [x] Stagingモデル実装（7モデル）
+- [x] Dimensionモデル実装（2モデル）
+- [x] Factモデル実装（4モデル）
+- [x] Incrementalモデル実装（1モデル）
+- [x] dbt testsによる品質保証
+
+### ✅ Phase 3: データ可視化（完了）
+
+- [x] Evidence.devセットアップ
+- [x] DuckDB接続設定
+- [x] ダッシュボード実装（7ページ）
+  - [x] 概要ダッシュボード
+  - [x] リポジトリ分析
+  - [x] Issue分析
+  - [x] PR分析
+  - [x] コントリビューター分析
+  - [x] CI/CD分析
+  - [x] 成長トレンド分析
+
+### 🔲 Phase 4: 本番運用（未着手）
+
+- [ ] Cloudflare本番デプロイ
+- [ ] 実データ取得テスト
+- [ ] アラート設定
+- [ ] コスト監視
+
+### 🔲 Phase 5: 拡張機能（未着手）
+
+- [ ] Elementary データ品質監視
+- [ ] Durable Objects（リアルタイム処理）
+- [ ] Hyperdrive（外部DB連携）
+- [ ] 高度な分析機能
 
 ## 参考リソース
 
 ### 公式ドキュメント
 
-- [Cloudflare Workers Docs](https://developers.cloudflare.com/workers/)
-- [Wrangler CLI](https://developers.cloudflare.com/workers/wrangler/)
-- [Workers KV](https://developers.cloudflare.com/kv/)
+- [Cloudflare Workers](https://developers.cloudflare.com/workers/)
+- [Cloudflare Queues](https://developers.cloudflare.com/queues/)
 - [R2 Storage](https://developers.cloudflare.com/r2/)
-- [D1 Database](https://developers.cloudflare.com/d1/)
+- [Workers KV](https://developers.cloudflare.com/kv/)
 - [Analytics Engine](https://developers.cloudflare.com/analytics/analytics-engine/)
+- [Wrangler CLI](https://developers.cloudflare.com/workers/wrangler/)
 
-### コミュニティ
+### データツール
 
-- [Cloudflare Developers Discord](https://discord.gg/cloudflaredev)
-- [Cloudflare Community](https://community.cloudflare.com/)
-- [GitHub - cloudflare/workers-sdk](https://github.com/cloudflare/workers-sdk)
+- [dbt Documentation](https://docs.getdbt.com/)
+- [dbt-duckdb](https://github.com/duckdb/dbt-duckdb)
+- [DuckDB](https://duckdb.org/)
+- [Evidence.dev](https://evidence.dev/)
 
-### ブログ・チュートリアル
+### このプロジェクト
 
-- [Cloudflare Blog](https://blog.cloudflare.com/)
-- [Workers Examples](https://developers.cloudflare.com/workers/examples/)
-
-## プロジェクトロードマップ
-
-### Phase 1: 基盤構築（現在）
-- [x] アーキテクチャ設計ドキュメント作成
-- [ ] Wrangler環境セットアップ
-- [ ] 基本的なWorkers実装
-- [ ] D1スキーマ設計
-
-### Phase 2: コア機能実装
-- [ ] データ取り込みパイプライン
-- [ ] ストレージ層の実装
-- [ ] Analytics Engine統合
-- [ ] 基本的なダッシュボード
-- [x] dbtプロジェクトセットアップ
-- [x] Elementaryデータ品質監視統合
-
-### Phase 3: 拡張機能
-- [ ] リアルタイム処理（Durable Objects）
-- [ ] 高度な分析機能
-- [ ] 外部システム連携（Hyperdrive）
-- [ ] 監視・アラート体制
-
-### Phase 4: 最適化
-- [ ] パフォーマンスチューニング
-- [ ] コスト最適化
-- [ ] セキュリティ強化
-- [ ] ドキュメント整備
+- `docs/architecture-design.md` - 詳細設計
+- `docs/github-workers-testing.md` - テスト戦略
+- `docs/SETUP_TODO.md` - セットアップ手順
+- `README.md` - プロジェクト概要
 
 ## 貢献ガイドライン
 
-1. **ブランチ戦略**: `main` ブランチは常にデプロイ可能な状態を維持
-2. **コミットメッセージ**: Conventional Commits形式を推奨
-3. **プルリクエスト**: レビュー必須、テスト通過が必要
-4. **ドキュメント**: 新機能追加時は必ずドキュメント更新
-
-## ライセンス
-
-TBD
+1. **ブランチ戦略**: feature/機能名 でブランチ作成
+2. **コミットメッセージ**: Conventional Commits形式
+   ```
+   feat: Add new dashboard page
+   fix: Resolve rate limit handling
+   test: Add Fetcher Worker tests
+   docs: Update setup guide
+   ```
+3. **テスト**: 新機能は必ずテスト追加
+4. **ドキュメント**: 重要な変更はCLAUDE.md更新
 
 ---
 
-最終更新: 2025-12-25
+**最終更新**: 2026-01-03
+**プロジェクトステータス**: Phase 1-3 完了、Phase 4 準備中
