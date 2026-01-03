@@ -1,0 +1,23 @@
+# Copy this file to ~/.dbt/profiles.yml and configure
+
+github_analytics:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: './target/github_analytics.duckdb'
+      schema: main
+      threads: 4
+
+    prod:
+      type: duckdb
+      path: './target/github_analytics_prod.duckdb'
+      schema: main
+      threads: 8
+      # For production with R2, install httpfs extension:
+      # extensions: ['httpfs']
+      # settings:
+      #   s3_region: 'auto'
+      #   s3_endpoint: 'https://<account-id>.r2.cloudflarestorage.com'
+      #   s3_access_key_id: '{{ env_var("R2_ACCESS_KEY_ID") }}'
+      #   s3_secret_access_key: '{{ env_var("R2_SECRET_ACCESS_KEY") }}'

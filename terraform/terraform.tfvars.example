@@ -1,0 +1,22 @@
+# Copy this file to terraform.tfvars and fill in your values
+# DO NOT commit terraform.tfvars to version control
+
+# Required: Your Cloudflare Account ID
+# Find at: Cloudflare Dashboard → Workers & Pages → right sidebar
+cloudflare_account_id = "your-account-id-here"
+
+# Optional: Cloudflare Zone ID (only needed if enable_worker_routes = true)
+# Find at: Cloudflare Dashboard → select domain → Overview → API section
+# cloudflare_zone_id = "your-zone-id-here"
+
+# Optional: Domain for worker routes
+# domain = "example.com"
+
+# Environment: development, staging, or production
+environment = "production"
+
+# Enable HTTP routes for Workers (requires zone_id and domain)
+enable_worker_routes = false
+
+# R2 bucket location (WNAM, ENAM, WEUR, EEUR, APAC)
+r2_location = "APAC"

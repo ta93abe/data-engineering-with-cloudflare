@@ -1,0 +1,138 @@
+name: Deploy GitHub Workers
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'workers/**'
+      - '.github/workflows/deploy-workers.yml'
+  workflow_dispatch:
+
+jobs:
+  deploy-scheduler:
+    name: Deploy Scheduler Worker
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: 'workers/github-scheduler/package.json'
+
+      - name: Install dependencies
+        working-directory: workers/github-scheduler
+        run: npm ci
+
+      - name: Deploy to Cloudflare Workers
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: 'workers/github-scheduler'
+          command: deploy
+          secrets: |
+            GITHUB_TOKEN
+
+      - name: Send success notification
+        if: success()
+        uses: slackapi/slack-github-action@v2
+        with:
+          webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          payload: |
+            {
+              "text": "✅ GitHub Scheduler Worker deployed successfully",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*GitHub Scheduler Worker Deployment*\n✅ Status: Success\n🌐 Worker: github-scheduler\n📦 Commit: ${{ github.sha }}"
+                  }
+                }
+              ]
+            }
+
+      - name: Send failure notification
+        if: failure()
+        uses: slackapi/slack-github-action@v2
+        with:
+          webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          payload: |
+            {
+              "text": "❌ GitHub Scheduler Worker deployment failed",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*GitHub Scheduler Worker Deployment*\n❌ Status: Failed\n🌐 Worker: github-scheduler\n📦 Commit: ${{ github.sha }}\n🔗 <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Logs>"
+                  }
+                }
+              ]
+            }
+
+  deploy-fetcher:
+    name: Deploy Fetcher Worker
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: 'workers/github-fetcher/package.json'
+
+      - name: Install dependencies
+        working-directory: workers/github-fetcher
+        run: npm ci
+
+      - name: Deploy to Cloudflare Workers
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: 'workers/github-fetcher'
+          command: deploy
+          secrets: |
+            GITHUB_TOKEN
+
+      - name: Send success notification
+        if: success()
+        uses: slackapi/slack-github-action@v2
+        with:
+          webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          payload: |
+            {
+              "text": "✅ GitHub Fetcher Worker deployed successfully",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*GitHub Fetcher Worker Deployment*\n✅ Status: Success\n🌐 Worker: github-fetcher\n📦 Commit: ${{ github.sha }}"
+                  }
+                }
+              ]
+            }
+
+      - name: Send failure notification
+        if: failure()
+        uses: slackapi/slack-github-action@v2
+        with:
+          webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          payload: |
+            {
+              "text": "❌ GitHub Fetcher Worker deployment failed",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*GitHub Fetcher Worker Deployment*\n❌ Status: Failed\n🌐 Worker: github-fetcher\n📦 Commit: ${{ github.sha }}\n🔗 <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Logs>"
+                  }
+                }
+              ]
+            }

@@ -1,0 +1,72 @@
+name: 'github_analytics'
+version: '1.0.0'
+config-version: 2
+
+# Project profile (references profiles.yml)
+profile: 'github_analytics'
+
+# Model paths
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+# Target directory for compiled SQL
+target-path: "target"
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+# Model configurations
+models:
+  github_analytics:
+    # Staging models
+    staging:
+      +materialized: view
+      +schema: staging
+      +tags: ["staging"]
+
+    # Marts models
+    marts:
+      +materialized: table
+      +schema: marts
+      +tags: ["marts"]
+
+      dimensions:
+        +tags: ["dimension"]
+
+      facts:
+        +tags: ["fact"]
+
+      aggregations:
+        +materialized: incremental
+        +on_schema_change: "append_new_columns"
+        +tags: ["aggregation"]
+
+# Seeds configuration
+seeds:
+  github_analytics:
+    +schema: raw
+    +tags: ["seed"]
+
+    # Quote column names to preserve casing
+    +quote_columns: false
+
+# Tests
+tests:
+  github_analytics:
+    +store_failures: true
+    +schema: test_results
+
+# Snapshots
+snapshots:
+  github_analytics:
+    +target_schema: snapshots
+
+# Variables
+vars:
+  # Date range for incremental models
+  start_date: '2025-01-01'
+  end_date: '2025-12-31'
