@@ -1,0 +1,12 @@
+datasources:
+  github_analytics:
+    type: duckdb
+    filename: ../dbt_github/target/github_analytics.duckdb
+
+deployment:
+  core:
+    build:
+      strict: true
+
+components:
+  tailwind: true

@@ -1,0 +1,19 @@
+{
+  "name": "github-analytics-dashboard",
+  "version": "1.0.0",
+  "description": "GitHub Analytics Dashboard powered by Evidence.dev",
+  "scripts": {
+    "dev": "evidence dev",
+    "build": "evidence build:strict",
+    "preview": "evidence preview",
+    "sources": "evidence sources"
+  },
+  "dependencies": {
+    "@evidence-dev/core": "^27.0.0",
+    "@evidence-dev/duckdb": "^1.0.0",
+    "@evidence-dev/tailwind": "^2.0.0"
+  },
+  "devDependencies": {
+    "@evidence-dev/cli": "^4.0.0"
+  }
+}
