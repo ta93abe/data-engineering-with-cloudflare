@@ -1,0 +1,206 @@
+name: GitHub Data Fetch
+
+on:
+  # 毎日午前2時(UTC)に実行
+  schedule:
+    - cron: '0 2 * * *'
+
+  # 手動実行も可能
+  workflow_dispatch:
+    inputs:
+      owner:
+        description: 'GitHub owner/organization (空欄で全リポジトリ)'
+        required: false
+        default: ''
+      repos:
+        description: 'リポジトリ名(カンマ区切り、空欄で全リポジトリ)'
+        required: false
+        default: ''
+
+jobs:
+  fetch-github-data:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: |
+          uv sync
+          # dlt GitHub extras をインストール
+          uv pip install 'dlt[filesystem,github]'
+
+      - name: Run GitHub data pipeline
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
+          R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
+          GITHUB_OWNER: ${{ github.event.inputs.owner }}
+          GITHUB_REPOS: ${{ github.event.inputs.repos }}
+        run: |
+          echo "🐙 GitHub データ取得パイプラインを開始..."
+          echo "================================================"
+
+          if [ -n "$GITHUB_OWNER" ]; then
+            echo "📌 対象オーナー: $GITHUB_OWNER"
+          else
+            echo "📌 対象: 認証ユーザーの全リポジトリ"
+          fi
+
+          if [ -n "$GITHUB_REPOS" ]; then
+            echo "📌 対象リポジトリ: $GITHUB_REPOS"
+          else
+            echo "📌 取得範囲: 全リポジトリ"
+          fi
+
+          echo "================================================"
+
+          uv run python scripts/github_pipeline.py
+
+      - name: Send Slack notification on success
+        if: success()
+        uses: slackapi/slack-github-action@v2
+        with:
+          webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          payload: |
+            {
+              "text": "✅ GitHub データ取得パイプライン成功",
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "✅ GitHub Data Fetch - Success"
+                  }
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Workflow:*\n${{ github.workflow }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Status:*\n成功"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*実行時刻:*\n${{ github.event.repository.updated_at }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*トリガー:*\n${{ github.event_name }}"
+                    }
+                  ]
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "GitHubの全リポジトリデータがR2 Bronze Layerに保存されました"
+                  }
+                },
+                {
+                  "type": "actions",
+                  "elements": [
+                    {
+                      "type": "button",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "📊 ワークフロー実行を表示"
+                      },
+                      "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+                    }
+                  ]
+                }
+              ]
+            }
+        continue-on-error: true
+
+      - name: Send Slack notification on failure
+        if: failure()
+        uses: slackapi/slack-github-action@v2
+        with:
+          webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          payload: |
+            {
+              "text": "❌ GitHub データ取得パイプライン失敗",
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "❌ GitHub Data Fetch - Failed"
+                  }
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Workflow:*\n${{ github.workflow }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Status:*\n失敗"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*実行時刻:*\n${{ github.event.repository.updated_at }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*トリガー:*\n${{ github.event_name }}"
+                    }
+                  ]
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "⚠️ パイプライン実行中にエラーが発生しました。ログを確認してください。"
+                  }
+                },
+                {
+                  "type": "actions",
+                  "elements": [
+                    {
+                      "type": "button",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "🔍 ログを確認"
+                      },
+                      "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+                      "style": "danger"
+                    }
+                  ]
+                }
+              ]
+            }
+        continue-on-error: true
+
+      - name: Upload pipeline logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: github-pipeline-logs-${{ github.run_id }}
+          path: |
+            .dlt/
+            *.log
+          retention-days: 7
+          if-no-files-found: ignore

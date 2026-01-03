@@ -13,6 +13,7 @@ Cloudflareのエッジコンピューティングプラットフォームを活�
 - [Iceberg実装ガイド](./docs/iceberg-implementation.md) - Apache Iceberg on Cloudflare（PyIceberg + R2 Data Catalog）
 - **[🚀 Icebergセットアップガイド](./docs/iceberg-setup-guide.md)** - R2 Data Catalogを使った実践的なセットアップ手順（ベータ版対応）
 - **[💰 コスト分析](./docs/cost-analysis.md)** - 固定費・変動費の詳細試算とコスト最適化戦略
+- **[🐙 GitHubデータパイプライン](./docs/github-data-pipeline.md)** - 全リポジトリのメトリクス・アクティビティ自動収集（dlt統合）
 - [情報源リンク集](./docs/resources.md) - 公式ドキュメント、ブログ、コミュニティリソース
 
 ## 🚀 Cloudflare データサービス
