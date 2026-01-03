@@ -1,0 +1,18 @@
+{
+  "name": "github-fetcher",
+  "version": "1.0.0",
+  "description": "Cloudflare Worker to fetch GitHub data from Queue and save to R2",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
+  },
+  "dependencies": {
+    "@cloudflare/workers-types": "^4.20241218.0",
+    "apache-arrow": "^18.1.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2",
+    "wrangler": "^3.100.0"
+  }
+}

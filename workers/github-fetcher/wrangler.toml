@@ -1,0 +1,25 @@
+name = "github-fetcher"
+main = "src/index.ts"
+compatibility_date = "2025-01-03"
+workers_dev = true
+
+# Queue consumer configuration
+[[queues.consumers]]
+queue = "github-fetch-queue"
+max_batch_size = 10
+max_batch_timeout = 30
+max_retries = 3
+dead_letter_queue = "github-fetch-dlq"
+
+# R2 bucket binding for storing fetched data
+[[r2_buckets]]
+binding = "RAW_BUCKET"
+bucket_name = "data-lake-raw"
+preview_bucket_name = "data-lake-raw-preview"  # Optional: separate bucket for testing
+
+# Analytics Engine binding for monitoring
+[analytics_engine_datasets]
+binding = "ANALYTICS"
+
+# Environment variables (secrets set via wrangler secret)
+# GITHUB_TOKEN - Set via: wrangler secret put GITHUB_TOKEN

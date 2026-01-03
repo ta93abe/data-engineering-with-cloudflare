@@ -1,0 +1,30 @@
+name = "github-scheduler"
+main = "src/index.ts"
+compatibility_date = "2025-01-03"
+workers_dev = true
+
+# Cron trigger: Run daily at 2:00 AM UTC (11:00 AM JST)
+[triggers]
+crons = ["0 2 * * *"]
+
+# Queue binding to send repository fetch tasks
+[[queues.producers]]
+queue = "github-fetch-queue"
+binding = "GITHUB_QUEUE"
+
+# KV binding for storing execution metadata
+[[kv_namespaces]]
+binding = "METADATA_KV"
+id = "preview_id"  # Replace with actual KV namespace ID after creation
+
+# Production KV namespace
+[[env.production.kv_namespaces]]
+binding = "METADATA_KV"
+id = "production_id"  # Replace with actual production KV namespace ID
+
+# Analytics Engine binding for monitoring
+[analytics_engine_datasets]
+binding = "ANALYTICS"
+
+# Environment variables (secrets set via wrangler secret)
+# GITHUB_TOKEN - Set via: wrangler secret put GITHUB_TOKEN

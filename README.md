@@ -18,6 +18,7 @@ Cloudflareのエッジコンピューティングプラットフォームを活�
 - **[🔄 GitHub dbt変換設計](./docs/github-dbt-design.md)** - dbtでRaw→Staging→Marts変換、メトリクス・KPI定義（設計フェーズ）
 - **[📊 GitHub Evidence.dev可視化設計](./docs/github-evidence-design.md)** - Evidence.devダッシュボード、Workers+R2デプロイ（設計フェーズ）
 - **[🎯 GitHub実装計画](./docs/github-implementation-plan.md)** - 6週間MVP実装ロードマップ、フェーズ別タスク（実装開始）
+- **[🛠️ GitHub Workersセットアップガイド](./docs/github-workers-setup.md)** - Workers実装のセットアップとデプロイ手順
 - [情報源リンク集](./docs/resources.md) - 公式ドキュメント、ブログ、コミュニティリソース
 
 ## 🚀 Cloudflare データサービス
