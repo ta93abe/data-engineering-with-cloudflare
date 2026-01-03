@@ -1,0 +1,16 @@
+id,tag_name,name,draft,prerelease,created_at,published_at,author_login,body,_extracted_at,_execution_id,_repository_full_name
+100001,v1.0.0,Version 1.0.0,false,false,2024-02-01T10:00:00Z,2024-02-01T10:00:00Z,johndoe,Initial stable release with core features,2025-01-03T02:00:00Z,exec-20250103-001,johndoe/awesome-project
+100002,v1.1.0,Version 1.1.0,false,false,2024-04-15T14:30:00Z,2024-04-15T14:30:00Z,johndoe,Added CI/CD support and bug fixes,2025-01-03T02:00:00Z,exec-20250103-001,johndoe/awesome-project
+100003,v1.2.0,Version 1.2.0,false,false,2024-07-20T09:15:00Z,2024-07-20T09:15:00Z,johndoe,Performance improvements and new features,2025-01-03T02:00:00Z,exec-20250103-001,johndoe/awesome-project
+100004,v2.0.0-beta,Version 2.0.0 Beta,false,true,2024-12-10T16:00:00Z,2024-12-10T16:00:00Z,johndoe,Beta release for v2 with breaking changes,2025-01-03T02:00:00Z,exec-20250103-001,johndoe/awesome-project
+200001,v2.0.0,Version 2.0.0,false,false,2023-09-15T11:20:00Z,2023-09-15T11:20:00Z,developer1,Major release with authentication support,2025-01-03T02:00:00Z,exec-20250103-001,acmecorp/enterprise-api
+200002,v2.1.0,Version 2.1.0,false,false,2023-12-05T14:45:00Z,2023-12-05T14:45:00Z,developer2,Added new endpoints and performance improvements,2025-01-03T02:00:00Z,exec-20250103-001,acmecorp/enterprise-api
+200003,v2.2.0,Version 2.2.0,false,false,2024-06-18T10:30:00Z,2024-06-18T10:30:00Z,developer1,Database optimization and bug fixes,2025-01-03T02:00:00Z,exec-20250103-001,acmecorp/enterprise-api
+200004,v3.0.0-rc1,Version 3.0.0 RC1,false,true,2024-11-25T15:00:00Z,2024-11-25T15:00:00Z,developer2,Release candidate for v3,2025-01-03T02:00:00Z,exec-20250103-001,acmecorp/enterprise-api
+300001,v0.1.0,Version 0.1.0,false,false,2024-04-01T12:00:00Z,2024-04-01T12:00:00Z,janedoe,Initial release with basic dbt models,2025-01-03T02:00:00Z,exec-20250103-001,janedoe/data-pipeline
+300002,v0.2.0,Version 0.2.0,false,false,2024-08-10T09:30:00Z,2024-08-10T09:30:00Z,janedoe,Added data quality tests and documentation,2025-01-03T02:00:00Z,exec-20250103-001,janedoe/data-pipeline
+400001,v1.0.0,Version 1.0.0,false,false,2024-09-01T10:00:00Z,2024-09-01T10:00:00Z,developer4,First production release,2025-01-03T02:00:00Z,exec-20250103-001,techcorp/frontend-app
+400002,v1.1.0,Version 1.1.0,false,false,2024-12-01T14:20:00Z,2024-12-01T14:20:00Z,developer4,Added dark mode support (beta),2025-01-03T02:00:00Z,exec-20250103-001,techcorp/frontend-app
+500001,v1.0.0,Version 1.0.0,false,false,2023-12-20T11:00:00Z,2023-12-20T11:00:00Z,contributor5,First stable release with config file support,2025-01-03T02:00:00Z,exec-20250103-001,oss-community/cli-tool
+500002,v1.1.0,Version 1.1.0,false,false,2024-02-15T15:30:00Z,2024-02-15T15:30:00Z,contributor5,Bug fixes and improved error messages,2025-01-03T02:00:00Z,exec-20250103-001,oss-community/cli-tool
+500003,v1.2.0,Version 1.2.0,false,false,2024-09-01T10:45:00Z,2024-09-01T10:45:00Z,contributor6,Performance improvements and new commands,2025-01-03T02:00:00Z,exec-20250103-001,oss-community/cli-tool

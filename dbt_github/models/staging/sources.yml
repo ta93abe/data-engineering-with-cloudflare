@@ -1,0 +1,68 @@
+version: 2
+
+sources:
+  - name: github_raw
+    description: Raw GitHub data from seeds (simulating R2 data)
+    schema: raw
+    tables:
+      - name: repositories
+        description: GitHub repository metadata
+        columns:
+          - name: id
+            description: Unique repository ID
+            tests:
+              - unique
+              - not_null
+
+      - name: issues
+        description: GitHub issues data
+        columns:
+          - name: id
+            description: Unique issue ID
+            tests:
+              - unique
+              - not_null
+
+      - name: pull_requests
+        description: GitHub pull requests data
+        columns:
+          - name: id
+            description: Unique pull request ID
+            tests:
+              - unique
+              - not_null
+
+      - name: commits
+        description: Git commit history
+        columns:
+          - name: sha
+            description: Unique commit SHA
+            tests:
+              - unique
+              - not_null
+
+      - name: stargazers
+        description: Repository stargazers (users who starred)
+        columns:
+          - name: user_login
+            description: GitHub username
+          - name: _repository_full_name
+            description: Repository full name
+
+      - name: releases
+        description: GitHub releases
+        columns:
+          - name: id
+            description: Unique release ID
+            tests:
+              - unique
+              - not_null
+
+      - name: workflow_runs
+        description: GitHub Actions workflow runs
+        columns:
+          - name: id
+            description: Unique workflow run ID
+            tests:
+              - unique
+              - not_null
