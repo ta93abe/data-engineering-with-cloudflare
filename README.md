@@ -15,6 +15,7 @@ Cloudflareのエッジコンピューティングプラットフォームを活�
 - **[💰 コスト分析](./docs/cost-analysis.md)** - 固定費・変動費の詳細試算とコスト最適化戦略
 - **[🐙 GitHubデータパイプライン](./docs/github-data-pipeline.md)** - 全リポジトリのメトリクス・アクティビティ自動収集（dlt統合）
 - **[⚡ GitHub Workers設計](./docs/github-workers-design.md)** - Cloudflare WorkersベースのGitHubデータ取得アーキテクチャ（設計フェーズ）
+- **[🔄 GitHub dbt変換設計](./docs/github-dbt-design.md)** - dbtでBronze→Silver→Gold変換、メトリクス・KPI定義（設計フェーズ）
 - [情報源リンク集](./docs/resources.md) - 公式ドキュメント、ブログ、コミュニティリソース
 
 ## 🚀 Cloudflare データサービス
