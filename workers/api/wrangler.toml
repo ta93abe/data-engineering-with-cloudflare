@@ -1,0 +1,45 @@
+# Cloudflare Data API (Hono)
+name = "cloudflare-data-api"
+main = "src/index.ts"
+compatibility_date = "2024-11-01"
+compatibility_flags = ["nodejs_compat"]
+
+# 環境変数
+[vars]
+ENVIRONMENT = "development"
+
+# ========================================
+# Bindings（コメントアウト - デプロイ時に有効化）
+# ========================================
+
+# KV Namespace
+# [[kv_namespaces]]
+# binding = "DATA_KV"
+# id = "your-kv-namespace-id"
+
+# D1 Database
+# [[d1_databases]]
+# binding = "DB"
+# database_name = "data-platform"
+# database_id = "your-d1-database-id"
+
+# R2 Bucket
+# [[r2_buckets]]
+# binding = "DATA_BUCKET"
+# bucket_name = "data-bucket"
+
+# Analytics Engine
+# [[analytics_engine_datasets]]
+# binding = "ANALYTICS"
+# dataset = "data_platform_metrics"
+
+# ========================================
+# 環境別設定
+# ========================================
+
+[env.production]
+vars = { ENVIRONMENT = "production" }
+# routes = [{ pattern = "api.your-domain.com", custom_domain = true }]
+
+[env.staging]
+vars = { ENVIRONMENT = "staging" }
