@@ -1,5 +1,12 @@
+use base64::{engine::general_purpose::STANDARD as BASE64, Engine};
 use serde::{Deserialize, Serialize};
 use worker::*;
+
+// JSON-RPC 2.0 エラーコード定数
+const PARSE_ERROR: i32 = -32700;
+const METHOD_NOT_FOUND: i32 = -32601;
+const INVALID_PARAMS: i32 = -32602;
+const INTERNAL_ERROR: i32 = -32603;
 
 /// JSON-RPC 2.0リクエスト構造体
 #[derive(Deserialize, Debug)]
@@ -60,7 +67,7 @@ struct ResourceContent {
 }
 
 #[event(fetch, respond_with_errors)]
-pub async fn main(mut req: Request, env: Env, _ctx: Context) -> Result<Response> {
+pub async fn main(req: Request, env: Env, _ctx: Context) -> Result<Response> {
     // パニック時のログ改善
     console_error_panic_hook::set_once();
 
@@ -98,10 +105,11 @@ async fn handle_mcp_request(req: &mut Request, ctx: &RouteContext<()>) -> Result
     let mcp_req: MCPRequest = match req.json().await {
         Ok(r) => r,
         Err(e) => {
+            console_error!("Parse error: {}", e);
             return create_error_response(
                 None,
-                -32700,
-                format!("Parse error: {}", e),
+                PARSE_ERROR,
+                "Parse error: Invalid JSON".to_string(),
                 None,
             );
         }
@@ -110,24 +118,58 @@ async fn handle_mcp_request(req: &mut Request, ctx: &RouteContext<()>) -> Result
     console_log!("MCP Request: method={}, id={:?}", mcp_req.method, mcp_req.id);
 
     // メソッドに応じた処理
-    let result = match mcp_req.method.as_str() {
-        "initialize" => handle_initialize(ctx).await,
-        "tools/list" => handle_tools_list(ctx).await,
-        "tools/call" => handle_tools_call(ctx, mcp_req.params).await,
-        "resources/list" => handle_resources_list(ctx).await,
-        "resources/read" => handle_resources_read(ctx, mcp_req.params).await,
-        _ => Err(Error::RustError(format!("Unknown method: {}", mcp_req.method))),
-    };
-
-    // レスポンス生成
-    match result {
-        Ok(data) => create_success_response(mcp_req.id, data),
-        Err(e) => create_error_response(
-            mcp_req.id,
-            -32603,
-            format!("Internal error: {:?}", e),
-            None,
-        ),
+    match mcp_req.method.as_str() {
+        "initialize" => match handle_initialize(ctx).await {
+            Ok(data) => create_success_response(mcp_req.id, data),
+            Err(e) => {
+                console_error!("Initialize error: {:?}", e);
+                create_error_response(mcp_req.id, INTERNAL_ERROR, "Internal server error".to_string(), None)
+            }
+        },
+        "tools/list" => match handle_tools_list(ctx).await {
+            Ok(data) => create_success_response(mcp_req.id, data),
+            Err(e) => {
+                console_error!("Tools list error: {:?}", e);
+                create_error_response(mcp_req.id, INTERNAL_ERROR, "Internal server error".to_string(), None)
+            }
+        },
+        "tools/call" => match handle_tools_call(ctx, mcp_req.params).await {
+            Ok(data) => create_success_response(mcp_req.id, data),
+            Err(e) => {
+                let error_msg = format!("{:?}", e);
+                console_error!("Tools call error: {}", error_msg);
+                // パラメータエラーかどうかを判定
+                let (code, msg) = if error_msg.contains("Missing") || error_msg.contains("must be") {
+                    (INVALID_PARAMS, error_msg)
+                } else {
+                    (INTERNAL_ERROR, "Internal server error".to_string())
+                };
+                create_error_response(mcp_req.id, code, msg, None)
+            }
+        },
+        "resources/list" => match handle_resources_list(ctx).await {
+            Ok(data) => create_success_response(mcp_req.id, data),
+            Err(e) => {
+                console_error!("Resources list error: {:?}", e);
+                create_error_response(mcp_req.id, INTERNAL_ERROR, "Internal server error".to_string(), None)
+            }
+        },
+        "resources/read" => match handle_resources_read(ctx, mcp_req.params).await {
+            Ok(data) => create_success_response(mcp_req.id, data),
+            Err(e) => {
+                console_error!("Resources read error: {:?}", e);
+                create_error_response(mcp_req.id, INTERNAL_ERROR, "Internal server error".to_string(), None)
+            }
+        },
+        _ => {
+            console_log!("Unknown method: {}", mcp_req.method);
+            create_error_response(
+                mcp_req.id,
+                METHOD_NOT_FOUND,
+                format!("Method not found: {}", mcp_req.method),
+                None,
+            )
+        }
     }
 }
 
@@ -179,7 +221,7 @@ async fn handle_tools_list(_ctx: &RouteContext<()>) -> Result<serde_json::Value>
                     },
                     "expirationTtl": {
                         "type": "number",
-                        "description": "有効期限（秒）"
+                        "description": "有効期限（秒、60〜31536000）"
                     }
                 },
                 "required": ["key", "value"]
@@ -187,13 +229,13 @@ async fn handle_tools_list(_ctx: &RouteContext<()>) -> Result<serde_json::Value>
         },
         Tool {
             name: "d1-query".to_string(),
-            description: "D1データベースにSQLクエリを実行".to_string(),
+            description: "D1データベースにSELECTクエリを実行（読み取り専用）".to_string(),
             input_schema: serde_json::json!({
                 "type": "object",
                 "properties": {
                     "sql": {
                         "type": "string",
-                        "description": "実行するSQLクエリ"
+                        "description": "実行するSELECTクエリ（SELECT文のみ許可）"
                     },
                     "params": {
                         "type": "array",
@@ -208,7 +250,7 @@ async fn handle_tools_list(_ctx: &RouteContext<()>) -> Result<serde_json::Value>
         },
         Tool {
             name: "r2-get".to_string(),
-            description: "R2バケットからオブジェクトを取得".to_string(),
+            description: "R2バケットからオブジェクトを取得（バイナリはBase64エンコード）".to_string(),
             input_schema: serde_json::json!({
                 "type": "object",
                 "properties": {
@@ -232,11 +274,15 @@ async fn handle_tools_list(_ctx: &RouteContext<()>) -> Result<serde_json::Value>
                     },
                     "data": {
                         "type": "string",
-                        "description": "保存するデータ（テキストまたはBase64）"
+                        "description": "保存するデータ（テキストまたはBase64エンコード）"
                     },
                     "contentType": {
                         "type": "string",
                         "description": "コンテンツタイプ"
+                    },
+                    "isBase64": {
+                        "type": "boolean",
+                        "description": "dataがBase64エンコードされているかどうか"
                     }
                 },
                 "required": ["key", "data"]
@@ -254,7 +300,7 @@ async fn handle_tools_list(_ctx: &RouteContext<()>) -> Result<serde_json::Value>
                     },
                     "limit": {
                         "type": "number",
-                        "description": "最大取得件数"
+                        "description": "最大取得件数（1〜1000、デフォルト100）"
                     }
                 }
             }),
@@ -277,6 +323,11 @@ async fn handle_tools_call(
         .ok_or(Error::RustError("Missing tool name".to_string()))?;
     let arguments = params.get("arguments").unwrap_or(&serde_json::json!({}));
 
+    // arguments がオブジェクトであることを検証
+    if !arguments.is_object() {
+        return Err(Error::RustError("'arguments' parameter must be an object".to_string()));
+    }
+
     console_log!("Calling tool: {} with args: {:?}", name, arguments);
 
     match name {
@@ -294,33 +345,46 @@ async fn handle_tools_call(
 async fn tool_kv_get(ctx: &RouteContext<()>, args: &serde_json::Value) -> Result<serde_json::Value> {
     let key = args["key"]
         .as_str()
-        .ok_or(Error::RustError("Missing key parameter".to_string()))?;
+        .ok_or(Error::RustError("Missing 'key' parameter".to_string()))?;
 
     let kv = ctx.kv("DATA")?;
     let value = kv.get(key).text().await?;
 
-    Ok(serde_json::json!({
-        "content": [{
-            "type": "text",
-            "text": value.unwrap_or_else(|| "Key not found".to_string())
-        }]
-    }))
+    match value {
+        Some(v) => Ok(serde_json::json!({
+            "content": [{
+                "type": "text",
+                "text": v
+            }],
+            "found": true
+        })),
+        None => Ok(serde_json::json!({
+            "content": [{
+                "type": "text",
+                "text": format!("Key '{}' not found", key)
+            }],
+            "found": false
+        })),
+    }
 }
 
 /// KV保存ツール
 async fn tool_kv_put(ctx: &RouteContext<()>, args: &serde_json::Value) -> Result<serde_json::Value> {
     let key = args["key"]
         .as_str()
-        .ok_or(Error::RustError("Missing key parameter".to_string()))?;
+        .ok_or(Error::RustError("Missing 'key' parameter".to_string()))?;
     let value = args["value"]
         .as_str()
-        .ok_or(Error::RustError("Missing value parameter".to_string()))?;
+        .ok_or(Error::RustError("Missing 'value' parameter".to_string()))?;
 
     let kv = ctx.kv("DATA")?;
     let mut put_builder = kv.put(key, value)?;
 
-    // TTLが指定されている場合
+    // TTLが指定されている場合（60秒〜31536000秒の範囲でバリデーション）
     if let Some(ttl) = args.get("expirationTtl").and_then(|v| v.as_u64()) {
+        if ttl < 60 || ttl > 31536000 {
+            return Err(Error::RustError("expirationTtl must be between 60 and 31536000 seconds".to_string()));
+        }
         put_builder = put_builder.expiration_ttl(ttl);
     }
 
@@ -334,11 +398,19 @@ async fn tool_kv_put(ctx: &RouteContext<()>, args: &serde_json::Value) -> Result
     }))
 }
 
-/// D1クエリツール
+/// D1クエリツール（SELECTのみ許可）
 async fn tool_d1_query(ctx: &RouteContext<()>, args: &serde_json::Value) -> Result<serde_json::Value> {
     let sql = args["sql"]
         .as_str()
-        .ok_or(Error::RustError("Missing sql parameter".to_string()))?;
+        .ok_or(Error::RustError("Missing 'sql' parameter".to_string()))?;
+
+    // セキュリティ対策: SELECT文のみを許可
+    let sql_trimmed = sql.trim();
+    if !sql_trimmed.to_uppercase().starts_with("SELECT") {
+        return Err(Error::RustError(
+            "Security: Only SELECT queries are allowed. Use D1 dashboard for write operations.".to_string()
+        ));
+    }
 
     let d1 = ctx.env.d1("DB")?;
     let mut stmt = d1.prepare(sql);
@@ -372,52 +444,102 @@ async fn tool_d1_query(ctx: &RouteContext<()>, args: &serde_json::Value) -> Resu
         "content": [{
             "type": "text",
             "text": serde_json::to_string_pretty(&rows)?
-        }]
+        }],
+        "rowCount": rows.len()
     }))
 }
 
-/// R2取得ツール
+/// R2取得ツール（バイナリはBase64エンコード）
 async fn tool_r2_get(ctx: &RouteContext<()>, args: &serde_json::Value) -> Result<serde_json::Value> {
     let key = args["key"]
         .as_str()
-        .ok_or(Error::RustError("Missing key parameter".to_string()))?;
+        .ok_or(Error::RustError("Missing 'key' parameter".to_string()))?;
 
     let bucket = ctx.bucket("STORAGE")?;
 
     match bucket.get(key).execute().await? {
         Some(object) => {
-            // テキストとして読み取り
             let body = object.body().ok_or(Error::RustError("No body".to_string()))?;
-            let text = body.text().await?;
+            let content_type = object
+                .http_metadata()
+                .content_type
+                .as_deref()
+                .unwrap_or("application/octet-stream");
 
-            Ok(serde_json::json!({
-                "content": [{
-                    "type": "text",
-                    "text": text
-                }]
-            }))
+            // テキスト系のContent-Typeかどうかを判定
+            let is_text = content_type.starts_with("text/")
+                || content_type == "application/json"
+                || content_type == "application/xml"
+                || content_type.ends_with("+json")
+                || content_type.ends_with("+xml");
+
+            if is_text {
+                let text = body.text().await?;
+                Ok(serde_json::json!({
+                    "content": [{
+                        "type": "text",
+                        "text": text
+                    }],
+                    "mimeType": content_type,
+                    "size": object.size(),
+                    "isBase64": false
+                }))
+            } else {
+                // バイナリデータはBase64エンコード
+                let bytes = body.bytes().await?;
+                let encoded = BASE64.encode(&bytes);
+                Ok(serde_json::json!({
+                    "content": [{
+                        "type": "text",
+                        "text": encoded
+                    }],
+                    "mimeType": content_type,
+                    "size": object.size(),
+                    "isBase64": true
+                }))
+            }
         }
         None => Ok(serde_json::json!({
             "content": [{
                 "type": "text",
-                "text": "Object not found"
-            }]
+                "text": format!("Object '{}' not found", key)
+            }],
+            "found": false
         })),
     }
 }
 
-/// R2保存ツール
+/// R2保存ツール（Base64デコード対応）
 async fn tool_r2_put(ctx: &RouteContext<()>, args: &serde_json::Value) -> Result<serde_json::Value> {
     let key = args["key"]
         .as_str()
-        .ok_or(Error::RustError("Missing key parameter".to_string()))?;
+        .ok_or(Error::RustError("Missing 'key' parameter".to_string()))?;
     let data = args["data"]
         .as_str()
-        .ok_or(Error::RustError("Missing data parameter".to_string()))?;
+        .ok_or(Error::RustError("Missing 'data' parameter".to_string()))?;
+
+    // データサイズ制限（25MB）
+    const MAX_SIZE: usize = 25 * 1024 * 1024;
+    if data.len() > MAX_SIZE {
+        return Err(Error::RustError(format!(
+            "Data size exceeds maximum allowed size of {} bytes",
+            MAX_SIZE
+        )));
+    }
 
     let bucket = ctx.bucket("STORAGE")?;
 
-    let mut put_builder = bucket.put(key, data.as_bytes().to_vec());
+    // Base64フラグがtrueの場合はデコード
+    let is_base64 = args.get("isBase64").and_then(|v| v.as_bool()).unwrap_or(false);
+    let data_bytes = if is_base64 {
+        BASE64.decode(data).map_err(|e| {
+            Error::RustError(format!("Invalid Base64 data: {}", e))
+        })?
+    } else {
+        data.as_bytes().to_vec()
+    };
+
+    let mut put_builder = bucket.put(key, data_bytes);
 
     // Content-Typeが指定されている場合
     if let Some(content_type) = args.get("contentType").and_then(|v| v.as_str()) {
@@ -447,10 +569,10 @@ async fn tool_r2_list(ctx: &RouteContext<()>, args: &serde_json::Value) -> Resul
         list_builder = list_builder.prefix(prefix);
     }
 
-    // 件数制限
-    if let Some(limit) = args.get("limit").and_then(|v| v.as_u64()) {
-        list_builder = list_builder.limit(limit as usize);
-    }
+    // 件数制限（1〜1000、デフォルト100）
+    let limit = args.get("limit").and_then(|v| v.as_u64()).unwrap_or(100);
+    let limit = limit.clamp(1, 1000) as usize;
+    list_builder = list_builder.limit(limit);
 
     let objects = list_builder.execute().await?;
     let object_list: Vec<serde_json::Value> = objects
@@ -469,7 +591,8 @@ async fn tool_r2_list(ctx: &RouteContext<()>, args: &serde_json::Value) -> Resul
         "content": [{
             "type": "text",
             "text": serde_json::to_string_pretty(&object_list)?
-        }]
+        }],
+        "count": object_list.len()
     }))
 }
 

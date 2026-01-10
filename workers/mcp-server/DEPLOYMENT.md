@@ -578,16 +578,28 @@ async fn authenticate(req: &Request, ctx: &RouteContext<()>) -> Result<bool> {
 
 ### 2. CORS設定
 
+> **⚠️ セキュリティ警告**: 以下のコードは開発/デモ用です。本番環境では `Access-Control-Allow-Origin: *` を使用しないでください。
+
+**本番環境では、必ず許可するオリジンを明示的に指定してください：**
+
 ```rust
-fn add_cors_headers(response: Response) -> Response {
+fn add_cors_headers(response: Response, allowed_origin: &str) -> Response {
     let mut headers = Headers::new();
-    headers.set("Access-Control-Allow-Origin", "*")?;
+    // ⚠️ 本番環境: 特定のオリジンのみ許可
+    // 例: "https://your-app.example.com"
+    headers.set("Access-Control-Allow-Origin", allowed_origin)?;
     headers.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")?;
     headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization")?;
+    headers.set("Access-Control-Max-Age", "86400")?;  // 24時間キャッシュ
 
     response.with_headers(headers)
 }
 ```
+
+**推奨事項:**
+- 本番環境では環境変数で許可オリジンを管理: `ctx.var("ALLOWED_ORIGIN")`
+- 複数オリジンが必要な場合は、リクエストのOriginヘッダーを検証してから動的に設定
+- ワイルドカード (`*`) は認証付きリクエストでは機能しないため、認証を使う場合は必ず明示的なオリジン指定が必要
 
 ### 3. レート制限
 

@@ -3,11 +3,11 @@
 
 name = "mcp-server"
 main = "build/worker/shim.mjs"
-compatibility_date = "2024-01-01"
+compatibility_date = "2025-01-01"
 
 # Rustビルドコマンド
 [build]
-command = "cargo install -q worker-build && worker-build --release"
+command = "worker-build --release"
 
 # =====================================
 # ストレージバインディング設定
