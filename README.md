@@ -15,6 +15,15 @@ Cloudflareのエッジコンピューティングプラットフォームを活�
 - **[💰 コスト分析](./docs/cost-analysis.md)** - 固定費・変動費の詳細試算とコスト最適化戦略
 - [情報源リンク集](./docs/resources.md) - 公式ドキュメント、ブログ、コミュニティリソース
 
+## 🔌 MCPサーバー
+
+LLMアプリケーションからCloudflareデータプラットフォームにアクセスするためのMCPサーバーを提供しています。
+
+- **[MCP Server](./workers/mcp-server/)** - Rust製のModel Context Protocolサーバー ✨NEW
+  - Workers KV、D1、R2へのアクセスツール
+  - JSON-RPC 2.0準拠のMCPプロトコル実装
+  - [デプロイメントガイド](./workers/mcp-server/DEPLOYMENT.md)
+
 ## 🚀 Cloudflare データサービス
 
 このプロジェクトでは、以下のCloudflareサービスを活用します：

@@ -17,8 +17,9 @@ Cloudflareのエッジコンピューティングプラットフォームを活�
 
 ### コアテクノロジー
 
-- **Cloudflare Workers**: JavaScriptランタイムでのエッジコンピューティング
-- **TypeScript**: 型安全な開発
+- **Cloudflare Workers**: エッジコンピューティングプラットフォーム
+- **TypeScript**: 型安全な開発（メイン言語）
+- **Rust**: WebAssemblyへのコンパイルによる高性能Workers実装
 - **Wrangler**: Cloudflare Workers用CLI
 
 ### データストレージ
@@ -41,15 +42,20 @@ data-engineering-with-cloudflare/
 │   └── CLAUDE.md              # このファイル
 ├── docs/                       # ドキュメント
 │   └── architecture-design.md  # アーキテクチャ設計
-├── src/                        # ソースコード（今後追加）
-│   ├── workers/               # Workers実装
+├── workers/                    # Cloudflare Workers実装
+│   └── mcp-server/            # Rust製MCPサーバー
+│       ├── src/lib.rs         # メイン実装
+│       ├── Cargo.toml         # Rust依存関係
+│       ├── wrangler.toml      # Workers設定
+│       ├── DEPLOYMENT.md      # デプロイガイド
+│       └── README.md          # 使用方法
+├── src/                        # その他ソースコード（今後追加）
 │   ├── schemas/               # D1スキーマ定義
 │   └── utils/                 # ユーティリティ
 ├── scripts/                    # スクリプト（今後追加）
 │   ├── deploy/                # デプロイスクリプト
 │   └── migrations/            # D1マイグレーション
 ├── tests/                      # テストコード（今後追加）
-├── wrangler.toml              # Wrangler設定（今後追加）
 └── README.md                  # プロジェクト概要
 ```
 
@@ -63,6 +69,8 @@ data-engineering-with-cloudflare/
 4. **セキュリティ**: APIキーや認証情報は環境変数で管理、コードに埋め込まない
 
 ### Workersベストプラクティス
+
+#### TypeScript
 
 ```typescript
 // ✅ Good: 環境変数からの読み取り
@@ -83,6 +91,39 @@ try {
 } catch (error) {
   console.error("Database error:", error);
   return new Response("Internal Server Error", { status: 500 });
+}
+```
+
+#### Rust（workers-rs）
+
+```rust
+use worker::*;
+
+#[event(fetch, respond_with_errors)]
+pub async fn main(req: Request, env: Env, _ctx: Context) -> Result<Response> {
+    // パニック時のログ改善
+    console_error_panic_hook::set_once();
+
+    let router = Router::new();
+    router
+        .get("/health", |_, _| Response::ok("OK"))
+        .post_async("/api", |mut req, ctx| async move {
+            // KVアクセス
+            let kv = ctx.kv("DATA")?;
+            let value = kv.get("key").text().await?;
+
+            // D1アクセス（SELECT文のみ推奨）
+            let d1 = ctx.env.d1("DB")?;
+            let result = d1.prepare("SELECT * FROM users").all().await?;
+
+            // R2アクセス
+            let bucket = ctx.bucket("STORAGE")?;
+            bucket.put("file.txt", "content").execute().await?;
+
+            Response::ok("Success")
+        })
+        .run(req, env)
+        .await
 }
 ```
 
@@ -280,17 +321,18 @@ console.log(JSON.stringify({
 
 ### Phase 1: 基盤構築（現在）
 - [x] アーキテクチャ設計ドキュメント作成
-- [ ] Wrangler環境セットアップ
-- [ ] 基本的なWorkers実装
+- [x] Wrangler環境セットアップ
+- [x] 基本的なWorkers実装（MCPサーバー）
 - [ ] D1スキーマ設計
 
 ### Phase 2: コア機能実装
 - [ ] データ取り込みパイプライン
-- [ ] ストレージ層の実装
+- [x] ストレージ層の実装（KV, D1, R2アクセス）
 - [ ] Analytics Engine統合
 - [ ] 基本的なダッシュボード
 - [x] dbtプロジェクトセットアップ
 - [x] Elementaryデータ品質監視統合
+- [x] MCPサーバー（LLMからのデータアクセス）
 
 ### Phase 3: 拡張機能
 - [ ] リアルタイム処理（Durable Objects）
@@ -317,4 +359,4 @@ TBD
 
 ---
 
-最終更新: 2025-12-25
+最終更新: 2026-01-10
