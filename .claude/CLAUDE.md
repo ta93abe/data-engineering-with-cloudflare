@@ -346,12 +346,106 @@ console.log(JSON.stringify({
 - [ ] セキュリティ強化
 - [ ] ドキュメント整備
 
+## 開発ワークフロー
+
+### ツール構成
+
+| 用途 | ツール | 備考 |
+|------|--------|------|
+| Issue管理 | [Linear](https://linear.app/ta93abe/project/de-study-11c86e96b24b) | de-studyプロジェクト |
+| PR管理 | [Graphite](https://app.graphite.dev/) | スタック型PR |
+| リポジトリ | GitHub | コードホスティング |
+
+### 開発フロー
+
+```text
+1. Issue作成 (Linear)
+   └── Backlog → Todo に移動
+
+2. 開発開始
+   ├── Linear: Todo → In Progress
+   └── ブランチ名をLinearからコピー
+
+3. 実装 & PR作成 (Graphite)
+   ├── コード実装
+   ├── gt create -m "feat: 機能説明"
+   ├── (スタックする場合は繰り返し)
+   └── gt submit --no-interactive
+
+4. レビュー
+   ├── Linear: In Progress → In Review
+   └── PRレビュー対応
+
+5. マージ & 完了
+   ├── Graphite/GitHubでマージ
+   └── Linear: In Review → Done
+```
+
+### Graphiteコマンド
+
+```bash
+# 初期化（初回のみ）
+gt init
+
+# 変更をコミット＆ブランチ作成
+gt create -m "feat: 機能説明"
+
+# PRを作成/更新
+gt submit --no-interactive
+
+# スタック全体をsubmit
+gt submit --stack --no-interactive
+
+# ブランチ間移動
+gt up    # 上のブランチへ
+gt down  # 下のブランチへ
+
+# 最新のmainを取得＆リベース
+gt sync
+
+# 現在の状態確認
+gt state
+```
+
+### コミットメッセージ規約
+
+Conventional Commits形式:
+
+```text
+<type>: <description>
+
+[optional body]
+
+[optional footer]
+```
+
+**Type一覧**:
+- `feat`: 新機能
+- `fix`: バグ修正
+- `docs`: ドキュメント
+- `refactor`: リファクタリング
+- `test`: テスト
+- `chore`: その他
+
+### Linear Issue連携
+
+PRタイトルまたはdescriptionにLinear issue IDを含めると自動連携:
+
+```text
+# PRタイトル例
+feat: Add user authentication [DEC-123]
+
+# PR description例
+Closes DEC-123
+```
+
 ## 貢献ガイドライン
 
 1. **ブランチ戦略**: `main` ブランチは常にデプロイ可能な状態を維持
 2. **コミットメッセージ**: Conventional Commits形式を推奨
-3. **プルリクエスト**: レビュー必須、テスト通過が必要
-4. **ドキュメント**: 新機能追加時は必ずドキュメント更新
+3. **プルリクエスト**: Graphiteでスタック型PRを作成
+4. **Issue管理**: Linearでissueを作成・管理
+5. **ドキュメント**: 新機能追加時は必ずドキュメント更新
 
 ## ライセンス
 
@@ -359,4 +453,4 @@ TBD
 
 ---
 
-最終更新: 2026-01-10
+最終更新: 2026-01-11
