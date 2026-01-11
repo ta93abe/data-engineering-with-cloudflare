@@ -353,7 +353,7 @@ console.log(JSON.stringify({
 | 用途 | ツール | 備考 |
 |------|--------|------|
 | Issue管理 | [Linear](https://linear.app/ta93abe/project/de-study-11c86e96b24b) | de-studyプロジェクト |
-| PR管理 | [Graphite](https://app.graphite.dev/) | スタック型PR |
+| PR管理 | [Graphite](https://app.graphite.com/) | スタック型PR |
 | リポジトリ | GitHub | コードホスティング |
 
 ### 開発フロー
