@@ -436,7 +436,7 @@ python scripts/cost_calculator.py --custom \
 
 ### 出力例
 
-```
+```text
 ============================================================
   Cloudflare Data Platform コスト試算: 中規模スタートアップ
 ============================================================
@@ -504,7 +504,7 @@ python scripts/cost_calculator.py --custom \
 
 ## 依存関係
 
-```
+```text
 # 標準ライブラリのみ使用
 Python 3.8+
 ```

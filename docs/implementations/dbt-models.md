@@ -11,7 +11,7 @@ DuckDBとCloudflare R2を使用したdbtプロジェクトの実装です。
 
 ## アーキテクチャ
 
-```
+```text
 ┌─────────────────────────────────────────────────────────┐
 │                 Cloudflare R2                           │
 │  ┌─────────────────────────────────────────────────┐   │
@@ -54,7 +54,7 @@ DuckDBとCloudflare R2を使用したdbtプロジェクトの実装です。
 
 ### ディレクトリ構造
 
-```
+```text
 dbt/
 ├── dbt_project.yml          # プロジェクト設定
 ├── profiles.yml             # 接続プロファイル
@@ -606,7 +606,7 @@ dbt docs serve
 
 ## 依存関係
 
-```
+```text
 dbt-duckdb>=1.7.0
 dbt-utils>=1.1.0
 elementary-data>=0.15.0

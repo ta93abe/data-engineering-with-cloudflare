@@ -12,7 +12,7 @@ Cloudflare Workers Python Runtime上でdltを使用したデータパイプラ�
 
 ## アーキテクチャ
 
-```
+```text
 ┌─────────────────────────────────────────────────────────┐
 │                   External APIs                         │
 │            (JSONPlaceholder, Custom APIs)               │
@@ -62,7 +62,7 @@ Cloudflare Workers Python Runtime上でdltを使用したデータパイプラ�
 
 ### ディレクトリ構造
 
-```
+```text
 workers/ingestion/
 ├── dlt_pipeline.py           # 基本dltパイプライン
 ├── dlt_iceberg_pipeline.py   # Iceberg統合パイプライン
@@ -597,7 +597,7 @@ pipeline = dlt.pipeline(
 
 ### 3. Hiveパーティション構造
 
-```
+```text
 s3://{bucket}/sources/{source_name}/{table_name}/
   └── year=2026/
       └── month=01/
@@ -650,7 +650,7 @@ catalog = load_catalog(
 
 ### データレイヤー設計
 
-```
+```text
 Bronze Layer (data-lake-raw)
     - 生データをそのまま保存
     - Parquet形式
@@ -709,7 +709,7 @@ curl "https://your-worker.workers.dev/?source=custom&endpoint=https://api.exampl
 
 ## 依存関係
 
-```
+```text
 dlt[parquet,filesystem]>=0.5.0
 pyiceberg>=0.7.0  # Iceberg統合の場合
 ```

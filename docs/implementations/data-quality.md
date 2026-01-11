@@ -11,7 +11,7 @@ Great ExpectationsとmarimoによるR2データのデータ品質監視システ
 
 ## アーキテクチャ
 
-```
+```text
 ┌─────────────────────────────────────────────────────────┐
 │                    R2 Storage                           │
 │  ┌─────────────────────────────────────────────────┐   │
@@ -63,7 +63,7 @@ Great ExpectationsとmarimoによるR2データのデータ品質監視システ
 
 ### ディレクトリ構造
 
-```
+```text
 great_expectations/
 ├── great_expectations.yml           # メイン設定ファイル
 ├── checkpoints/
@@ -1064,7 +1064,7 @@ marimo run marimo/notebooks/data_quality_dashboard.py
 
 ## 依存関係
 
-```
+```text
 great_expectations>=0.18.0
 duckdb>=1.0.0
 marimo>=0.9.0

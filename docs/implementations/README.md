@@ -31,7 +31,7 @@
 
 ### データレイヤー構成
 
-```
+```text
 Bronze Layer (data-lake-raw)
     ↓ dlt でロード
 Silver Layer (data-lake-staging)

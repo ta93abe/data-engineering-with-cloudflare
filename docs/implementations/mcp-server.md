@@ -11,7 +11,7 @@ Cloudflare Workers上で動作するModel Context Protocol（MCP）サーバー�
 
 ## アーキテクチャ
 
-```
+```text
 ┌─────────────────────────────────────────────────────────┐
 │                    LLM Application                      │
 └─────────────────────────────────────────────────────────┘
@@ -46,7 +46,7 @@ Cloudflare Workers上で動作するModel Context Protocol（MCP）サーバー�
 
 ### ディレクトリ構造
 
-```
+```text
 workers/mcp-server/
 ├── src/
 │   └── lib.rs           # メイン実装
