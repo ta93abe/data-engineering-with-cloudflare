@@ -1,6 +1,6 @@
-# R2 Iceberg + R2 SQL セットアップガイド
+# R2 Iceberg + R2 SQL + DuckDB セットアップガイド
 
-R2上でIcebergテーブルを作成し、R2 SQLでクエリを実行するミニマム環境のセットアップ手順。
+R2上でIcebergテーブルを作成し、R2 SQL または DuckDB でクエリを実行するミニマム環境のセットアップ手順。
 
 ## 前提条件
 
@@ -39,9 +39,14 @@ npx wrangler r2 bucket catalog enable iceberg-demo
 ### 4. 環境変数設定
 
 ```bash
+# 必須（PyIceberg / R2 SQL用）
 export CLOUDFLARE_ACCOUNT_ID="your-account-id"
 export R2_BUCKET_NAME="iceberg-demo"
 export CLOUDFLARE_API_TOKEN="your-api-token"
+
+# DuckDB用（R2 APIトークン作成時に取得）
+export R2_ACCESS_KEY_ID="your-access-key-id"
+export R2_SECRET_ACCESS_KEY="your-secret-access-key"
 ```
 
 ### 5. Python依存関係インストール
@@ -81,6 +86,36 @@ npx wrangler r2 sql query "iceberg-demo" "SELECT event_type, COUNT(*) as count F
 # フィルタ
 npx wrangler r2 sql query "iceberg-demo" "SELECT * FROM default.events WHERE event_type = 'purchase'"
 ```
+
+### DuckDBでクエリ実行
+
+DuckDBを使用すると、JOINや複雑な分析クエリをローカルで実行できます。
+
+```bash
+# 基本クエリ
+python scripts/r2_iceberg_demo.py query "SELECT * FROM events"
+
+# 集計クエリ
+python scripts/r2_iceberg_demo.py query "SELECT event_type, COUNT(*) as count FROM events GROUP BY event_type"
+
+# 金額合計
+python scripts/r2_iceberg_demo.py query "SELECT SUM(amount) as total FROM events WHERE amount IS NOT NULL"
+
+# フィルタ＆ソート
+python scripts/r2_iceberg_demo.py query "SELECT * FROM events WHERE event_type = 'purchase' ORDER BY amount DESC"
+```
+
+**注意**: DuckDBクエリには `R2_ACCESS_KEY_ID` と `R2_SECRET_ACCESS_KEY` が必要です（S3互換アクセス用）。
+
+### R2 SQL vs DuckDB 比較
+
+| 機能 | R2 SQL | DuckDB |
+|------|--------|--------|
+| 実行環境 | Cloudflareエッジ | ローカル |
+| JOIN | 未サポート | サポート |
+| 複雑な分析 | 基本的なSQL | フル機能 |
+| セットアップ | Wrangler CLI | Python + 環境変数 |
+| 認証 | API Token | S3 Access Key |
 
 ### その他のコマンド
 
@@ -137,3 +172,4 @@ Data Catalogが有効化されてからテーブルが認識されるまで数�
 - [R2 SQL Getting Started](https://developers.cloudflare.com/r2-sql/get-started/)
 - [R2 Data Catalog](https://developers.cloudflare.com/r2/data-catalog/)
 - [PyIceberg Documentation](https://py.iceberg.apache.org/)
+- [DuckDB Iceberg Extension](https://duckdb.org/docs/extensions/iceberg.html)

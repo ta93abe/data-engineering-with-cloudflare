@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
 """
-R2 Iceberg + R2 SQL ミニマムデモ
+R2 Iceberg + R2 SQL + DuckDB ミニマムデモ
 
 R2 Data Catalog上にIcebergテーブルを作成し、サンプルデータを投入するスクリプト。
-R2 SQLでクエリを実行するための最小限の環境を構築します。
+R2 SQL または DuckDB でクエリを実行するための最小限の環境を構築します。
 
 環境変数:
     CLOUDFLARE_ACCOUNT_ID: CloudflareアカウントID
     R2_BUCKET_NAME: R2バケット名（Data Catalog有効化済み）
     CLOUDFLARE_API_TOKEN: R2 Admin Read & Write権限を持つAPIトークン
+    R2_ACCESS_KEY_ID: R2アクセスキーID（DuckDB用）
+    R2_SECRET_ACCESS_KEY: R2シークレットキー（DuckDB用）
 
 使用方法:
     # テーブル作成 & サンプルデータ投入
@@ -20,8 +22,12 @@ R2 SQLでクエリを実行するための最小限の環境を構築します�
     # テーブル一覧表示
     python scripts/r2_iceberg_demo.py list
 
-    # テーブル内容をローカルで確認
+    # テーブル内容をローカルで確認（PyIceberg）
     python scripts/r2_iceberg_demo.py scan
+
+    # DuckDBでクエリ実行
+    python scripts/r2_iceberg_demo.py query "SELECT * FROM events"
+    python scripts/r2_iceberg_demo.py query "SELECT event_type, COUNT(*) FROM events GROUP BY event_type"
 
 R2 SQLでのクエリ:
     npx wrangler r2 sql query "<WAREHOUSE>" "SELECT * FROM default.events"
@@ -174,27 +180,88 @@ def scan_table():
     print(f"\n合計: {len(df)} 件")
 
 
+def query_with_duckdb(sql: str):
+    """DuckDBでIcebergテーブルにクエリを実行"""
+    import duckdb
+
+    account_id = get_env_or_exit("CLOUDFLARE_ACCOUNT_ID")
+    bucket = get_env_or_exit("R2_BUCKET_NAME")
+    access_key = get_env_or_exit("R2_ACCESS_KEY_ID")
+    secret_key = get_env_or_exit("R2_SECRET_ACCESS_KEY")
+
+    # PyIcebergでmetadata locationを取得
+    catalog = get_catalog()
+    table = catalog.load_table(("default", "events"))
+    metadata_location = table.metadata_location
+
+    print(f"📂 Metadata: {metadata_location}")
+
+    # DuckDB接続
+    conn = duckdb.connect(":memory:")
+
+    # 拡張機能インストール・ロード
+    conn.execute("INSTALL httpfs;")
+    conn.execute("INSTALL iceberg;")
+    conn.execute("LOAD httpfs;")
+    conn.execute("LOAD iceberg;")
+
+    # R2認証設定（S3互換）
+    r2_endpoint = f"{account_id}.r2.cloudflarestorage.com"
+    conn.execute(f"SET s3_endpoint = '{r2_endpoint}';")
+    conn.execute(f"SET s3_access_key_id = '{access_key}';")
+    conn.execute(f"SET s3_secret_access_key = '{secret_key}';")
+    conn.execute("SET s3_region = 'auto';")
+    conn.execute("SET s3_url_style = 'path';")
+
+    # Icebergテーブルをビューとして登録
+    conn.execute(f"""
+        CREATE VIEW events AS
+        SELECT * FROM iceberg_scan('{metadata_location}', allow_moved_paths = true);
+    """)
+
+    print(f"\n🦆 DuckDB Query: {sql}\n")
+    print("=" * 60)
+
+    # クエリ実行
+    result = conn.execute(sql).fetchdf()
+    print(result.to_string())
+
+    print("=" * 60)
+    print(f"結果: {len(result)} 件")
+
+    conn.close()
+
+
 def main():
     parser = argparse.ArgumentParser(
-        description="R2 Iceberg + R2 SQL ミニマムデモ",
+        description="R2 Iceberg + R2 SQL + DuckDB ミニマムデモ",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 使用例:
   python scripts/r2_iceberg_demo.py create   # テーブル作成 & サンプルデータ投入
   python scripts/r2_iceberg_demo.py append   # データ追加
   python scripts/r2_iceberg_demo.py list     # テーブル一覧
-  python scripts/r2_iceberg_demo.py scan     # テーブル内容確認
+  python scripts/r2_iceberg_demo.py scan     # テーブル内容確認（PyIceberg）
+  python scripts/r2_iceberg_demo.py query "SELECT * FROM events"  # DuckDBクエリ
 
 環境変数:
   CLOUDFLARE_ACCOUNT_ID   CloudflareアカウントID
   R2_BUCKET_NAME          R2バケット名
   CLOUDFLARE_API_TOKEN    APIトークン（Admin Read & Write権限）
+  R2_ACCESS_KEY_ID        R2アクセスキー（DuckDB用）
+  R2_SECRET_ACCESS_KEY    R2シークレットキー（DuckDB用）
         """
     )
     parser.add_argument(
         "command",
-        choices=["create", "append", "list", "scan"],
+        choices=["create", "append", "list", "scan", "query"],
         help="実行するコマンド"
+    )
+    parser.add_argument(
+        "sql",
+        nargs="?",
+        default="SELECT * FROM events LIMIT 10",
+        help="DuckDBで実行するSQL（queryコマンド用）"
     )
     args = parser.parse_args()
 
@@ -206,6 +273,8 @@ def main():
         list_tables()
     elif args.command == "scan":
         scan_table()
+    elif args.command == "query":
+        query_with_duckdb(args.sql)
 
 
 if __name__ == "__main__":
