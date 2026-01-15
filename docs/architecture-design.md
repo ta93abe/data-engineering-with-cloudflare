@@ -515,7 +515,202 @@ Workers (Consumer)
 | **CDC** | Debezium | Change Data Capture、Kafka統合 |
 | **PII処理** | カスタム (Rust Workers) | 検出・マスキング、GDPR/CCPA |
 
-### 5.4 プログラミング言語とランタイム
+### 5.4 外部ツール連携
+
+Cloudflareネイティブサービスと組み合わせて使用する外部ツールです。
+
+#### TROCCO
+
+**概要**: 日本発のデータ転送・ELTプラットフォーム
+
+| 項目 | 内容 |
+|------|------|
+| **主な機能** | データ転送、ELT、ワークフロー管理 |
+| **対応コネクタ** | 100種類以上（SaaS、DB、クラウドストレージ） |
+| **Cloudflare連携** | R2（S3互換）経由でのデータ転送 |
+
+**ユースケース**:
+- SaaSデータの収集（Salesforce、HubSpot、Google Analytics等）
+- 外部DB → R2/Snowflakeへのデータ転送
+- 定期的なデータ同期ジョブ
+
+**連携パターン**:
+```
+外部SaaS/DB → TROCCO → R2 (Bronze) → dbt変換 → Gold Layer
+                 ↓
+            Snowflake (並行ロード)
+```
+
+#### Snowflake
+
+**概要**: クラウドネイティブなデータウェアハウス
+
+| 項目 | 内容 |
+|------|------|
+| **主な機能** | DWH、データレイク、データ共有 |
+| **R2連携** | External Stage経由でR2データにアクセス |
+| **コスト** | 使用量ベース（コンピュート・ストレージ分離） |
+
+**ユースケース**:
+- 大規模データ分析・集計
+- BIツール（Tableau、Looker）のバックエンド
+- データマート構築
+- 外部データ共有（Data Sharing）
+
+**R2連携設定**:
+```sql
+-- External Stage作成（R2接続）
+CREATE OR REPLACE STAGE r2_stage
+  URL = 's3compat://bucket-name/path/'
+  CREDENTIALS = (AWS_KEY_ID = '...' AWS_SECRET_KEY = '...')
+  FILE_FORMAT = (TYPE = PARQUET);
+
+-- R2データのクエリ
+SELECT * FROM @r2_stage/gold/aggregated/;
+```
+
+**アーキテクチャパターン**:
+```
+Cloudflare Workers → R2 (Bronze/Silver)
+                       ↓
+                   Snowflake External Tables
+                       ↓
+                   dbt (Snowflake内変換)
+                       ↓
+                   Gold Layer (Snowflake) + BI連携
+```
+
+#### Observe
+
+**概要**: 統合オブザーバビリティプラットフォーム
+
+| 項目 | 内容 |
+|------|------|
+| **主な機能** | ログ、メトリクス、トレース、アラート |
+| **データモデル** | イベントベース、自動スキーマ検出 |
+| **Cloudflare連携** | Workers LogsをHTTP経由で送信 |
+
+**ユースケース**:
+- Workersアプリケーションログの集約・分析
+- 分散トレーシング
+- 異常検知・アラート
+- インシデント調査
+
+**Workers連携実装**:
+```typescript
+// Workers → Observe へログ送信
+async function sendToObserve(env: Env, logData: object) {
+  await fetch(env.OBSERVE_ENDPOINT, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${env.OBSERVE_TOKEN}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      ...logData,
+      timestamp: new Date().toISOString(),
+      source: 'cloudflare-workers'
+    })
+  });
+}
+
+// 使用例
+export default {
+  async fetch(request: Request, env: Env) {
+    const startTime = Date.now();
+    try {
+      // ビジネスロジック
+      const result = await processRequest(request);
+
+      // 成功ログ
+      await sendToObserve(env, {
+        level: 'info',
+        message: 'Request processed',
+        duration_ms: Date.now() - startTime,
+        path: new URL(request.url).pathname
+      });
+
+      return result;
+    } catch (error) {
+      // エラーログ
+      await sendToObserve(env, {
+        level: 'error',
+        message: error.message,
+        stack: error.stack
+      });
+      throw error;
+    }
+  }
+}
+```
+
+**監視アーキテクチャ**:
+```
+┌─────────────────────────────────────────────────────────┐
+│                  Cloudflare Workers                     │
+│  ┌─────────┐  ┌─────────┐  ┌─────────┐                │
+│  │ API     │  │ Data    │  │ Auth    │                │
+│  │ Worker  │  │ Worker  │  │ Worker  │                │
+│  └────┬────┘  └────┬────┘  └────┬────┘                │
+└───────┼────────────┼────────────┼─────────────────────┘
+        │            │            │
+        └────────────┼────────────┘
+                     ▼
+              ┌──────────────┐
+              │   Observe    │
+              │  ┌────────┐  │
+              │  │ Logs   │  │
+              │  │Metrics │  │
+              │  │Traces  │  │
+              │  └────────┘  │
+              │      ↓       │
+              │  Dashboards  │
+              │  Alerts      │
+              └──────────────┘
+```
+
+#### 外部ツール統合アーキテクチャ
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        Data Sources                              │
+│   SaaS Apps    External DBs    APIs    Cloudflare Services      │
+└───────┬─────────────┬───────────┬───────────────┬───────────────┘
+        │             │           │               │
+        ▼             ▼           ▼               ▼
+┌───────────────────────────────────────────────────────────────────┐
+│                      Data Integration Layer                        │
+│   ┌──────────┐    ┌──────────────┐    ┌─────────────────────┐    │
+│   │  TROCCO  │    │   Workers    │    │ Cloudflare Pipelines│    │
+│   │(ELT/転送)│    │ (リアルタイム)│    │   (ストリーミング)   │    │
+│   └────┬─────┘    └──────┬───────┘    └──────────┬──────────┘    │
+└────────┼─────────────────┼───────────────────────┼────────────────┘
+         │                 │                       │
+         ▼                 ▼                       ▼
+┌───────────────────────────────────────────────────────────────────┐
+│                        Storage Layer                               │
+│   ┌──────────────────────────────────────────────────────────┐   │
+│   │                R2 (Medallion Architecture)                │   │
+│   │         Bronze → Silver → Gold                            │   │
+│   └──────────────────────────────────────────────────────────┘   │
+│                              ↓                                    │
+│   ┌──────────────────────────────────────────────────────────┐   │
+│   │                      Snowflake                            │   │
+│   │    External Tables (R2) + Native Tables (Gold/Marts)     │   │
+│   └──────────────────────────────────────────────────────────┘   │
+└───────────────────────────────────────────────────────────────────┘
+                               │
+                               ▼
+┌───────────────────────────────────────────────────────────────────┐
+│                    Analytics & Monitoring                          │
+│   ┌────────────┐  ┌────────────┐  ┌──────────────────────────┐   │
+│   │  Evidence  │  │   marimo   │  │  Observe (Observability) │   │
+│   │ (BI/コスト) │  │(Notebooks) │  │ (Logs/Metrics/Traces)   │   │
+│   └────────────┘  └────────────┘  └──────────────────────────┘   │
+└───────────────────────────────────────────────────────────────────┘
+```
+
+### 5.5 プログラミング言語とランタイム
 
 | 言語 | 用途 | 割合 |
 |------|------|------|
@@ -784,14 +979,20 @@ Workers (Consumer)
 - [marimo](https://docs.marimo.io/)
 - [Evidence](https://docs.evidence.dev/)
 
-### 8.4 その他ツール
+### 8.4 外部ツール連携
+
+- [TROCCO](https://trocco.io/docs/) - データ転送・ELTプラットフォーム
+- [Snowflake Documentation](https://docs.snowflake.com/) - クラウドDWH
+- [Observe Documentation](https://docs.observeinc.com/) - オブザーバビリティ
+
+### 8.5 その他ツール
 
 - [DVC (Data Version Control)](https://dvc.org/doc)
 - [Debezium (CDC)](https://debezium.io/documentation/)
 - [Apache Iceberg](https://iceberg.apache.org/docs/latest/)
 - [Rust Workers SDK](https://github.com/cloudflare/workers-rs)
 
-### 8.5 関連ガイド（このプロジェクト内）
+### 8.6 関連ガイド（このプロジェクト内）
 
 - [ワークフローオーケストレーション完全ガイド](./workflow-orchestration.md)
 - [Cloudflare Zero Trust & Tunnelsセキュリティ](./cloudflare-security-zerotrust.md)
@@ -852,4 +1053,4 @@ Workers (Consumer)
 
 ---
 
-最終更新: 2025-12-26
+最終更新: 2026-01-15

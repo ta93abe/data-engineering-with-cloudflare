@@ -356,6 +356,14 @@ console.log(JSON.stringify({
 | PR管理 | [Graphite](https://app.graphite.com/) | スタック型PR |
 | リポジトリ | GitHub | コードホスティング |
 
+### 外部ツール連携
+
+| ツール | 用途 | 備考 |
+|--------|------|------|
+| [TROCCO](https://trocco.io/) | データ転送・ELT | 日本発のデータ統合プラットフォーム |
+| [Snowflake](https://www.snowflake.com/) | データウェアハウス | クラウドDWH、R2連携可能 |
+| [Observe](https://www.observeinc.com/) | オブザーバビリティ | ログ・メトリクス・トレース統合監視 |
+
 ### 開発フロー
 
 ```text
