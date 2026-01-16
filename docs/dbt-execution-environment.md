@@ -335,10 +335,19 @@ export default {
       return new Response("Method Not Allowed", { status: 405 });
     }
 
-    // ⚠️ リクエストサイズ制限
+    // ⚠️ リクエストサイズ制限（JSONボディ考慮）
     const contentLength = request.headers.get("Content-Length");
-    if (contentLength && parseInt(contentLength) > 1024) {
+    if (contentLength && parseInt(contentLength) > 4096) {
       return new Response("Payload Too Large", { status: 413 });
+    }
+
+    // ⚠️ リクエストボディからパラメータを取得（拡張性向上）
+    let body: { command?: string; args?: string[] };
+    try {
+      const text = await request.text();
+      body = text ? JSON.parse(text) : {};
+    } catch {
+      return new Response("Invalid JSON body", { status: 400 });
     }
 
     const container = getContainer(env.DbtContainer, "dbt-runner");
@@ -347,7 +356,8 @@ export default {
       const runId = generateRunId();
 
       try {
-        const command = url.searchParams.get("command") || "build";
+        const command = body.command || "build";
+        const extraArgs = body.args || [];
 
         // ⚠️ コマンド許可リストチェック
         if (!isAllowedCommand(command)) {
@@ -357,12 +367,13 @@ export default {
           );
         }
 
-        logEvent("info", "manual_run_started", { runId, command });
+        logEvent("info", "manual_run_started", { runId, command, args: extraArgs });
 
         const result = await execWithRetry(container, [
           command,
           "--target", env.DBT_TARGET,
-          "--profiles-dir", "."
+          "--profiles-dir", ".",
+          ...extraArgs  // 追加の引数を展開（例: --select, --exclude）
         ]);
 
         logEvent(
@@ -415,15 +426,23 @@ export default {
         throw new Error(`dbt build failed with exit code ${buildResult.exitCode}`);
       }
 
-      // Elementary実行（データ品質監視）
-      const elementaryResult = await container.exec("dbt", [
+      // Elementary実行（データ品質監視）- リトライ処理適用
+      const elementaryResult = await execWithRetry(container, [
         "run",
         "--select", "elementary",
         "--target", env.DBT_TARGET,
         "--profiles-dir", "."
       ]);
 
-      logEvent("info", "elementary_result", { runId, exitCode: elementaryResult.exitCode });
+      logEvent(
+        elementaryResult.exitCode === 0 ? "info" : "error",
+        "elementary_result",
+        { runId, exitCode: elementaryResult.exitCode }
+      );
+
+      if (elementaryResult.exitCode !== 0) {
+        throw new Error(`Elementary run failed with exit code ${elementaryResult.exitCode}`);
+      }
 
       // アーティファクトをR2に永続化
       await persistArtifacts(container, env, runId);
@@ -451,8 +470,13 @@ async function persistArtifacts(container: Container, env: Env, runId: string) {
           result.stdout
         );
       }
-    } catch {
-      // アーティファクトがない場合はスキップ
+    } catch (error) {
+      // アーティファクトがない場合はスキップするが、予期せぬエラーはログに残す
+      logEvent("warn", "persist_artifact_failed", {
+        runId,
+        artifact,
+        error: (error as Error).message
+      });
     }
   }
 }
@@ -579,11 +603,11 @@ crons = [
 ### 5.2 監視・アラート
 
 ```typescript
-// エラー時の通知
-async function notifyError(error: Error, env: Env) {
+// エラー時の通知（context引数でエラー発生源を特定）
+async function notifyError(error: Error, env: Env, context: string) {
   // Cloudflare Workers Analyticsに記録
   env.ANALYTICS.writeDataPoint({
-    blobs: ["dbt_error", error.message],
+    blobs: ["dbt_error", context, error.message],
     indexes: [new Date().toISOString()]
   });
 
@@ -591,7 +615,7 @@ async function notifyError(error: Error, env: Env) {
   await fetch(env.SLACK_WEBHOOK_URL, {
     method: "POST",
     body: JSON.stringify({
-      text: `dbt実行エラー: ${error.message}`
+      text: `dbt実行エラー\nContext: ${context}\nError: ${error.message}`
     })
   });
 }
