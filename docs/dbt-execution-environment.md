@@ -298,8 +298,9 @@ async function execWithRetry(
       const result = await container.exec("dbt", args);
       if (result.exitCode === 0) return result;
 
-      // 一時的なエラーの場合のみリトライ
-      if (attempt < maxRetries && result.exitCode !== 1) {
+      // Exit code 1 = 標準的なdbt失敗（テスト失敗等）- リトライしない
+      // Exit code 2+ = インフラ系の一時的エラーの可能性 - リトライする
+      if (attempt < maxRetries && result.exitCode > 1) {
         await new Promise(r => setTimeout(r, backoffMs * (attempt + 1)));
         continue;
       }
@@ -544,6 +545,7 @@ export { Sandbox } from "@cloudflare/sandbox";
 interface Env {
   Sandbox: DurableObjectNamespace<Sandbox>;
   DATA_LAKE: R2Bucket;
+  ACCOUNT_ID: string;
 }
 
 export default {
@@ -656,54 +658,75 @@ curl -X POST "https://dbt-runner.<your-subdomain>.workers.dev/run" \
 
 本番環境と検証環境を分離し、安全なデプロイを実現します。
 
-**ディレクトリ構成**:
-```
-workers/dbt-runner/
-├── wrangler.toml              # 共通設定
-├── wrangler.staging.toml      # staging環境
-└── wrangler.prod.toml         # 本番環境
-```
-
-**wrangler.staging.toml**:
+**wrangler.toml** (単一ファイルで環境管理):
 ```toml
-name = "dbt-runner-staging"
-inherits = "wrangler.toml"
+# 共通設定（全環境で継承される）
+name = "dbt-runner"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+account_id = "$ACCOUNT_ID"
 
-[[r2_buckets]]
-binding = "DATA_LAKE"
-bucket_name = "data-lake-staging"  # staging用バケット
+# 本番環境（デフォルト）
+[[containers]]
+class_name = "DbtContainer"
+image = "./Dockerfile"
+instance_type = "standard-2"
+max_instances = 1
+
+[[analytics_engine_datasets]]
+binding = "ANALYTICS"
+dataset = "dbt_metrics"
 
 [vars]
-DBT_TARGET = "staging"
-
-# staging用Cron（本番より頻度を下げる）
-[triggers]
-crons = ["0 */6 * * *"]  # 6時間ごと
-```
-
-**wrangler.prod.toml**:
-```toml
-name = "dbt-runner"
-inherits = "wrangler.toml"
+DBT_TARGET = "prod"
 
 [[r2_buckets]]
 binding = "DATA_LAKE"
 bucket_name = "data-lake"
 
-[[containers]]
-instance_type = "standard-2"  # 本番は高スペック
+[triggers]
+crons = [
+  "0 * * * *",
+  "0 2 * * *",
+  "0 3 * * 0"
+]
 
-[vars]
-DBT_TARGET = "prod"
+# ========================================
+# staging環境 (wrangler deploy --env staging)
+# ========================================
+[env.staging]
+name = "dbt-runner-staging"
+
+# バインディングは非継承のため、環境ごとに完全定義が必要
+[[env.staging.containers]]
+class_name = "DbtContainer"
+image = "./Dockerfile"
+instance_type = "standard-1"  # stagingは低スペック
+max_instances = 1
+
+[[env.staging.analytics_engine_datasets]]
+binding = "ANALYTICS"
+dataset = "dbt_metrics_staging"
+
+[[env.staging.r2_buckets]]
+binding = "DATA_LAKE"
+bucket_name = "data-lake-staging"
+
+[env.staging.vars]
+DBT_TARGET = "staging"
+
+# staging用Cron（本番より頻度を下げる）
+[env.staging.triggers]
+crons = ["0 */6 * * *"]  # 6時間ごと
 ```
 
 **デプロイフロー**:
 ```bash
 # staging環境へデプロイ
-wrangler deploy -c wrangler.staging.toml
+wrangler deploy --env staging
 
-# stagingでテスト後、本番へプロモート
-wrangler deploy -c wrangler.prod.toml
+# stagingでテスト後、本番へデプロイ
+wrangler deploy
 ```
 
 **CI/CDでの事前検証**:
