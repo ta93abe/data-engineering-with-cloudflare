@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Serena MCP
+.serena/
+
+# Cloudflare
+.wrangler/
+.dev.vars
+
+# dbt
+dbt/target/
+dbt/dbt_packages/
+dbt/logs/
+
+# Jupyter
+.ipynb_checkpoints/
