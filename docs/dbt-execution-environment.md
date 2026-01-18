@@ -279,6 +279,74 @@ function isAllowedCommand(cmd: string): cmd is AllowedCommand {
   return ALLOWED_COMMANDS.includes(cmd as AllowedCommand);
 }
 
+// ⚠️ 引数許可リスト（コマンドインジェクション対策）
+const ALLOWED_FLAGS = [
+  "--select", "-s",
+  "--exclude",
+  "--models", "-m",
+  "--full-refresh",
+  "--vars",
+  "--threads",
+  "--defer",
+  "--state",
+  "--no-version-check"
+] as const;
+
+// 禁止フラグ（セキュリティ上危険なオプション）
+const FORBIDDEN_FLAGS = [
+  "--profiles-dir",  // パス変更禁止（固定値を使用）
+  "--project-dir",   // プロジェクトパス変更禁止
+  "--log-path",      // ログパス変更禁止
+  "--target-path",   // ターゲットパス変更禁止
+] as const;
+
+// 危険な文字パターン
+const UNSAFE_PATTERNS = [
+  /[;&|`$(){}[\]<>\\]/,  // シェルメタ文字
+  /\.\./,                 // パストラバーサル
+  /^-.*=/,               // --flag=value形式（パース回避の可能性）
+];
+
+function validateExtraArgs(args: string[]): { valid: boolean; reason?: string } {
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+
+    // 禁止フラグのチェック
+    for (const forbidden of FORBIDDEN_FLAGS) {
+      if (arg === forbidden || arg.startsWith(`${forbidden}=`)) {
+        return { valid: false, reason: `Forbidden flag: ${forbidden}` };
+      }
+    }
+
+    // フラグの場合、許可リストに含まれているかチェック
+    if (arg.startsWith("-")) {
+      const isAllowed = ALLOWED_FLAGS.some(f => arg === f || arg.startsWith(`${f}=`));
+      if (!isAllowed) {
+        return { valid: false, reason: `Unknown flag: ${arg}` };
+      }
+    }
+
+    // 危険なパターンのチェック
+    for (const pattern of UNSAFE_PATTERNS) {
+      if (pattern.test(arg)) {
+        return { valid: false, reason: `Unsafe characters in argument: ${arg}` };
+      }
+    }
+
+    // 引数の長さ制限
+    if (arg.length > 500) {
+      return { valid: false, reason: `Argument too long: ${arg.slice(0, 50)}...` };
+    }
+  }
+
+  // 引数の総数制限
+  if (args.length > 20) {
+    return { valid: false, reason: `Too many arguments: ${args.length}` };
+  }
+
+  return { valid: true };
+}
+
 // 実行ID生成（トレーサビリティ用）
 function generateRunId(): string {
   return `run_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
@@ -368,13 +436,22 @@ export default {
           );
         }
 
+        // ⚠️ extraArgsのバリデーション（コマンドインジェクション対策）
+        const validationResult = validateExtraArgs(extraArgs);
+        if (!validationResult.valid) {
+          return Response.json(
+            { error: `Invalid argument: ${validationResult.reason}` },
+            { status: 400 }
+          );
+        }
+
         logEvent("info", "manual_run_started", { runId, command, args: extraArgs });
 
         const result = await execWithRetry(container, [
           command,
           "--target", env.DBT_TARGET,
           "--profiles-dir", ".",
-          ...extraArgs  // 追加の引数を展開（例: --select, --exclude）
+          ...extraArgs  // バリデーション済みの引数のみ展開
         ]);
 
         logEvent(
