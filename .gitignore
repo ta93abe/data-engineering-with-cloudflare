@@ -24,8 +24,7 @@ ENV/
 .DS_Store
 Thumbs.db
 
-# Serena MCP
-.serena/
+# Serena MCP (commit .serena/ for project config)
 
 # Cloudflare
 .wrangler/
