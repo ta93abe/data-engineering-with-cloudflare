@@ -1,0 +1,53 @@
+# Streamlit Dashboard - Cloudflare Containers Configuration
+name = "streamlit-dashboard"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+
+# Container Configuration
+[[containers]]
+class_name = "StreamlitContainer"
+image = "./Dockerfile"
+# standard-2: 1 vCPU, 6 GiB RAM, 12 GB disk
+# Streamlitの応答性を確保するため、十分なリソースを確保
+instance_type = "standard-2"
+max_instances = 1
+
+# R2 Bucket Binding (データレイク)
+[[r2_buckets]]
+binding = "DATA_LAKE"
+bucket_name = "data-lake"
+
+# Analytics Engine (監視用)
+[[analytics_engine_datasets]]
+binding = "ANALYTICS"
+dataset = "streamlit_metrics"
+
+# Environment Variables (non-sensitive)
+[vars]
+STREAMLIT_ENV = "production"
+
+# Secrets (set via: wrangler secret put API_KEY_SECRET)
+# - API_KEY_SECRET: API認証用
+
+# ========================================
+# staging環境 (wrangler deploy --env staging)
+# ========================================
+[env.staging]
+name = "streamlit-dashboard-staging"
+
+[[env.staging.containers]]
+class_name = "StreamlitContainer"
+image = "./Dockerfile"
+instance_type = "standard-1"  # stagingは低スペック
+max_instances = 1
+
+[[env.staging.r2_buckets]]
+binding = "DATA_LAKE"
+bucket_name = "data-lake-staging"
+
+[[env.staging.analytics_engine_datasets]]
+binding = "ANALYTICS"
+dataset = "streamlit_metrics_staging"
+
+[env.staging.vars]
+STREAMLIT_ENV = "staging"
