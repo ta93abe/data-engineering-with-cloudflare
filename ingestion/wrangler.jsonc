@@ -1,0 +1,21 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "ingestion",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-01-27",
+  "preview_urls": true,
+  "triggers": {
+    "crons": ["0 0 * * *"]
+  },
+  "vars": {
+    "GITHUB_USERNAME": "ta93abe"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "raw",
+      "database_id": "30fb49b7-8321-4792-8706-06c9205ce026"
+    }
+  ]
+  // シークレット: wrangler secret put GITHUB_TOKEN
+}
