@@ -1,0 +1,11 @@
+name: data-engineering-cloudflare
+runtime: go
+description: Cloudflare Data Engineering Infrastructure
+
+# Backend is configured via `pulumi login` command:
+# pulumi login 's3://pulumi?endpoint=https://<ACCOUNT_ID>.r2.cloudflarestorage.com&region=auto&s3ForcePathStyle=true'
+
+config:
+  pulumi:tags:
+    value:
+      pulumi:template: cloudflare-go
