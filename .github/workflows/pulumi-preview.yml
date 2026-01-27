@@ -1,0 +1,207 @@
+name: Pulumi Preview
+
+on:
+  pull_request:
+    paths:
+      - "infrastructure/pulumi/**"
+      - ".github/workflows/pulumi-preview.yml"
+
+env:
+  CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+  CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+  AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+  PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PULUMI_CONFIG_PASSPHRASE }}
+
+jobs:
+  preview:
+    name: Preview
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    defaults:
+      run:
+        working-directory: infrastructure/pulumi
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.23"
+          cache-dependency-path: infrastructure/pulumi/go.sum
+
+      - name: Install dependencies
+        run: go mod tidy
+
+      - name: Login to R2 backend
+        run: pulumi login 's3://pulumi?endpoint=https://${{ secrets.CLOUDFLARE_ACCOUNT_ID }}.r2.cloudflarestorage.com&region=auto&s3ForcePathStyle=true'
+
+      - name: Select stack
+        run: pulumi stack select dev
+
+      - name: Pulumi Preview
+        id: preview
+        run: |
+          set +e
+
+          # Run preview with JSON output for parsing
+          pulumi preview --json 2>/dev/null > preview.json
+          JSON_EXIT=$?
+
+          # Also get human-readable output
+          pulumi preview --diff 2>&1 | tee preview.txt
+          PREVIEW_EXIT=${PIPESTATUS[0]}
+
+          echo "exit_code=$PREVIEW_EXIT" >> $GITHUB_OUTPUT
+
+          # Parse JSON for accurate counts
+          if [ -f preview.json ] && [ -s preview.json ]; then
+            CREATES=$(jq '[.steps[]? | select(.op == "create")] | length' preview.json 2>/dev/null || echo "0")
+            UPDATES=$(jq '[.steps[]? | select(.op == "update")] | length' preview.json 2>/dev/null || echo "0")
+            DELETES=$(jq '[.steps[]? | select(.op == "delete")] | length' preview.json 2>/dev/null || echo "0")
+            SAMES=$(jq '[.steps[]? | select(.op == "same")] | length' preview.json 2>/dev/null || echo "0")
+          else
+            # Fallback to text parsing
+            CREATES=$(grep -c "^\s*+.*create" preview.txt 2>/dev/null || echo "0")
+            UPDATES=$(grep -c "^\s*~.*update" preview.txt 2>/dev/null || echo "0")
+            DELETES=$(grep -c "^\s*-.*delete" preview.txt 2>/dev/null || echo "0")
+            SAMES=$(grep -oP '\d+(?= unchanged)' preview.txt 2>/dev/null || echo "0")
+          fi
+
+          echo "creates=$CREATES" >> $GITHUB_OUTPUT
+          echo "updates=$UPDATES" >> $GITHUB_OUTPUT
+          echo "deletes=$DELETES" >> $GITHUB_OUTPUT
+          echo "sames=$SAMES" >> $GITHUB_OUTPUT
+
+          # Determine result status
+          TOTAL_CHANGES=$((CREATES + UPDATES + DELETES))
+          if [ $PREVIEW_EXIT -ne 0 ]; then
+            echo "result=failed" >> $GITHUB_OUTPUT
+          elif [ $TOTAL_CHANGES -eq 0 ]; then
+            echo "result=no-changes" >> $GITHUB_OUTPUT
+          else
+            echo "result=has-changes" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Generate PR Comment
+        id: comment
+        run: |
+          RESULT="${{ steps.preview.outputs.result }}"
+          CREATES="${{ steps.preview.outputs.creates }}"
+          UPDATES="${{ steps.preview.outputs.updates }}"
+          DELETES="${{ steps.preview.outputs.deletes }}"
+          SAMES="${{ steps.preview.outputs.sames }}"
+
+          # Set header based on result
+          case $RESULT in
+            "failed")
+              HEADER="## ❌ Pulumi Preview Failed"
+              BADGE="https://img.shields.io/badge/pulumi-failed-red?style=flat-square&logo=pulumi"
+              ;;
+            "no-changes")
+              HEADER="## ✅ Pulumi Preview: No Changes"
+              BADGE="https://img.shields.io/badge/pulumi-no%20changes-green?style=flat-square&logo=pulumi"
+              ;;
+            "has-changes")
+              HEADER="## 🔄 Pulumi Preview: Changes Detected"
+              BADGE="https://img.shields.io/badge/pulumi-changes%20detected-blue?style=flat-square&logo=pulumi"
+              ;;
+          esac
+
+          # Build comment
+          cat << 'COMMENT_EOF' > comment.md
+          HEADER_PLACEHOLDER
+
+          ![Pulumi](BADGE_PLACEHOLDER)
+
+          ### 📊 Resource Changes
+
+          | | Create | Update | Delete | Unchanged |
+          |:-:|:-:|:-:|:-:|:-:|
+          | Count | **CREATES_PLACEHOLDER** | **UPDATES_PLACEHOLDER** | **DELETES_PLACEHOLDER** | SAMES_PLACEHOLDER |
+          | | 🆕 | 📝 | 🗑️ | ⏸️ |
+
+          COMMENT_EOF
+
+          # Add warning section for destructive changes
+          if [ "$DELETES" -gt 0 ]; then
+            cat << 'WARNING_EOF' >> comment.md
+
+          > [!CAUTION]
+          > **DELETES_PLACEHOLDER resources will be deleted.** Please review carefully before merging.
+
+          WARNING_EOF
+          fi
+
+          # Add details section
+          cat << 'DETAILS_EOF' >> comment.md
+
+          <details>
+          <summary>📋 Preview Details</summary>
+
+          ```diff
+          DETAILS_EOF
+
+          # Add preview output (truncated if needed)
+          head -c 60000 preview.txt >> comment.md
+
+          cat << 'END_EOF' >> comment.md
+          ```
+
+          </details>
+
+          ---
+
+          <sub>🏗️ **Stack:** `dev` | 📁 **Path:** `infrastructure/pulumi` | 🔗 **Workflow:** [Run #${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})</sub>
+          END_EOF
+
+          # Replace placeholders
+          sed -i "s|HEADER_PLACEHOLDER|$HEADER|g" comment.md
+          sed -i "s|BADGE_PLACEHOLDER|$BADGE|g" comment.md
+          sed -i "s|CREATES_PLACEHOLDER|$CREATES|g" comment.md
+          sed -i "s|UPDATES_PLACEHOLDER|$UPDATES|g" comment.md
+          sed -i "s|DELETES_PLACEHOLDER|$DELETES|g" comment.md
+          sed -i "s|SAMES_PLACEHOLDER|$SAMES|g" comment.md
+
+      - name: Post PR Comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const body = fs.readFileSync('infrastructure/pulumi/comment.md', 'utf8');
+
+            const marker = '<!-- pulumi-preview-comment -->';
+            const fullBody = marker + '\n' + body;
+
+            // Find existing comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const existingComment = comments.find(c => c.body.includes(marker));
+
+            if (existingComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existingComment.id,
+                body: fullBody
+              });
+              console.log('Updated existing comment');
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: fullBody
+              });
+              console.log('Created new comment');
+            }
+
+      - name: Set exit code
+        if: steps.preview.outputs.result == 'failed'
+        run: exit 1
