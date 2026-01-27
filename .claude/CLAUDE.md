@@ -348,6 +348,47 @@ console.log(JSON.stringify({
 
 ## 開発ワークフロー
 
+### ⚠️ 重要なルール
+
+#### mainブランチでの直接作業の禁止
+
+**絶対に `main` ブランチで直接コミットしないこと**
+
+```bash
+# ❌ 絶対にやってはいけない
+git checkout main
+# コード変更
+git add .
+git commit -m "変更"
+
+# ✅ 正しい方法
+git checkout main
+git pull
+git checkout -b feat/new-feature
+# コード変更
+git add .
+git commit -m "feat: 新機能追加"
+git push -u origin feat/new-feature
+```
+
+**理由:**
+- mainは常にデプロイ可能な状態を保つ
+- CI/CDパイプラインが正しく動作する
+- レビュープロセスを経由することで品質を保つ
+- 変更履歴が明確になる
+
+**もしmainで誤ってコミットしてしまった場合:**
+
+```bash
+# まだpushしていない場合
+git reset --soft HEAD~1  # コミットを取り消し（変更は保持）
+git stash                # 変更を退避
+git checkout -b feat/your-feature  # 新ブランチ作成
+git stash pop            # 変更を復元
+git add .
+git commit -m "feat: your feature"
+```
+
 ### ツール構成
 
 | 用途 | ツール | 備考 |
@@ -358,53 +399,222 @@ console.log(JSON.stringify({
 
 ### 開発フロー
 
+**重要な原則:**
+- ⚠️ **mainブランチでは絶対に直接作業しない**
+- すべての変更はフィーチャーブランチで行う
+- コミット前に必ずCIが通ることを確認
+
 ```text
 1. Issue作成 (Linear)
    └── Backlog → Todo に移動
 
 2. 開発開始
    ├── Linear: Todo → In Progress
-   └── ブランチ名をLinearからコピー
+   ├── mainブランチから最新を取得: git checkout main && git pull
+   └── フィーチャーブランチ作成: git checkout -b <type>/<description>
 
-3. 実装 & PR作成 (Graphite)
+3. 実装
    ├── コード実装
-   ├── gt create -m "feat: 機能説明"
-   ├── (スタックする場合は繰り返し)
-   └── gt submit --no-interactive
+   ├── 適切な粒度でコミット
+   │   └── 例: 1機能1コミット、refactorは別コミット
+   └── コミットメッセージ: <type>: <description>
+       └── Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 
-4. レビュー
+4. PR作成 (Graphite)
+   ├── Graphiteでトラッキング: gt track
+   ├── PRを作成: gt submit --no-interactive
+   ├── Draft PRが作成される
+   └── CI確認（Pulumi Preview、claude-review、GitGuardian等）
+
+5. レビュー & 修正
    ├── Linear: In Progress → In Review
-   └── PRレビュー対応
+   ├── AIレビュー結果を確認（CodeRabbit、claude-review）
+   ├── 必要に応じて修正
+   │   ├── 修正コミット
+   │   └── git push（自動でPR更新）
+   └── 全CI通過を確認
 
-5. マージ & 完了
-   ├── Graphite/GitHubでマージ
-   └── Linear: In Review → Done
+6. マージ
+   ├── DraftからReady for reviewに変更（必要に応じて）
+   ├── 全CI通過を確認
+   ├── gh pr merge <pr-number> --squash --delete-branch
+   │   または Graphite/GitHub UIでマージ
+   └── ローカルmain更新: git checkout main && git pull
+
+7. 完了
+   ├── Linear: In Review → Done
+   └── ローカルブランチクリーンアップ（自動削除済み）
 ```
 
+### ブランチ命名規則
+
+```bash
+<type>/<description>
+
+例:
+feat/add-r2-bucket-management
+fix/pulumi-authentication-error
+chore/update-dependencies
+refactor/restructure-repository
+docs/update-development-workflow
+```
+
+**Type:**
+- `feat/`: 新機能
+- `fix/`: バグ修正
+- `chore/`: 依存関係更新、設定変更
+- `refactor/`: リファクタリング
+- `docs/`: ドキュメント更新
+- `test/`: テスト追加・修正
+
 ### Graphiteコマンド
+
+#### 基本フロー
 
 ```bash
 # 初期化（初回のみ）
 gt init
 
-# 変更をコミット＆ブランチ作成
-gt create -m "feat: 機能説明"
+# 既存ブランチをトラッキング
+git checkout feat/your-branch
+gt track  # または gt branch track（推奨される新コマンド）
 
 # PRを作成/更新
 gt submit --no-interactive
 
-# スタック全体をsubmit
-gt submit --stack --no-interactive
+# 現在の状態確認
+gt state
+```
 
-# ブランチ間移動
+#### よく使うコマンド
+
+```bash
+# 最新のmainを取得＆スタック全体をリベース
+gt sync
+
+# 外部変更を取得（リモートでコミットが追加された場合）
+gt get
+
+# ブランチ間移動（スタック型開発時）
 gt up    # 上のブランチへ
 gt down  # 下のブランチへ
 
-# 最新のmainを取得＆リベース
-gt sync
+# スタック全体をsubmit
+gt submit --stack --no-interactive
+```
 
-# 現在の状態確認
-gt state
+#### トラブルシューティング
+
+```bash
+# force-pushが必要な場合（外部変更があった時）
+gt submit --no-interactive --force
+
+# ブランチの親を変更
+gt branch parent <parent-branch>
+
+# 現在のスタック構造を確認
+gt log
+gt log --short
+```
+
+### CI/CD確認
+
+PR作成後、以下のCIが自動実行されます:
+
+| CI | 用途 | 確認内容 |
+|---|---|---|
+| **Pulumi Preview** | インフラ変更プレビュー | PRコメントでリソース変更を確認 |
+| **claude-review** | AIコードレビュー | コード品質、潜在的バグ |
+| **CodeRabbit** | AIコードレビュー | 包括的なレビュー |
+| **GitGuardian** | セキュリティチェック | シークレット漏洩検知 |
+
+**マージ前の確認事項:**
+- ✅ 全CIが pass していること
+- ✅ Pulumi Previewで意図しない変更がないこと
+- ✅ レビューコメントに対応済み
+
+### インフラ開発サイクル
+
+#### Pulumiでのリソース管理
+
+```bash
+# 1. インフラ変更
+vim infrastructure/pulumi/main.go
+
+# 2. ローカルでpreview
+cd infrastructure/pulumi
+set -a; source .env.local; set +a
+pulumi preview
+
+# 3. コミット＆PR作成
+git add infrastructure/pulumi/
+git commit -m "feat: Add R2 bucket for data lake"
+git push
+
+# 4. PRでPreview確認
+# → GitHub ActionsがPulumi Previewを実行
+# → PRコメントにリソース変更が表示される
+
+# 5. マージ後、自動デプロイ
+# → pulumi-deploy.yml が pulumi up --yes を実行
+```
+
+#### D1マイグレーション
+
+```bash
+# 1. マイグレーションファイル作成
+vim infrastructure/d1/migrations/0002_add_new_table.sql
+
+# 2. ローカルで確認
+cd infrastructure/d1
+wrangler d1 migrations apply raw --local
+
+# 3. コミット＆PR作成
+git add infrastructure/d1/migrations/
+git commit -m "feat: Add new table for analytics"
+git push
+
+# 4. マージ後、自動適用
+# → d1-migrations.yml が wrangler d1 migrations apply raw を実行
+```
+
+#### Workers デプロイ
+
+Workersは Cloudflare Dashboard の GitHub連携で自動デプロイされます:
+
+- **mainへのpush** → 本番デプロイ
+- **PRの作成/更新** → プレビューURL発行
+
+手動デプロイ（必要な場合）:
+```bash
+cd ingestion
+wrangler deploy
+```
+
+### 依存関係のアップデート
+
+定期的に依存関係を更新します:
+
+```bash
+# 1. 新ブランチ作成
+git checkout -b chore/update-dependencies
+
+# 2. Wrangler更新
+npm view wrangler version  # 最新版確認
+# .github/workflows/d1-migrations.yml の wranglerVersion を更新
+
+# 3. Pulumi更新
+cd infrastructure/pulumi
+# go.mod の require セクションを更新
+go mod tidy
+
+# 4. GitHub Actions のGoバージョン更新
+# .github/workflows/pulumi-*.yml の go-version を更新
+
+# 5. コミット＆PR
+git add .
+git commit -m "chore: Update Wrangler and Pulumi dependencies"
+git push
 ```
 
 ### コミットメッセージ規約

@@ -24,4 +24,5 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: infrastructure/d1
+          wranglerVersion: "4.61.0"
           command: d1 migrations apply raw --remote
