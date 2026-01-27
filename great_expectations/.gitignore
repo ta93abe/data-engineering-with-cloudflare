@@ -1,8 +1,0 @@
-uncommitted/
-*.pyc
-__pycache__/
-.pytest_cache/
-*.log
-*.duckdb
-*.duckdb.wal
-.ipynb_checkpoints/
