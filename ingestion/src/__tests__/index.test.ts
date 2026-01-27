@@ -1,5 +1,5 @@
-import { env, SELF, fetchMock } from "cloudflare:test";
-import { describe, it, expect, beforeAll, afterEach } from "vitest";
+import { env, fetchMock, SELF } from "cloudflare:test";
+import { afterEach, beforeAll, describe, expect, it } from "vitest";
 
 const MIGRATION_SQL = `
 create table if not exists github_users (
@@ -143,15 +143,12 @@ describe("github service", () => {
 
   it("syncs github data with mocked API", async () => {
     // Mock GitHub API responses
-    fetchMock
-      .get("https://api.github.com")
-      .intercept({ path: "/users/ta93abe" })
-      .reply(200, {
-        id: 12345,
-        login: "ta93abe",
-        name: "Test User",
-        avatar_url: "https://example.com/avatar.png",
-      });
+    fetchMock.get("https://api.github.com").intercept({ path: "/users/ta93abe" }).reply(200, {
+      id: 12345,
+      login: "ta93abe",
+      name: "Test User",
+      avatar_url: "https://example.com/avatar.png",
+    });
 
     fetchMock
       .get("https://api.github.com")

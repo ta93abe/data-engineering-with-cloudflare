@@ -1,6 +1,6 @@
 import { Hono } from "hono";
-import type { Env, SyncResult } from "./types";
 import github, { runSync as runGitHubSync } from "./services/github";
+import type { Env, SyncResult } from "./types";
 
 const app = new Hono<{ Bindings: Env }>();
 
