@@ -1,0 +1,10 @@
+name = "d1-migrations"
+
+# D1 マイグレーション専用設定
+# このwrangler.tomlはマイグレーション実行のためのみに使用
+
+[[d1_databases]]
+binding = "DB"
+database_name = "raw"
+database_id = "30fb49b7-8321-4792-8706-06c9205ce026"
+migrations_dir = "migrations"
