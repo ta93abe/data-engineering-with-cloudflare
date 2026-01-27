@@ -543,7 +543,7 @@ vim infrastructure/pulumi/main.go
 
 # 2. ローカルでpreview
 cd infrastructure/pulumi
-export $(cat .env.local | xargs)
+set -a; source .env.local; set +a
 pulumi preview
 
 # 3. コミット＆PR作成
@@ -575,7 +575,7 @@ git commit -m "feat: Add new table for analytics"
 git push
 
 # 4. マージ後、自動適用
-# → d1-migrations.yml が wrangler d1 migrations apply を実行
+# → d1-migrations.yml が wrangler d1 migrations apply raw を実行
 ```
 
 #### Workers デプロイ
