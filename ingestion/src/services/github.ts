@@ -187,16 +187,12 @@ app.get("/stats", async (c) => {
 });
 
 app.get("/daily", async (c) => {
-  const results = await c.env.DB.prepare(
-    "SELECT * FROM v_daily_commits LIMIT 30"
-  ).all();
+  const results = await c.env.DB.prepare("SELECT * FROM v_daily_commits LIMIT 30").all();
   return c.json(results.results);
 });
 
 app.get("/repos", async (c) => {
-  const results = await c.env.DB.prepare(
-    "SELECT * FROM v_repo_stats LIMIT 50"
-  ).all();
+  const results = await c.env.DB.prepare("SELECT * FROM v_repo_stats LIMIT 50").all();
   return c.json(results.results);
 });
 
