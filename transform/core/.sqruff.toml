@@ -1,0 +1,23 @@
+[sqruff]
+dialect = "duckdb"
+templater = "jinja"
+max_line_length = 120
+
+# Exclude rules that conflict with dbt/Jinja conventions
+exclude_rules = [
+    "LT01",  # Whitespace rules conflict with Jinja
+    "LT02",  # Indentation rules conflict with Jinja blocks
+    "LT12",  # Files must end with a single trailing newline
+]
+
+[sqruff.rules.capitalisation.keywords]
+capitalisation_policy = "lower"
+
+[sqruff.rules.capitalisation.identifiers]
+capitalisation_policy = "lower"
+
+[sqruff.rules.capitalisation.functions]
+capitalisation_policy = "lower"
+
+[sqruff.rules.layout.indent]
+tab_space_size = 4

@@ -1,0 +1,97 @@
+version: 2
+
+seeds:
+  - name: users
+    description: "ユーザーマスタデータ"
+    columns:
+      - name: user_id
+        description: "ユーザーID (PK)"
+        data_tests:
+          - unique
+          - not_null
+      - name: username
+        description: "ユーザー名"
+      - name: email
+        description: "メールアドレス"
+      - name: country
+        description: "国コード (JP, US, UK, DE)"
+      - name: signup_date
+        description: "登録日"
+      - name: is_premium
+        description: "プレミアム会員フラグ"
+      - name: lifetime_value
+        description: "累計購入金額"
+
+  - name: products
+    description: "商品マスタデータ"
+    columns:
+      - name: product_id
+        description: "商品ID (PK)"
+        data_tests:
+          - unique
+          - not_null
+      - name: product_name
+        description: "商品名"
+      - name: category
+        description: "カテゴリ (Electronics, Sports, Fashion, Food, Stationery)"
+      - name: subcategory
+        description: "サブカテゴリ"
+      - name: price
+        description: "販売価格"
+      - name: cost
+        description: "原価"
+      - name: is_active
+        description: "販売中フラグ"
+
+  - name: orders
+    description: "注文データ"
+    columns:
+      - name: order_id
+        description: "注文ID (PK)"
+        data_tests:
+          - unique
+          - not_null
+      - name: user_id
+        description: "ユーザーID (FK)"
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('users')
+              field: user_id
+      - name: order_date
+        description: "注文日"
+      - name: status
+        description: "注文ステータス (completed, pending, cancelled, refunded)"
+      - name: payment_method
+        description: "支払い方法 (credit_card, paypal, bank_transfer)"
+      - name: shipping_country
+        description: "配送先国"
+      - name: discount_amount
+        description: "割引額"
+
+  - name: order_items
+    description: "注文明細データ"
+    columns:
+      - name: order_item_id
+        description: "注文明細ID (PK)"
+        data_tests:
+          - unique
+          - not_null
+      - name: order_id
+        description: "注文ID (FK)"
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('orders')
+              field: order_id
+      - name: product_id
+        description: "商品ID (FK)"
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('products')
+              field: product_id
+      - name: quantity
+        description: "数量"
+      - name: unit_price
+        description: "単価"

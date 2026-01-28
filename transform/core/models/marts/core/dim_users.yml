@@ -1,0 +1,121 @@
+version: 2
+
+models:
+  - name: dim_users
+    description: "User dimension with calculated metrics and segmentation"
+    columns:
+      - name: user_id
+        description: "Primary key"
+        data_tests:
+          - unique
+          - not_null
+      - name: username
+        description: "User display name"
+      - name: email
+        description: "User email address"
+      - name: country
+        description: "User country"
+      - name: signup_date
+        description: "Date when user signed up"
+      - name: is_premium
+        description: "Whether user has premium subscription"
+      - name: total_orders
+        description: "Total number of orders placed"
+      - name: completed_orders
+        description: "Number of completed orders"
+      - name: total_revenue
+        description: "Total revenue from all orders"
+      - name: completed_revenue
+        description: "Revenue from completed orders only"
+      - name: first_order_date
+        description: "Date of first order"
+      - name: last_order_date
+        description: "Date of most recent order"
+      - name: customer_segment
+        description: "Customer value segment (High/Medium/Low/No Purchase)"
+      - name: updated_at
+        description: "Timestamp when record was last updated"
+
+unit_tests:
+  - name: test_customer_segment_high_value
+    description: "Users with completed_revenue >= 50000 should be High Value"
+    model: dim_users
+    given:
+      - input: ref('stg_users')
+        rows:
+          - { user_id: 1, username: "Test User", email: "test@example.com", country: "Japan", signup_date: "2024-01-01", is_premium: true, lifetime_value: 60000 }
+      - input: ref('stg_orders')
+        rows:
+          - { order_id: 1, user_id: 1, order_date: "2024-01-15", status: "completed", payment_method: "credit_card", shipping_country: "Japan", discount_amount: 0 }
+      - input: ref('stg_order_items')
+        rows:
+          - { order_item_id: 1, order_id: 1, product_id: 1, quantity: 1, unit_price: 60000, line_total: 60000 }
+    expect:
+      rows:
+        - { user_id: 1, customer_segment: "High Value" }
+
+  - name: test_customer_segment_medium_value
+    description: "Users with completed_revenue between 20000 and 50000 should be Medium Value"
+    model: dim_users
+    given:
+      - input: ref('stg_users')
+        rows:
+          - { user_id: 1, username: "Test User", email: "test@example.com", country: "Japan", signup_date: "2024-01-01", is_premium: false, lifetime_value: 25000 }
+      - input: ref('stg_orders')
+        rows:
+          - { order_id: 1, user_id: 1, order_date: "2024-01-15", status: "completed", payment_method: "credit_card", shipping_country: "Japan", discount_amount: 0 }
+      - input: ref('stg_order_items')
+        rows:
+          - { order_item_id: 1, order_id: 1, product_id: 1, quantity: 1, unit_price: 25000, line_total: 25000 }
+    expect:
+      rows:
+        - { user_id: 1, customer_segment: "Medium Value" }
+
+  - name: test_customer_segment_low_value
+    description: "Users with completed_revenue between 0 and 20000 should be Low Value"
+    model: dim_users
+    given:
+      - input: ref('stg_users')
+        rows:
+          - { user_id: 1, username: "Test User", email: "test@example.com", country: "Japan", signup_date: "2024-01-01", is_premium: false, lifetime_value: 5000 }
+      - input: ref('stg_orders')
+        rows:
+          - { order_id: 1, user_id: 1, order_date: "2024-01-15", status: "completed", payment_method: "credit_card", shipping_country: "Japan", discount_amount: 0 }
+      - input: ref('stg_order_items')
+        rows:
+          - { order_item_id: 1, order_id: 1, product_id: 1, quantity: 1, unit_price: 5000, line_total: 5000 }
+    expect:
+      rows:
+        - { user_id: 1, customer_segment: "Low Value" }
+
+  - name: test_customer_segment_no_purchase
+    description: "Users with no completed orders should be No Purchase"
+    model: dim_users
+    given:
+      - input: ref('stg_users')
+        rows:
+          - { user_id: 1, username: "Test User", email: "test@example.com", country: "Japan", signup_date: "2024-01-01", is_premium: false, lifetime_value: 0 }
+      - input: ref('stg_orders')
+        rows: []
+      - input: ref('stg_order_items')
+        rows: []
+    expect:
+      rows:
+        - { user_id: 1, customer_segment: "No Purchase" }
+
+  - name: test_customer_segment_cancelled_not_counted
+    description: "Cancelled orders should not count toward customer segment"
+    model: dim_users
+    given:
+      - input: ref('stg_users')
+        rows:
+          - { user_id: 1, username: "Test User", email: "test@example.com", country: "Japan", signup_date: "2024-01-01", is_premium: false, lifetime_value: 0 }
+      - input: ref('stg_orders')
+        rows:
+          - { order_id: 1, user_id: 1, order_date: "2024-01-15", status: "cancelled", payment_method: "credit_card", shipping_country: "Japan", discount_amount: 0 }
+      - input: ref('stg_order_items')
+        rows:
+          - { order_item_id: 1, order_id: 1, product_id: 1, quantity: 1, unit_price: 60000, line_total: 60000 }
+    expect:
+      rows:
+        - { user_id: 1, customer_segment: "No Purchase" }

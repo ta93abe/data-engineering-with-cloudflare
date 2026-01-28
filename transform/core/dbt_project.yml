@@ -1,0 +1,58 @@
+name: 'core'
+version: '1.0.0'
+config-version: 2
+
+profile: 'core'
+
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+models:
+  core:
+    +persist_docs:
+      relation: true
+      columns: true
+
+    staging:
+      +materialized: view
+      +schema: staging
+      +tags: ['staging']
+
+    marts:
+      +materialized: table
+      +schema: marts
+      +tags: ['marts']
+
+  # Elementary - Data Quality Monitoring (some DuckDB compatibility issues)
+  elementary:
+    +schema: elementary
+    +enabled: false
+
+  # dbt Project Evaluator - disabled by default
+  dbt_project_evaluator:
+    +enabled: false
+
+
+vars:
+  # Elementary Configuration
+  elementary:
+    anomaly_sensitivity: 3
+    days_back: 14
+    backfill_days: 7
+    edr_cli_run: true
+
+  # automate_dv Configuration (DuckDB not supported - commented out)
+  # automate_dv:
+  #   hash: 'MD5'
+  #   hash_null_collision: 'null_collision'
+  #   data_types:
+  #     source_date: 'DATE'
+  #     load_datetime: 'TIMESTAMP'

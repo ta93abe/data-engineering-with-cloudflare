@@ -1,0 +1,25 @@
+version: 2
+
+models:
+  - name: stg_orders
+    description: "Staged order data"
+    columns:
+      - name: order_id
+        description: "Primary key"
+        data_tests:
+          - unique
+          - not_null
+      - name: user_id
+        description: "FK to users"
+        data_tests:
+          - not_null
+      - name: order_date
+        description: "Date when order was placed"
+      - name: status
+        description: "Order status (pending/completed/cancelled/refunded)"
+      - name: payment_method
+        description: "Payment method used"
+      - name: shipping_country
+        description: "Country order is shipped to"
+      - name: discount_amount
+        description: "Discount amount applied to order"
