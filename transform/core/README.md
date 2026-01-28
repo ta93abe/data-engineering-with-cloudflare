@@ -31,6 +31,9 @@ export R2_BUCKET_NAME="your-bucket-name"
 ## 実行
 
 ```bash
+# Seedデータのロード
+uv run dbt seed
+
 # モデルの実行
 uv run dbt run
 
@@ -60,11 +63,26 @@ transform/core/
 │       └── core/
 │           ├── _core__models.yml
 │           └── dim_*.sql / fct_*.sql
+├── seeds/                  # シードデータ (CSV)
+│   ├── users.csv
+│   ├── products.csv
+│   ├── orders.csv
+│   └── order_items.csv
 ├── tests/                  # カスタムテスト
 ├── macros/                 # カスタムマクロ
-├── seeds/                  # シードデータ
 └── snapshots/              # スナップショット
 ```
+
+## Seedデータ
+
+分析用のECサイトサンプルデータ:
+
+| テーブル | レコード数 | 説明 |
+|----------|------------|------|
+| users | 10 | ユーザーマスタ（国、プレミアム会員、LTV） |
+| products | 15 | 商品マスタ（カテゴリ、価格、原価） |
+| orders | 20 | 注文データ（ステータス、支払方法、割引） |
+| order_items | 40 | 注文明細（商品、数量、単価） |
 
 ## 命名規則
 
@@ -77,21 +95,22 @@ transform/core/
 
 ## パッケージ
 
-- **elementary**: データ品質監視
+- **elementary**: データ品質監視（DuckDB互換性問題あり）
 - **dbt_utils**: 汎用マクロ
 - **dbt_expectations**: テスト拡張
 - **codegen**: YAML 自動生成
 - **audit_helper**: リファクタリング検証
 - **dbt_project_evaluator**: ベストプラクティス診断
-- **automate_dv**: Data Vault 自動化
 
-## Linting
+## Linting / Formatting
 
 ```bash
-# SQL Lint
-uv run sqruff lint models/
+# sqlfmt - SQL Formatter (Jinja対応)
+uv run sqlfmt models/ --check --diff  # チェックのみ
+uv run sqlfmt models/                  # フォーマット適用
 
-# SQL Format
+# sqruff - SQL Linter
+uv run sqruff lint models/
 uv run sqruff fix models/
 ```
 

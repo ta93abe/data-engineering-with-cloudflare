@@ -34,6 +34,7 @@ Thumbs.db
 dbt/target/
 dbt/dbt_packages/
 dbt/logs/
+logs/
 
 # Jupyter
 .ipynb_checkpoints/

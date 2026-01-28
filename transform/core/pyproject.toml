@@ -12,5 +12,9 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "shandy-sqlfmt[jinjafmt]>=0.24.0",
     "sqruff>=0.24.0",
 ]
+
+[tool.sqlfmt]
+line_length = 120

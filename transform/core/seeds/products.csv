@@ -1,0 +1,16 @@
+product_id,product_name,category,subcategory,price,cost,is_active
+1,Wireless Headphones,Electronics,Audio,15000,8000,true
+2,Bluetooth Speaker,Electronics,Audio,8000,4500,true
+3,USB-C Cable,Electronics,Accessories,1200,400,true
+4,Laptop Stand,Electronics,Accessories,5500,2800,true
+5,Mechanical Keyboard,Electronics,Input Devices,12000,6500,true
+6,Running Shoes,Sports,Footwear,9800,5200,true
+7,Yoga Mat,Sports,Fitness,3500,1800,true
+8,Water Bottle,Sports,Accessories,2200,900,true
+9,Backpack,Fashion,Bags,7500,3800,true
+10,Sunglasses,Fashion,Accessories,4500,2000,true
+11,Coffee Beans 500g,Food,Beverages,1800,800,true
+12,Green Tea Set,Food,Beverages,3200,1500,true
+13,Notebook Set,Stationery,Writing,1500,600,true
+14,Fountain Pen,Stationery,Writing,8500,4000,true
+15,Desk Organizer,Stationery,Office,2800,1200,false

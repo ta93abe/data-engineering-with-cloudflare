@@ -1,4 +1,4 @@
-cloudflare_data_platform:
+core:
   target: dev
   outputs:
     dev:

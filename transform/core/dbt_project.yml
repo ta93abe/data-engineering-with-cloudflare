@@ -1,8 +1,8 @@
-name: 'cloudflare_data_platform'
+name: 'core'
 version: '1.0.0'
 config-version: 2
 
-profile: 'cloudflare_data_platform'
+profile: 'core'
 
 model-paths: ["models"]
 analysis-paths: ["analyses"]
@@ -16,7 +16,7 @@ clean-targets:
   - "dbt_packages"
 
 models:
-  cloudflare_data_platform:
+  core:
     +persist_docs:
       relation: true
       columns: true
