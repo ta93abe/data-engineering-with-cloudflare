@@ -1,20 +1,47 @@
 version: 2
 
 models:
-  - name: stg_sample
-    description: "Staged sample data with standardized column names"
-
+  - name: stg_users
+    description: "Staged user data"
     columns:
-      - name: id
+      - name: user_id
         description: "Primary key"
         data_tests:
           - unique
           - not_null
 
-      - name: name
-        description: "Name field"
+  - name: stg_products
+    description: "Staged product data with calculated margin"
+    columns:
+      - name: product_id
+        description: "Primary key"
+        data_tests:
+          - unique
+          - not_null
+
+  - name: stg_orders
+    description: "Staged order data"
+    columns:
+      - name: order_id
+        description: "Primary key"
+        data_tests:
+          - unique
+          - not_null
+      - name: user_id
         data_tests:
           - not_null
 
-      - name: created_at
-        description: "Record creation timestamp (UTC)"
+  - name: stg_order_items
+    description: "Staged order items with line total"
+    columns:
+      - name: order_item_id
+        description: "Primary key"
+        data_tests:
+          - unique
+          - not_null
+      - name: order_id
+        data_tests:
+          - not_null
+      - name: product_id
+        data_tests:
+          - not_null
