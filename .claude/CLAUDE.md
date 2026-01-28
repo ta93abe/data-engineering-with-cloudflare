@@ -402,23 +402,23 @@ git commit -m "feat: your feature"
 - **図はMermaidで記述**: アーキテクチャ図やフロー図はMermaid記法を使用する
 - LinearはMermaidをネイティブサポートしているため、コードブロックで記述すれば自動でレンダリングされる
 
-```markdown
+````markdown
 # 例: フローチャート
-\`\`\`mermaid
+```mermaid
 flowchart LR
     A[Data Source] --> B[Workers]
-    B --> C[(R2)]
-\`\`\`
+    B --> C[R2]
+```
 
 # 例: シーケンス図
-\`\`\`mermaid
+```mermaid
 sequenceDiagram
     Client->>+API: Request
     API->>+DB: Query
     DB-->>-API: Result
     API-->>-Client: Response
-\`\`\`
 ```
+````
 
 ### 開発フロー
 
