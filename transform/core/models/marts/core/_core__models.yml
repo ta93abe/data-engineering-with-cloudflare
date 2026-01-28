@@ -1,0 +1,23 @@
+version: 2
+
+models:
+  - name: dim_sample
+    description: "Sample dimension table"
+
+    columns:
+      - name: sample_id
+        description: "Primary key - Sample identifier"
+        data_tests:
+          - unique
+          - not_null
+
+      - name: sample_name
+        description: "Sample name"
+        data_tests:
+          - not_null
+
+      - name: created_at
+        description: "Record creation timestamp (UTC)"
+
+      - name: updated_at
+        description: "Record update timestamp (UTC)"

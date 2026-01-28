@@ -1,0 +1,42 @@
+cloudflare_data_platform:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: 'dev.duckdb'
+      extensions:
+        - httpfs
+        - parquet
+      settings:
+        s3_endpoint: "{{ env_var('R2_ENDPOINT', '') }}"
+        s3_access_key_id: "{{ env_var('R2_ACCESS_KEY_ID', '') }}"
+        s3_secret_access_key: "{{ env_var('R2_SECRET_ACCESS_KEY', '') }}"
+        s3_url_style: 'path'
+      threads: 4
+
+    ci:
+      type: duckdb
+      path: ':memory:'
+      extensions:
+        - httpfs
+        - parquet
+      settings:
+        s3_endpoint: "{{ env_var('R2_ENDPOINT', '') }}"
+        s3_access_key_id: "{{ env_var('R2_ACCESS_KEY_ID', '') }}"
+        s3_secret_access_key: "{{ env_var('R2_SECRET_ACCESS_KEY', '') }}"
+        s3_url_style: 'path'
+      threads: 2
+
+    prod:
+      type: duckdb
+      path: ':memory:'
+      extensions:
+        - httpfs
+        - parquet
+        - iceberg
+      settings:
+        s3_endpoint: "{{ env_var('R2_ENDPOINT', '') }}"
+        s3_access_key_id: "{{ env_var('R2_ACCESS_KEY_ID', '') }}"
+        s3_secret_access_key: "{{ env_var('R2_SECRET_ACCESS_KEY', '') }}"
+        s3_url_style: 'path'
+      threads: 8
