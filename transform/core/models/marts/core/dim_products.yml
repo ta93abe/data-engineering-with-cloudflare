@@ -1,0 +1,127 @@
+version: 2
+
+models:
+  - name: dim_products
+    description: "Product dimension with sales metrics and performance tier"
+    columns:
+      - name: product_id
+        description: "Primary key"
+        data_tests:
+          - unique
+          - not_null
+      - name: product_name
+        description: "Product display name"
+      - name: category
+        description: "Product category"
+      - name: subcategory
+        description: "Product subcategory"
+      - name: price
+        description: "Product selling price"
+      - name: cost
+        description: "Product cost"
+      - name: margin
+        description: "Margin (price - cost)"
+      - name: margin_percent
+        description: "Margin as percentage of price"
+      - name: is_active
+        description: "Whether product is active"
+      - name: total_orders
+        description: "Total number of orders containing this product"
+      - name: completed_orders
+        description: "Number of completed orders"
+      - name: total_quantity_sold
+        description: "Total quantity sold"
+      - name: completed_quantity_sold
+        description: "Quantity sold in completed orders"
+      - name: total_revenue
+        description: "Total revenue from all orders"
+      - name: completed_revenue
+        description: "Revenue from completed orders only"
+      - name: performance_tier
+        description: "Product performance tier (Top/Good/Low/No Sales)"
+      - name: updated_at
+        description: "Timestamp when record was last updated"
+
+unit_tests:
+  - name: test_product_performance_tier_top
+    description: "Products with completed_revenue >= 30000 should be Top Performer"
+    model: dim_products
+    given:
+      - input: ref('stg_products')
+        rows:
+          - { product_id: 1, product_name: "Test Product", category: "Electronics", subcategory: "Phones", price: 15000, cost: 9000, margin: 6000, is_active: true }
+      - input: ref('stg_orders')
+        rows:
+          - { order_id: 1, user_id: 1, order_date: "2024-01-15", status: "completed", payment_method: "credit_card", shipping_country: "Japan", discount_amount: 0 }
+      - input: ref('stg_order_items')
+        rows:
+          - { order_item_id: 1, order_id: 1, product_id: 1, quantity: 3, unit_price: 15000, line_total: 45000 }
+    expect:
+      rows:
+        - { product_id: 1, performance_tier: "Top Performer" }
+
+  - name: test_product_performance_tier_good
+    description: "Products with completed_revenue between 10000 and 30000 should be Good Performer"
+    model: dim_products
+    given:
+      - input: ref('stg_products')
+        rows:
+          - { product_id: 1, product_name: "Test Product", category: "Electronics", subcategory: "Phones", price: 5000, cost: 3000, margin: 2000, is_active: true }
+      - input: ref('stg_orders')
+        rows:
+          - { order_id: 1, user_id: 1, order_date: "2024-01-15", status: "completed", payment_method: "credit_card", shipping_country: "Japan", discount_amount: 0 }
+      - input: ref('stg_order_items')
+        rows:
+          - { order_item_id: 1, order_id: 1, product_id: 1, quantity: 3, unit_price: 5000, line_total: 15000 }
+    expect:
+      rows:
+        - { product_id: 1, performance_tier: "Good Performer" }
+
+  - name: test_product_performance_tier_low
+    description: "Products with completed_revenue between 0 and 10000 should be Low Performer"
+    model: dim_products
+    given:
+      - input: ref('stg_products')
+        rows:
+          - { product_id: 1, product_name: "Test Product", category: "Electronics", subcategory: "Phones", price: 2000, cost: 1200, margin: 800, is_active: true }
+      - input: ref('stg_orders')
+        rows:
+          - { order_id: 1, user_id: 1, order_date: "2024-01-15", status: "completed", payment_method: "credit_card", shipping_country: "Japan", discount_amount: 0 }
+      - input: ref('stg_order_items')
+        rows:
+          - { order_item_id: 1, order_id: 1, product_id: 1, quantity: 2, unit_price: 2000, line_total: 4000 }
+    expect:
+      rows:
+        - { product_id: 1, performance_tier: "Low Performer" }
+
+  - name: test_product_performance_tier_no_sales
+    description: "Products with no completed sales should be No Sales"
+    model: dim_products
+    given:
+      - input: ref('stg_products')
+        rows:
+          - { product_id: 1, product_name: "Test Product", category: "Electronics", subcategory: "Phones", price: 5000, cost: 3000, margin: 2000, is_active: true }
+      - input: ref('stg_orders')
+        rows: []
+      - input: ref('stg_order_items')
+        rows: []
+    expect:
+      rows:
+        - { product_id: 1, performance_tier: "No Sales" }
+
+  - name: test_product_cancelled_not_counted
+    description: "Cancelled orders should not count toward performance tier"
+    model: dim_products
+    given:
+      - input: ref('stg_products')
+        rows:
+          - { product_id: 1, product_name: "Test Product", category: "Electronics", subcategory: "Phones", price: 15000, cost: 9000, margin: 6000, is_active: true }
+      - input: ref('stg_orders')
+        rows:
+          - { order_id: 1, user_id: 1, order_date: "2024-01-15", status: "cancelled", payment_method: "credit_card", shipping_country: "Japan", discount_amount: 0 }
+      - input: ref('stg_order_items')
+        rows:
+          - { order_item_id: 1, order_id: 1, product_id: 1, quantity: 3, unit_price: 15000, line_total: 45000 }
+    expect:
+      rows:
+        - { product_id: 1, performance_tier: "No Sales" }

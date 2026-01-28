@@ -1,10 +1,3 @@
-{{
-    config(
-        materialized='table',
-        tags=['marts', 'dimension']
-    )
-}}
-
 with products as (
     select * from {{ ref('stg_products') }}
 ),

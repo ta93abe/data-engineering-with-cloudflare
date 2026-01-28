@@ -1,10 +1,3 @@
-{{
-    config(
-        materialized='table',
-        tags=['marts', 'dimension']
-    )
-}}
-
 with users as (
     select * from {{ ref('stg_users') }}
 ),

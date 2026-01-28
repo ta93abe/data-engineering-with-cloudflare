@@ -1,10 +1,3 @@
-{{
-    config(
-        materialized='table',
-        tags=['marts', 'dimension']
-    )
-}}
-
 with date_spine as (
     select
         unnest(generate_series(

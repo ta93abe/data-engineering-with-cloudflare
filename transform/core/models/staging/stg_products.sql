@@ -1,10 +1,3 @@
-{{
-    config(
-        materialized='view',
-        tags=['staging']
-    )
-}}
-
 with source as (
     select * from {{ ref('products') }}
 ),
