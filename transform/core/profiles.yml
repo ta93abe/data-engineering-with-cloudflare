@@ -29,7 +29,7 @@ core:
 
     prod:
       type: duckdb
-      path: ':memory:'
+      path: 'prod.duckdb'
       extensions:
         - httpfs
         - parquet
