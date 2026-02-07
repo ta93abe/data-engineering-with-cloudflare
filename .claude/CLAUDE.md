@@ -19,7 +19,9 @@ Cloudflareのエッジコンピューティングプラットフォームを活�
 
 - **Cloudflare Workers**: エッジコンピューティングプラットフォーム
 - **TypeScript**: 型安全な開発（メイン言語）
-- **Rust**: WebAssemblyへのコンパイルによる高性能Workers実装
+- **Hono**: Workers用軽量Webフレームワーク
+- **Python**: dbt変換パイプライン
+- **Go**: Pulumiインフラ管理
 - **Wrangler**: Cloudflare Workers用CLI
 
 ### データストレージ
@@ -40,23 +42,37 @@ Cloudflareのエッジコンピューティングプラットフォームを活�
 data-engineering-with-cloudflare/
 ├── .claude/                    # Claude Code設定
 │   └── CLAUDE.md              # このファイル
-├── docs/                       # ドキュメント
-│   └── architecture-design.md  # アーキテクチャ設計
-├── workers/                    # Cloudflare Workers実装
-│   └── mcp-server/            # Rust製MCPサーバー
-│       ├── src/lib.rs         # メイン実装
-│       ├── Cargo.toml         # Rust依存関係
-│       ├── wrangler.toml      # Workers設定
-│       ├── DEPLOYMENT.md      # デプロイガイド
-│       └── README.md          # 使用方法
-├── src/                        # その他ソースコード（今後追加）
-│   ├── schemas/               # D1スキーマ定義
-│   └── utils/                 # ユーティリティ
-├── scripts/                    # スクリプト（今後追加）
-│   ├── deploy/                # デプロイスクリプト
-│   └── migrations/            # D1マイグレーション
-├── tests/                      # テストコード（今後追加）
-└── README.md                  # プロジェクト概要
+├── .github/workflows/          # GitHub Actions CI/CD
+├── ingestion/                  # データ取り込みWorker (TypeScript/Hono)
+│   ├── src/
+│   │   ├── index.ts           # メインエントリ
+│   │   ├── types.ts           # 型定義
+│   │   ├── services/          # サービス層
+│   │   └── __tests__/         # テスト
+│   ├── biome.json             # Biome設定
+│   ├── wrangler.jsonc         # Wrangler設定
+│   └── package.json           # pnpm依存関係
+├── transform/
+│   └── core/                  # dbtプロジェクト (DuckDB)
+│       ├── models/            # dbtモデル
+│       ├── macros/            # dbtマクロ
+│       ├── tests/             # dbtテスト
+│       ├── seeds/             # シードデータ
+│       ├── dbt_project.yml    # dbt設定
+│       ├── .sqruff.toml       # SQLリンター設定
+│       └── pyproject.toml     # Python依存関係 (uv)
+├── mcp-server/                # MCPサーバー（予定）
+├── ai/                        # AI関連（予定）
+├── dashboard/                 # ダッシュボード（予定）
+├── ml/                        # ML関連（予定）
+├── infrastructure/
+│   ├── pulumi/                # IaC (Go + Pulumi)
+│   │   └── main.go           # インフラ定義
+│   └── d1/                    # D1マイグレーション
+│       └── migrations/        # SQLマイグレーションファイル
+├── docs/                      # ドキュメント
+├── scripts/                   # ユーティリティスクリプト
+└── README.md                 # プロジェクト概要
 ```
 
 ## 開発ガイドライン
@@ -64,9 +80,11 @@ data-engineering-with-cloudflare/
 ### コーディング規約
 
 1. **TypeScript優先**: 型安全性を確保するため、TypeScriptを使用
-2. **エラーハンドリング**: すべての非同期処理で適切なエラーハンドリングを実装
-3. **レスポンス時間**: Workers実行時間は50ms以内を目標（CPU time制限考慮）
-4. **セキュリティ**: APIキーや認証情報は環境変数で管理、コードに埋め込まない
+2. **Biome**: Linting & Formattingに Biome を使用（ESLint/Prettier不使用）
+3. **pnpm**: パッケージマネージャーにpnpmを使用
+4. **エラーハンドリング**: すべての非同期処理で適切なエラーハンドリングを実装
+5. **レスポンス時間**: Workers実行時間は50ms以内を目標（CPU time制限考慮）
+6. **セキュリティ**: APIキーや認証情報は環境変数で管理、コードに埋め込まない
 
 ### Workersベストプラクティス
 
@@ -94,37 +112,57 @@ try {
 }
 ```
 
-#### Rust（workers-rs）
+#### Hono（Webフレームワーク）
 
-```rust
-use worker::*;
+```typescript
+// ingestion Workerの基本構造
+import { Hono } from "hono";
 
-#[event(fetch, respond_with_errors)]
-pub async fn main(req: Request, env: Env, _ctx: Context) -> Result<Response> {
-    // パニック時のログ改善
-    console_error_panic_hook::set_once();
+type Bindings = {
+  DB: D1Database;
+  GITHUB_TOKEN: string;
+  GITHUB_USERNAME: string;
+};
 
-    let router = Router::new();
-    router
-        .get("/health", |_, _| Response::ok("OK"))
-        .post_async("/api", |mut req, ctx| async move {
-            // KVアクセス
-            let kv = ctx.kv("DATA")?;
-            let value = kv.get("key").text().await?;
+const app = new Hono<{ Bindings: Bindings }>();
 
-            // D1アクセス（SELECT文のみ推奨）
-            let d1 = ctx.env.d1("DB")?;
-            let result = d1.prepare("SELECT * FROM users").all().await?;
+app.get("/health", (c) => c.text("OK"));
 
-            // R2アクセス
-            let bucket = ctx.bucket("STORAGE")?;
-            bucket.put("file.txt", "content").execute().await?;
+app.get("/api/data", async (c) => {
+  const result = await c.env.DB.prepare("SELECT * FROM data").all();
+  return c.json(result);
+});
 
-            Response::ok("Success")
-        })
-        .run(req, env)
-        .await
+export default app;
+```
+
+#### Biome設定
+
+```jsonc
+// ingestion/biome.json
+{
+  "formatter": {
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 100
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "double",
+      "semicolons": "always",
+      "trailingCommas": "es5"
+    }
+  }
 }
+```
+
+#### dbt (SQL変換)
+
+```bash
+# transform/core/ で実行
+uv run dbt run                    # モデル実行
+uv run dbt test                   # テスト
+uv run sqruff lint models/        # SQLリント（sqruff）
 ```
 
 ### ストレージ選択の判断基準
@@ -226,20 +264,28 @@ jobs:
 
 ## テスト戦略
 
-1. **ユニットテスト**: Vitest または Jest
-2. **統合テスト**: Miniflare（ローカルWorkersシミュレータ）
+1. **Workers テスト**: Vitest + @cloudflare/vitest-pool-workers
+2. **dbt テスト**: dbt test + Elementary
 3. **E2Eテスト**: 本番環境でのスモークテスト
 
 ```typescript
-// テスト例（Vitest）
-import { describe, it, expect } from 'vitest';
+// テスト例（Vitest + Workers Pool）
+// ingestion/src/__tests__/index.test.ts
+import { describe, it, expect } from "vitest";
+import { SELF } from "cloudflare:test";
 
-describe('User API', () => {
-  it('should return user data', async () => {
-    const response = await handleRequest(mockRequest);
+describe("Ingestion Worker", () => {
+  it("should return health check", async () => {
+    const response = await SELF.fetch("http://localhost/health");
     expect(response.status).toBe(200);
   });
 });
+```
+
+```bash
+# テスト実行コマンド
+cd ingestion && pnpm test:run       # Vitest
+cd transform/core && uv run dbt test # dbt
 ```
 
 ## セキュリティ
@@ -258,22 +304,30 @@ describe('User API', () => {
 
 ## 監視とオブザーバビリティ
 
+### Workers Observability
+
+ingestion Workerは Workers Observability が有効化されています（`wrangler.jsonc`）:
+
+```jsonc
+{
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1  // 全リクエストをサンプリング
+  }
+}
+```
+
 ### メトリクス
 
+- **Workers Observability**: ログ、トレース、メトリクスの統合ダッシュボード
 - **Workers Analytics**: リクエスト数、レイテンシ、エラー率
 - **Analytics Engine**: カスタムメトリクスの記録
-- **外部ツール連携**: Grafana、Datadog、Sentryなど
 
 ### ログ管理
 
 ```typescript
-// 構造化ログの推奨
-console.log(JSON.stringify({
-  level: "info",
-  message: "User created",
-  userId: userId,
-  timestamp: new Date().toISOString()
-}));
+// Workers Observabilityでは console.log が自動収集される
+console.log("User created", { userId, timestamp: new Date().toISOString() });
 ```
 
 ### アラート設定
@@ -319,20 +373,23 @@ console.log(JSON.stringify({
 
 ## プロジェクトロードマップ
 
-### Phase 1: 基盤構築（現在）
+### Phase 1: 基盤構築（完了）
 - [x] アーキテクチャ設計ドキュメント作成
 - [x] Wrangler環境セットアップ
-- [x] 基本的なWorkers実装（MCPサーバー）
-- [ ] D1スキーマ設計
+- [x] リポジトリ構造リストラクチャリング
+- [x] D1スキーマ設計（初期マイグレーション）
+- [x] Pulumiインフラ管理セットアップ
+- [x] Biome Linting導入
+- [x] Workers Observability有効化
 
-### Phase 2: コア機能実装
-- [ ] データ取り込みパイプライン
-- [x] ストレージ層の実装（KV, D1, R2アクセス）
+### Phase 2: コア機能実装（進行中）
+- [x] データ取り込みWorker（ingestion / Hono）
+- [x] ストレージ層の実装（D1バインディング）
 - [ ] Analytics Engine統合
 - [ ] 基本的なダッシュボード
-- [x] dbtプロジェクトセットアップ
+- [x] dbtプロジェクトセットアップ（transform/core）
 - [x] Elementaryデータ品質監視統合
-- [x] MCPサーバー（LLMからのデータアクセス）
+- [ ] MCPサーバー実装
 
 ### Phase 3: 拡張機能
 - [ ] リアルタイム処理（Durable Objects）
@@ -547,8 +604,8 @@ PR作成後、以下のCIが自動実行されます:
 | CI | 用途 | 確認内容 |
 |---|---|---|
 | **Pulumi Preview** | インフラ変更プレビュー | PRコメントでリソース変更を確認 |
-| **claude-review** | AIコードレビュー | コード品質、潜在的バグ |
-| **CodeRabbit** | AIコードレビュー | 包括的なレビュー |
+| **biome-check** | Lint & Format | TypeScript/JSコード品質 |
+| **claude-code-review** | AIコードレビュー | コード品質、潜在的バグ |
 | **GitGuardian** | セキュリティチェック | シークレット漏洩検知 |
 
 **マージ前の確認事項:**
@@ -686,4 +743,4 @@ TBD
 
 ---
 
-最終更新: 2026-01-28
+最終更新: 2026-02-07

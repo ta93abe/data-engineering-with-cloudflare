@@ -1,110 +1,99 @@
-# Suggested Commands
+# Suggested Commands (2026-02更新)
 
-## Python環境
-
-### 依存関係インストール
-```bash
-# uv使用（推奨）
-uv sync
-
-# 開発依存関係含む
-uv sync --extra dev
-
-# 特定グループ
-uv sync --extra iceberg
-uv sync --extra workers
-```
-
-### Linting & Formatting
-```bash
-# Ruff (リント)
-ruff check .
-ruff check . --fix
-
-# Black (フォーマット)
-black .
-black --check .
-
-# mypy (型チェック)
-mypy src/
-
-# SQLFluff (SQLリント)
-sqlfluff lint dbt/models/
-sqlfluff fix dbt/models/
-```
-
-### テスト
-```bash
-pytest
-pytest --cov=src --cov-report=html
-```
-
-## dbt
+## ingestion Worker (TypeScript)
 
 ```bash
-cd dbt
+cd ingestion
 
 # 依存関係インストール
-dbt deps
+pnpm install
 
-# モデル実行
-dbt run
-dbt run --select model_name
-
-# テスト
-dbt test
-
-# ドキュメント生成
-dbt docs generate
-dbt docs serve
-```
-
-## Great Expectations
-
-```bash
-cd great_expectations
-
-# チェックポイント実行
-great_expectations checkpoint run daily_data_quality_checkpoint
-
-# データドキュメント生成
-great_expectations docs build
-```
-
-## marimo (ノートブック)
-
-```bash
-# ノートブック起動
-marimo edit marimo/notebooks/data_quality_dashboard.py
-
-# サーバーモード
-marimo run marimo/notebooks/data_quality_dashboard.py
-```
-
-## Cloudflare Workers
-
-### Wrangler CLI
-```bash
 # ローカル開発
-wrangler dev
-
-# 特定設定ファイル使用
-wrangler dev --config wrangler-llm-chat.toml
+pnpm dev              # wrangler dev
 
 # デプロイ
-wrangler deploy
-wrangler deploy --config wrangler-llm-chat.toml
+pnpm deploy           # wrangler deploy --minify
 
+# テスト
+pnpm test             # vitest (watch mode)
+pnpm test:run         # vitest run (single run)
+
+# 型チェック
+pnpm typecheck        # tsc --noEmit
+
+# 型生成
+pnpm cf-typegen       # wrangler types --env-interface CloudflareBindings
+
+# Linting (Biome)
+pnpm lint             # biome lint .
+pnpm lint:fix         # biome lint --write .
+pnpm format           # biome format --write .
+pnpm check            # biome check . (lint + format)
+pnpm check:fix        # biome check --write .
+```
+
+## transform/core (dbt)
+
+```bash
+cd transform/core
+
+# Python環境セットアップ
+uv sync
+uv sync --group dev
+
+# dbt操作
+uv run dbt deps
+uv run dbt run
+uv run dbt run --select model_name
+uv run dbt test
+uv run dbt docs generate
+uv run dbt docs serve
+
+# SQLリント (sqruff)
+uv run sqruff lint models/
+uv run sqruff fix models/
+
+# SQLフォーマット (sqlfmt)
+uv run sqlfmt models/
+```
+
+## infrastructure
+
+### Pulumi
+```bash
+cd infrastructure/pulumi
+
+# 環境変数読み込み
+set -a; source .env.local; set +a
+
+# プレビュー
+pulumi preview
+
+# デプロイ
+pulumi up
+```
+
+### D1マイグレーション
+```bash
+# マイグレーション適用
+wrangler d1 migrations apply raw --config infrastructure/d1/wrangler.toml
+
+# ローカルで確認
+wrangler d1 migrations apply raw --local --config infrastructure/d1/wrangler.toml
+```
+
+## Cloudflare Workers CLI
+
+```bash
 # 環境変数設定
 wrangler secret put API_KEY
 
 # KV操作
-wrangler kv:namespace create "NAMESPACE_NAME"
-wrangler kv:namespace list
+wrangler kv namespace create "NAMESPACE_NAME"
+wrangler kv namespace list
 
 # D1操作
 wrangler d1 create database-name
-wrangler d1 migrations apply database-name
 
 # R2操作
 wrangler r2 bucket create bucket-name
@@ -114,58 +103,20 @@ wrangler r2 bucket list
 wrangler tail
 ```
 
-### Rust MCP Server
-```bash
-cd workers/mcp-server
-
-# Rustターゲット追加（初回のみ）
-rustup target add wasm32-unknown-unknown
-
-# worker-buildインストール（初回のみ）
-cargo install worker-build
-
-# ビルド
-worker-build --release
-
-# ローカル開発
-wrangler dev
-
-# デプロイ
-wrangler deploy
-```
-
-## Git
+## Git / Graphite
 
 ```bash
 # ブランチ作成
-git switch -c feature/xxx
+git checkout main && git pull
+git checkout -b feat/description
 
-# コミット
-git add .
-git commit -m "feat: xxx"
+# Graphiteでトラッキング＆PR作成
+gt track
+gt submit --no-interactive
 
-# プッシュ
-git push -u origin feature/xxx
+# Graphite同期
+gt sync
 
-# PR作成
-gh pr create --title "xxx" --body "xxx"
-```
-
-## ユーティリティ (macOS/Darwin)
-
-```bash
-# ファイル検索
-find . -name "*.py" -type f
-mdfind -onlyin . "keyword"
-
-# テキスト検索
-grep -r "pattern" .
-rg "pattern"  # ripgrep推奨
-
-# ディレクトリ構造
-ls -la
-find . -type d -maxdepth 2
-
-# プロセス確認
-lsof -i :8787  # ポート使用確認
+# PRマージ
+gh pr merge <pr-number> --squash --delete-branch
 ```

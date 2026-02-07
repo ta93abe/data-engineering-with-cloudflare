@@ -1,45 +1,38 @@
-# Task Completion Checklist
+# Task Completion Checklist (2026-02更新)
 
-タスク完了時に実行すべき項目のチェックリストです。
+## ingestion Worker (TypeScript) 変更時
 
-## Python コード変更時
+- [ ] `cd ingestion && pnpm check` - Biome lint + format チェック
+- [ ] `pnpm check:fix` - 自動修正
+- [ ] `pnpm typecheck` - TypeScript型チェック
+- [ ] `pnpm test:run` - Vitestテスト実行
+- [ ] `pnpm dev` - ローカルで動作確認
 
-- [ ] `ruff check .` - リントエラーがないこと
-- [ ] `ruff check . --fix` - 自動修正可能な問題を修正
-- [ ] `black .` - コードフォーマット
-- [ ] `mypy src/` - 型エラーがないこと
-- [ ] `pytest` - テストが通ること
+## transform/core (dbt) 変更時
 
-## SQL/dbt 変更時
+- [ ] `cd transform/core && uv run sqruff lint models/` - SQLリント
+- [ ] `uv run sqruff fix models/` - 自動修正
+- [ ] `uv run dbt run` - モデルが正常に実行されること
+- [ ] `uv run dbt test` - テストが通ること
 
-- [ ] `sqlfluff lint dbt/models/` - SQLリント
-- [ ] `sqlfluff fix dbt/models/` - 自動修正
-- [ ] `cd dbt && dbt run` - モデルが正常に実行されること
-- [ ] `cd dbt && dbt test` - テストが通ること
+## infrastructure 変更時
 
-## Cloudflare Workers 変更時 (TypeScript/JavaScript)
+### Pulumi
+- [ ] `cd infrastructure/pulumi && pulumi preview` - 変更プレビュー
+- [ ] 意図しないリソース変更がないか確認
 
-- [ ] `wrangler dev` - ローカルで動作確認
-- [ ] `/health` エンドポイント確認
-- [ ] エラーハンドリングの確認
-
-## Rust MCP Server 変更時
-
-- [ ] `worker-build --release` - ビルドが通ること
-- [ ] `wrangler dev` - ローカルで動作確認
-- [ ] MCP プロトコルの動作確認
+### D1マイグレーション
+- [ ] `wrangler d1 migrations apply raw --local --config infrastructure/d1/wrangler.toml` - ローカル確認
 
 ## ドキュメント変更時
 
 - [ ] Markdownのリンク切れ確認
-- [ ] コード例の動作確認
 - [ ] 日本語の誤字脱字チェック
 
 ## Git コミット前
 
-- [ ] 上記の該当項目をすべて実行
+- [ ] 上記の該当チェック項目をすべて実行
 - [ ] `git status` で変更ファイル確認
-- [ ] 不要なファイルが含まれていないか確認
 - [ ] `.env`, credentials, secrets が含まれていないか確認
 - [ ] Conventional Commits形式でコミットメッセージ作成
 
@@ -48,11 +41,14 @@
 - [ ] PRタイトルは変更内容を簡潔に表現
 - [ ] PR本文に変更概要を記載
 - [ ] テストプランを記載
-- [ ] 関連するIssueをリンク（あれば）
+- [ ] 関連するLinear Issueをリンク（あれば）
+- [ ] Graphiteで `gt submit --no-interactive`
 
-## デプロイ前 (本番)
+## CI確認
 
-- [ ] 開発環境でのテスト完了
-- [ ] wrangler.toml の設定確認
-- [ ] シークレット/環境変数の設定確認
-- [ ] バケット名などリソース名の確認
+| CI | 確認内容 |
+|---|---|
+| Pulumi Preview | インフラ変更プレビュー |
+| claude-code-review | AIコードレビュー |
+| biome-check | Biome lint/format |
+| GitGuardian | シークレット漏洩検知 |

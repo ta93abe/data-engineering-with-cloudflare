@@ -1,84 +1,96 @@
-# Code Style & Conventions
+# Code Style & Conventions (2026-02更新)
 
-## Python
+## TypeScript/JavaScript (ingestion Worker)
 
-### フォーマット・リント設定 (pyproject.toml)
-```toml
-[tool.ruff]
-line-length = 100
-target-version = "py311"
+### ツール: Biome (ESLint+Prettier統合代替)
+設定ファイル: `ingestion/biome.json`
 
-[tool.ruff.lint]
-select = ["E", "W", "F", "I", "B", "C4", "UP"]
-ignore = ["E501"]
-
-[tool.black]
-line-length = 100
-target-version = ['py311']
-
-[tool.mypy]
-python_version = "3.11"
-warn_return_any = true
-warn_unused_configs = true
-disallow_untyped_defs = true
+```json
+{
+  "formatter": {
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 100
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "double",
+      "semicolons": "always",
+      "trailingCommas": "es5"
+    }
+  },
+  "linter": {
+    "rules": {
+      "recommended": true,
+      "suspicious": { "noExplicitAny": "warn" },
+      "complexity": { "noForEach": "off" }
+    }
+  }
+}
 ```
 
 ### 規約
+- ダブルクォート使用
+- セミコロン必須
+- インデント: スペース2つ
 - 行長: 100文字
-- 型ヒント: 必須 (disallow_untyped_defs)
-- import順序: isortで自動整理
-
-## TypeScript/JavaScript (Workers)
-
-### 規約
 - TypeScript優先
 - 環境変数からの読み取り（ハードコード禁止）
 - すべての非同期処理で適切なエラーハンドリング
 - Workers実行時間: 50ms以内を目標
 
-### コード例
-```typescript
-// ✅ Good: 環境変数からの読み取り
-export default {
-  async fetch(request: Request, env: Env) {
-    const apiKey = env.API_KEY;
-  }
-}
+## SQL (dbt / sqruff)
 
-// ✅ Good: エラーハンドリング
-try {
-  const data = await env.DB.prepare("SELECT * FROM users").all();
-  return new Response(JSON.stringify(data), { status: 200 });
-} catch (error) {
-  console.error("Database error:", error);
-  return new Response("Internal Server Error", { status: 500 });
-}
+### ツール: sqruff (SQLFluff後継のRust製リンター)
+設定ファイル: `transform/core/.sqruff.toml`
+
+```toml
+[sqruff]
+dialect = "duckdb"
+templater = "jinja"
+max_line_length = 120
+
+[sqruff.rules.capitalisation.keywords]
+capitalisation_policy = "lower"
+
+[sqruff.rules.capitalisation.identifiers]
+capitalisation_policy = "lower"
+
+[sqruff.rules.capitalisation.functions]
+capitalisation_policy = "lower"
+
+[sqruff.rules.layout.indent]
+tab_space_size = 4
 ```
 
-## Rust (MCP Server)
-
 ### 規約
-- console_error_panic_hook使用
-- serde derive使用
-- エラーは Result<T, worker::Error> で返す
+- キーワード: 小文字 (select, from, where)
+- 識別子: 小文字
+- 関数名: 小文字
+- インデント: スペース4つ
+- 行長: 120文字
+- DuckDB方言
 
-## SQL (dbt)
+## Python (transform/core)
+- Python 3.11〜3.12
+- パッケージ管理: uv (pyproject.toml)
+- 型ヒント推奨
 
-### 規約
-- SQLFluff使用
-- dbt公式スタイルガイドに準拠
+## Go (infrastructure/pulumi)
+- Go標準フォーマッタ (gofmt)
 
 ## Git
 
-### ブランチ戦略
-- `main`: 常にデプロイ可能な状態を維持
-- 機能ブランチ: `feature/xxx`, `fix/xxx`
+### ブランチ命名
+```
+<type>/<description>
+例: feat/add-r2-bucket, fix/auth-error, chore/update-deps
+```
 
 ### コミットメッセージ
-- Conventional Commits形式を推奨
-- 例: `feat:`, `fix:`, `docs:`, `refactor:`
+- Conventional Commits形式
+- `feat:`, `fix:`, `docs:`, `refactor:`, `chore:`, `test:`
+- Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 
-### プルリクエスト
-- レビュー必須
-- テスト通過が必要
-- 新機能追加時はドキュメント更新
+### ⚠️ mainブランチでの直接コミット禁止
+すべての変更はフィーチャーブランチ→PR経由
