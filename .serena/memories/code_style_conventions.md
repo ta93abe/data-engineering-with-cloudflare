@@ -82,7 +82,7 @@ tab_space_size = 4
 ## Git
 
 ### ブランチ命名
-```
+```text
 <type>/<description>
 例: feat/add-r2-bucket, fix/auth-error, chore/update-deps
 ```

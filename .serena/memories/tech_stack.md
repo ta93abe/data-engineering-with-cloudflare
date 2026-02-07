@@ -44,6 +44,7 @@
 - **D1マイグレーション**: Wrangler CLI
 
 ## Linting & Formatting
+
 | 対象 | ツール | 備考 |
 |------|--------|------|
 | TypeScript/JS | Biome | ESLint+Prettier置き換え |
@@ -51,12 +52,14 @@
 | SQL整形 | shandy-sqlfmt | 行長120 |
 
 ## テスト
+
 | 対象 | ツール | 備考 |
 |------|--------|------|
 | TypeScript | Vitest | @cloudflare/vitest-pool-workers |
 | dbt | dbt test | Elementary含む |
 
 ## CI/CD (GitHub Actions)
+
 | ワークフロー | 用途 |
 |-------------|------|
 | claude-code-review.yml | AIコードレビュー |
@@ -67,6 +70,7 @@
 | biome-check.yml | Biomeリント・フォーマットチェック |
 
 ## ツール
+
 | 用途 | ツール |
 |------|--------|
 | Issue管理 | Linear (de-studyプロジェクト) |

@@ -504,11 +504,11 @@ sequenceDiagram
    ├── Graphiteでトラッキング: gt track
    ├── PRを作成: gt submit --no-interactive
    ├── Draft PRが作成される
-   └── CI確認（Pulumi Preview、claude-review、GitGuardian等）
+   └── CI確認（Pulumi Preview、claude-code-review、biome-check、GitGuardian等）
 
 5. レビュー & 修正
    ├── Linear: In Progress → In Review
-   ├── AIレビュー結果を確認（CodeRabbit、claude-review）
+   ├── AIレビュー結果を確認（claude-code-review）
    ├── 必要に応じて修正
    │   ├── 修正コミット
    │   └── git push（自動でPR更新）
