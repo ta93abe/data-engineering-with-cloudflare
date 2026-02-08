@@ -476,17 +476,13 @@ export async function runSync(
   // Heart rate API has a 30-day limit; include only when range fits
   const daysDiff =
     (new Date(endDate).getTime() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24);
-  const hrRange = overrideStartDate
-    ? { startDate, endDate }
-    : getHeartRateDateRange(lastSyncAt);
+  const hrRange = overrideStartDate ? { startDate, endDate } : getHeartRateDateRange(lastSyncAt);
 
   const sleepCount = await syncDailySleep(db, token, startDate, endDate);
   const activityCount = await syncDailyActivity(db, token, startDate, endDate);
   const readinessCount = await syncDailyReadiness(db, token, startDate, endDate);
   const heartRateCount =
-    daysDiff > 30
-      ? 0
-      : await syncHeartRate(db, token, hrRange.startDate, hrRange.endDate);
+    daysDiff > 30 ? 0 : await syncHeartRate(db, token, hrRange.startDate, hrRange.endDate);
 
   // Only update sync_state when not doing a historical backfill
   if (!overrideStartDate) {
