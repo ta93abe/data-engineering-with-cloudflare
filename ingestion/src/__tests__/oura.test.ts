@@ -318,7 +318,7 @@ describe("oura sync", () => {
             low_activity_time: 7200,
             sedentary_time: 28800,
             resting_time: 28800,
-            met: { average: 1.5 },
+            average_met_minutes: 1.5,
             contributors: {
               meet_daily_targets: 85,
               move_every_hour: 90,
@@ -499,6 +499,98 @@ describe("oura sync", () => {
 
     const json = (await res.json()) as { success: boolean; count: number };
     expect(json.count).toBe(2);
+  });
+
+  it("handles missing contributors gracefully", async () => {
+    await insertTestToken();
+
+    fetchMock
+      .get("https://api.ouraring.com")
+      .intercept({ path: /\/v2\/usercollection\/daily_sleep/ })
+      .reply(200, {
+        data: [
+          {
+            id: "sleep-no-contrib",
+            day: "2026-02-04",
+            score: null,
+            timestamp: "2026-02-04T07:00:00+00:00",
+          },
+        ],
+        next_token: null,
+      });
+
+    fetchMock
+      .get("https://api.ouraring.com")
+      .intercept({ path: /\/v2\/usercollection\/daily_activity/ })
+      .reply(200, {
+        data: [
+          {
+            id: "activity-no-contrib",
+            day: "2026-02-04",
+            score: null,
+            active_calories: 200,
+            total_calories: 1800,
+            steps: 5000,
+            equivalent_walking_distance: 4000,
+            high_activity_time: 0,
+            medium_activity_time: 1800,
+            low_activity_time: 3600,
+            sedentary_time: 30000,
+            resting_time: 28800,
+            average_met_minutes: 1.2,
+            timestamp: "2026-02-04T23:59:59+00:00",
+          },
+        ],
+        next_token: null,
+      });
+
+    fetchMock
+      .get("https://api.ouraring.com")
+      .intercept({ path: /\/v2\/usercollection\/daily_readiness/ })
+      .reply(200, {
+        data: [
+          {
+            id: "readiness-no-contrib",
+            day: "2026-02-04",
+            score: null,
+            temperature_deviation: null,
+            temperature_trend_deviation: null,
+            timestamp: "2026-02-04T07:00:00+00:00",
+          },
+        ],
+        next_token: null,
+      });
+
+    fetchMock
+      .get("https://api.ouraring.com")
+      .intercept({ path: /\/v2\/usercollection\/heartrate/ })
+      .reply(200, { data: [], next_token: null });
+
+    const res = await SELF.fetch("https://example.com/oura/sync", { method: "POST" });
+    expect(res.status).toBe(200);
+
+    const json = (await res.json()) as { success: boolean; count: number };
+    expect(json.success).toBe(true);
+    expect(json.count).toBe(3);
+
+    // Verify nulls stored correctly
+    const sleep = await env.DB.prepare(
+      "SELECT * FROM oura_daily_sleep WHERE id = 'sleep-no-contrib'"
+    ).first();
+    expect(sleep?.score).toBeNull();
+    expect(sleep?.deep_sleep).toBeNull();
+
+    const activity = await env.DB.prepare(
+      "SELECT * FROM oura_daily_activity WHERE id = 'activity-no-contrib'"
+    ).first();
+    expect(activity?.score).toBeNull();
+    expect(activity?.meet_daily_targets).toBeNull();
+
+    const readiness = await env.DB.prepare(
+      "SELECT * FROM oura_daily_readiness WHERE id = 'readiness-no-contrib'"
+    ).first();
+    expect(readiness?.score).toBeNull();
+    expect(readiness?.activity_balance).toBeNull();
   });
 
   it("returns 401 when not authenticated", async () => {

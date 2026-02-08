@@ -29,14 +29,14 @@ interface OuraDailySleep {
   day: string;
   score: number | null;
   timestamp: string;
-  contributors: {
-    deep_sleep: number | null;
-    efficiency: number | null;
-    latency: number | null;
-    rem_sleep: number | null;
-    restfulness: number | null;
-    timing: number | null;
-    total_sleep: number | null;
+  contributors?: {
+    deep_sleep?: number | null;
+    efficiency?: number | null;
+    latency?: number | null;
+    rem_sleep?: number | null;
+    restfulness?: number | null;
+    timing?: number | null;
+    total_sleep?: number | null;
   };
 }
 
@@ -53,14 +53,14 @@ interface OuraDailyActivity {
   low_activity_time: number;
   sedentary_time: number;
   resting_time: number;
-  met: { average: number };
-  contributors: {
-    meet_daily_targets: number | null;
-    move_every_hour: number | null;
-    recovery_time: number | null;
-    stay_active: number | null;
-    training_frequency: number | null;
-    training_volume: number | null;
+  average_met_minutes: number;
+  contributors?: {
+    meet_daily_targets?: number | null;
+    move_every_hour?: number | null;
+    recovery_time?: number | null;
+    stay_active?: number | null;
+    training_frequency?: number | null;
+    training_volume?: number | null;
   };
   timestamp: string;
 }
@@ -72,15 +72,15 @@ interface OuraDailyReadiness {
   temperature_deviation: number | null;
   temperature_trend_deviation: number | null;
   timestamp: string;
-  contributors: {
-    activity_balance: number | null;
-    body_temperature: number | null;
-    hrv_balance: number | null;
-    previous_day_activity: number | null;
-    previous_night: number | null;
-    recovery_index: number | null;
-    resting_heart_rate: number | null;
-    sleep_balance: number | null;
+  contributors?: {
+    activity_balance?: number | null;
+    body_temperature?: number | null;
+    hrv_balance?: number | null;
+    previous_day_activity?: number | null;
+    previous_night?: number | null;
+    recovery_index?: number | null;
+    resting_heart_rate?: number | null;
+    sleep_balance?: number | null;
   };
 }
 
@@ -276,15 +276,15 @@ async function syncDailySleep(
       .bind(
         item.id,
         item.day,
-        item.score,
+        item.score ?? null,
         item.timestamp,
-        item.contributors.deep_sleep,
-        item.contributors.efficiency,
-        item.contributors.latency,
-        item.contributors.rem_sleep,
-        item.contributors.restfulness,
-        item.contributors.timing,
-        item.contributors.total_sleep
+        item.contributors?.deep_sleep ?? null,
+        item.contributors?.efficiency ?? null,
+        item.contributors?.latency ?? null,
+        item.contributors?.rem_sleep ?? null,
+        item.contributors?.restfulness ?? null,
+        item.contributors?.timing ?? null,
+        item.contributors?.total_sleep ?? null
       )
       .run();
   }
@@ -336,7 +336,7 @@ async function syncDailyActivity(
       .bind(
         item.id,
         item.day,
-        item.score,
+        item.score ?? null,
         item.active_calories,
         item.total_calories,
         item.steps,
@@ -346,13 +346,13 @@ async function syncDailyActivity(
         item.low_activity_time,
         item.sedentary_time,
         item.resting_time,
-        item.met.average,
-        item.contributors.meet_daily_targets,
-        item.contributors.move_every_hour,
-        item.contributors.recovery_time,
-        item.contributors.stay_active,
-        item.contributors.training_frequency,
-        item.contributors.training_volume,
+        item.average_met_minutes ?? null,
+        item.contributors?.meet_daily_targets ?? null,
+        item.contributors?.move_every_hour ?? null,
+        item.contributors?.recovery_time ?? null,
+        item.contributors?.stay_active ?? null,
+        item.contributors?.training_frequency ?? null,
+        item.contributors?.training_volume ?? null,
         item.timestamp
       )
       .run();
@@ -398,18 +398,18 @@ async function syncDailyReadiness(
       .bind(
         item.id,
         item.day,
-        item.score,
-        item.temperature_deviation,
-        item.temperature_trend_deviation,
+        item.score ?? null,
+        item.temperature_deviation ?? null,
+        item.temperature_trend_deviation ?? null,
         item.timestamp,
-        item.contributors.activity_balance,
-        item.contributors.body_temperature,
-        item.contributors.hrv_balance,
-        item.contributors.previous_day_activity,
-        item.contributors.previous_night,
-        item.contributors.recovery_index,
-        item.contributors.resting_heart_rate,
-        item.contributors.sleep_balance
+        item.contributors?.activity_balance ?? null,
+        item.contributors?.body_temperature ?? null,
+        item.contributors?.hrv_balance ?? null,
+        item.contributors?.previous_day_activity ?? null,
+        item.contributors?.previous_night ?? null,
+        item.contributors?.recovery_index ?? null,
+        item.contributors?.resting_heart_rate ?? null,
+        item.contributors?.sleep_balance ?? null
       )
       .run();
   }
