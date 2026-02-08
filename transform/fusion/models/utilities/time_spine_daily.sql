@@ -8,10 +8,10 @@ with
 
 base_dates as (
     {{
-        dbt.date_spine(
-            'day',
-            "DATE('2010-01-01')",
-            "DATE('2030-01-01')"
+        dbt_utils.date_spine(
+            datepart='day',
+            start_date="cast('2010-01-01' as date)",
+            end_date="cast('2030-01-01' as date)"
         )
     }}
 ),

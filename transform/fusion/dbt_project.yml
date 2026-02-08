@@ -3,10 +3,6 @@ version: '1.0.0'
 
 profile: fusion
 
-flags:
-  use_managed_iceberg: true
-  use_materialization_v2: true
-
 seed-paths: ["seeds"]
 model-paths: ["models"]
 macro-paths: ["macros"]
