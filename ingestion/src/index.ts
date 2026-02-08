@@ -72,21 +72,27 @@ app.post("/sync", async (c) => {
 app.get("/health", (c) => c.json({ status: "ok" }));
 
 // Scheduled handler (Cron)
+// "0 0 * * *"    → GitHub (1日1回 UTC 0:00 / JST 9:00)
+// "0 */12 * * *" → Oura   (12時間毎 UTC 0:00,12:00 / JST 9:00,21:00)
 const scheduled: ExportedHandlerScheduledHandler<Env> = async (event, env) => {
   console.log("Scheduled sync started:", event.cron);
 
-  try {
-    const result = await runGitHubSync(env);
-    console.log("GitHub sync completed:", result);
-  } catch (e) {
-    console.error("GitHub sync failed:", e);
+  if (event.cron === "0 0 * * *") {
+    try {
+      const result = await runGitHubSync(env);
+      console.log("GitHub sync completed:", result);
+    } catch (e) {
+      console.error("GitHub sync failed:", e);
+    }
   }
 
-  try {
-    const result = await runOuraSync(env);
-    console.log("Oura sync completed:", result);
-  } catch (e) {
-    console.error("Oura sync failed:", e);
+  if (event.cron === "0 */12 * * *") {
+    try {
+      const result = await runOuraSync(env);
+      console.log("Oura sync completed:", result);
+    } catch (e) {
+      console.error("Oura sync failed:", e);
+    }
   }
 };
 
