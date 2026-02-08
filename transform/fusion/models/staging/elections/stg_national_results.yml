@@ -1,0 +1,42 @@
+models:
+  - name: stg_national_results
+    description: 全国集計の選挙結果ステージングモデル。1行1選挙×1政党。total_votesを算出。
+    columns:
+      - name: election_id
+        description: 選挙ID。stg_electionsへの外部キー。
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_elections')
+                field: election_id
+      - name: party_id
+        description: 政党ID。stg_partiesへの外部キー。
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_parties')
+                field: party_id
+      - name: district_votes
+        description: 小選挙区（衆院）または選挙区（参院）での得票数。
+      - name: proportional_votes
+        description: 比例代表での得票数。
+      - name: total_votes
+        description: 総得票数。district_votes + proportional_votes で算出。
+      - name: seats_won
+        description: 獲得議席数（小選挙区+比例代表の合計）。
+
+unit_tests:
+  - name: test_total_votes_calculation
+    description: total_votes が district_votes + proportional_votes と一致することを検証。
+    model: stg_national_results
+    given:
+      - input: ref('raw_national_results')
+        rows:
+          - {election_id: 1, party_id: 1, district_votes: 25000000, proportional_votes: 16000000, seats_won: 294}
+          - {election_id: 1, party_id: 2, district_votes: 13000000, proportional_votes: 9000000, seats_won: 57}
+    expect:
+      rows:
+        - {election_id: 1, party_id: 1, district_votes: 25000000, proportional_votes: 16000000, total_votes: 41000000, seats_won: 294}
+        - {election_id: 1, party_id: 2, district_votes: 13000000, proportional_votes: 9000000, total_votes: 22000000, seats_won: 57}

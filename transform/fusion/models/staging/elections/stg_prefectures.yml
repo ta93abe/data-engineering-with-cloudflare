@@ -1,0 +1,17 @@
+models:
+  - name: stg_prefectures
+    description: 都道府県マスタのステージングモデル。1行1都道府県。JIS X 0401準拠。
+    columns:
+      - name: prefecture_id
+        description: 都道府県コード（1-47）。JIS X 0401準拠。
+        data_tests:
+          - not_null
+          - unique
+      - name: prefecture_name
+        description: 都道府県名（例：東京都、大阪府、北海道）。
+      - name: region
+        description: 地方区分（北海道/東北/関東/中部/近畿/中国/四国/九州沖縄）。
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["北海道", "東北", "関東", "中部", "近畿", "中国", "四国", "九州沖縄"]

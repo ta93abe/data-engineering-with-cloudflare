@@ -1,0 +1,23 @@
+models:
+  - name: stg_elections
+    description: 選挙マスタのステージングモデル。1行1選挙。chamber_nameで院名の日本語表記を追加。
+    columns:
+      - name: election_id
+        description: 選挙の一意キー。
+        data_tests:
+          - not_null
+          - unique
+      - name: election_name
+        description: 選挙の正式名称（例：第50回衆議院議員総選挙）。
+      - name: chamber
+        description: 院の識別子。lower=衆議院、upper=参議院。
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ["lower", "upper"]
+      - name: election_date
+        description: 投票日（date型）。
+      - name: total_seats
+        description: 当該選挙の総議席数。
+      - name: chamber_name
+        description: 院の日本語名称。衆議院または参議院。
