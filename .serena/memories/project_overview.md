@@ -59,5 +59,8 @@ data-engineering-with-cloudflare/
 ## 外部ツール統合
 - **dbt** (dbt-duckdb): SQLベースのデータ変換・モデリング
 - **Elementary**: dbt向けデータ品質監視
+- **Great Expectations**: データバリデーション・品質監視
+- **Apache Iceberg**: R2上のオープンテーブルフォーマット（データレイク）
+- **Marimo**: リアクティブPythonノートブック
 - **dbt-osmosis**: スキーマ自動管理
 - **Pulumi** (Go): Infrastructure as Code
