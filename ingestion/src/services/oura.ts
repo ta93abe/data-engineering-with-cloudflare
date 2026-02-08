@@ -53,7 +53,7 @@ interface OuraDailyActivity {
   low_activity_time: number;
   sedentary_time: number;
   resting_time: number;
-  average_met_minutes: number;
+  average_met_minutes?: number;
   contributors?: {
     meet_daily_targets?: number | null;
     move_every_hour?: number | null;
