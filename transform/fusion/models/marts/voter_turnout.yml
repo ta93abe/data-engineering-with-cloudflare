@@ -98,6 +98,13 @@ metrics:
     type_params:
       measure:
         name: avg_turnout_rate
+  - name: eligible_voters_total
+    description: 有権者数の合計。
+    type: simple
+    label: 有権者数
+    type_params:
+      measure:
+        name: total_eligible_voters
   - name: weighted_turnout_rate
     description: 加重平均投票率（有権者数で加重）。
     type: derived
@@ -109,7 +116,6 @@ metrics:
           alias: total_actual_voters
         - name: eligible_voters_total
           alias: total_eligible_voters
-          offset_window: 0
 
 unit_tests:
   - name: test_diff_from_national_calculation
