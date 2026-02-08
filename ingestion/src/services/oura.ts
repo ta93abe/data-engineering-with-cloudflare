@@ -456,7 +456,7 @@ async function syncHeartRate(
 // Main Sync
 // ============================================
 
-export async function runSync(env: Env): Promise<SyncResult> {
+export async function runSync(env: Env, overrideStartDate?: string): Promise<SyncResult> {
   const db = env.DB;
   const token = await getValidToken(db, env);
 
@@ -465,8 +465,11 @@ export async function runSync(env: Env): Promise<SyncResult> {
     .first<{ last_sync_at: string | null }>();
 
   const lastSyncAt = syncState?.last_sync_at ?? null;
-  const { startDate, endDate } = getDateRange(lastSyncAt);
-  const hrRange = getHeartRateDateRange(lastSyncAt);
+  const { startDate: defaultStart, endDate } = getDateRange(lastSyncAt);
+  const startDate = overrideStartDate ?? defaultStart;
+  const hrRange = overrideStartDate
+    ? { startDate: overrideStartDate, endDate }
+    : getHeartRateDateRange(lastSyncAt);
 
   const sleepCount = await syncDailySleep(db, token, startDate, endDate);
   const activityCount = await syncDailyActivity(db, token, startDate, endDate);
@@ -579,7 +582,8 @@ app.get("/callback", async (c) => {
 // Manual sync
 app.post("/sync", async (c) => {
   try {
-    const result = await runSync(c.env);
+    const startDate = c.req.query("start_date");
+    const result = await runSync(c.env, startDate);
     return c.json(result);
   } catch (e) {
     const message = e instanceof Error ? e.message : "Unknown error";
