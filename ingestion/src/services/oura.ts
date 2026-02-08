@@ -456,7 +456,11 @@ async function syncHeartRate(
 // Main Sync
 // ============================================
 
-export async function runSync(env: Env, overrideStartDate?: string): Promise<SyncResult> {
+export async function runSync(
+  env: Env,
+  overrideStartDate?: string,
+  overrideEndDate?: string
+): Promise<SyncResult> {
   const db = env.DB;
   const token = await getValidToken(db, env);
 
@@ -465,21 +469,29 @@ export async function runSync(env: Env, overrideStartDate?: string): Promise<Syn
     .first<{ last_sync_at: string | null }>();
 
   const lastSyncAt = syncState?.last_sync_at ?? null;
-  const { startDate: defaultStart, endDate } = getDateRange(lastSyncAt);
+  const { startDate: defaultStart, endDate: defaultEnd } = getDateRange(lastSyncAt);
   const startDate = overrideStartDate ?? defaultStart;
-  // Heart rate API has a 30-day limit; always use getHeartRateDateRange
+  const endDate = overrideEndDate ?? defaultEnd;
+
+  // Heart rate API has a 30-day limit; skip when doing historical backfill
+  const skipHeartRate = !!overrideStartDate;
   const hrRange = getHeartRateDateRange(lastSyncAt);
 
   const sleepCount = await syncDailySleep(db, token, startDate, endDate);
   const activityCount = await syncDailyActivity(db, token, startDate, endDate);
   const readinessCount = await syncDailyReadiness(db, token, startDate, endDate);
-  const heartRateCount = await syncHeartRate(db, token, hrRange.startDate, hrRange.endDate);
+  const heartRateCount = skipHeartRate
+    ? 0
+    : await syncHeartRate(db, token, hrRange.startDate, hrRange.endDate);
 
-  await db
-    .prepare(
-      "UPDATE sync_state SET last_sync_at = datetime('now'), updated_at = datetime('now') WHERE id = 'oura'"
-    )
-    .run();
+  // Only update sync_state when not doing a historical backfill
+  if (!overrideStartDate) {
+    await db
+      .prepare(
+        "UPDATE sync_state SET last_sync_at = datetime('now'), updated_at = datetime('now') WHERE id = 'oura'"
+      )
+      .run();
+  }
 
   const total = sleepCount + activityCount + readinessCount + heartRateCount;
 
@@ -582,7 +594,8 @@ app.get("/callback", async (c) => {
 app.post("/sync", async (c) => {
   try {
     const startDate = c.req.query("start_date");
-    const result = await runSync(c.env, startDate);
+    const endDate = c.req.query("end_date");
+    const result = await runSync(c.env, startDate, endDate);
     return c.json(result);
   } catch (e) {
     const message = e instanceof Error ? e.message : "Unknown error";
