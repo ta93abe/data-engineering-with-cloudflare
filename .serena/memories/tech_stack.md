@@ -2,7 +2,8 @@
 
 ## プログラミング言語
 - **TypeScript**: Cloudflare Workers実装（メイン）
-- **Python**: dbt変換パイプライン
+- **Rust**: WebAssemblyコンパイルによる高性能Workers (workers-rs)
+- **Python**: dbt変換パイプライン、Marimo、Great Expectations
 - **Go**: Pulumiインフラ管理
 - **SQL**: dbt変換、D1クエリ
 
@@ -38,6 +39,19 @@
 - **スキーマ管理**: dbt-osmosis>=1.0.0
 - **SQLフォーマット**: shandy-sqlfmt[jinjafmt]>=0.24.0
 - **SQLリント**: sqruff>=0.24.0 (DuckDB方言)
+
+## データレイク (Apache Iceberg)
+- **テーブルフォーマット**: Apache Iceberg
+- **ストレージ**: Cloudflare R2
+- **検証ライブラリ**: supabase/iceberg-js（調査中）
+- **連携先**: Snowflake (External Tables)
+
+## データ品質
+- **Elementary**: dbt向けデータ品質監視
+- **Great Expectations**: データバリデーション・品質監視
+
+## ノートブック
+- **Marimo**: リアクティブPythonノートブック
 
 ## infrastructure (Pulumi + Go)
 - **IaC**: Pulumi (Go)
