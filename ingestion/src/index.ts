@@ -1,17 +1,19 @@
 import { Hono } from "hono";
 import github, { runSync as runGitHubSync } from "./services/github";
+import oura, { runSync as runOuraSync } from "./services/oura";
 import type { Env, SyncResult } from "./types";
 
 const app = new Hono<{ Bindings: Env }>();
 
 // Service routes
 app.route("/github", github);
+app.route("/oura", oura);
 
 // Root
 app.get("/", (c) => {
   return c.json({
     name: "ingestion",
-    services: ["github"],
+    services: ["github", "oura"],
     endpoints: {
       "POST /sync": "Sync all services",
       "GET /health": "Health check",
@@ -20,6 +22,17 @@ app.get("/", (c) => {
         "GET /github/stats": "Get sync stats",
         "GET /github/daily": "Daily commit counts",
         "GET /github/repos": "Repository stats",
+      },
+      oura: {
+        "GET /oura/auth": "Start OAuth2 authorization",
+        "GET /oura/callback": "OAuth2 callback",
+        "POST /oura/sync": "Sync Oura data",
+        "GET /oura/stats": "Get sync stats",
+        "GET /oura/daily-summary": "Daily health summary",
+        "GET /oura/sleep": "Sleep data",
+        "GET /oura/activity": "Activity data",
+        "GET /oura/readiness": "Readiness data",
+        "GET /oura/heart-rate": "Heart rate data",
       },
     },
   });
@@ -34,6 +47,16 @@ app.post("/sync", async (c) => {
   } catch (e) {
     results.push({
       service: "github",
+      success: false,
+      message: e instanceof Error ? e.message : "Unknown error",
+    });
+  }
+
+  try {
+    results.push(await runOuraSync(c.env));
+  } catch (e) {
+    results.push({
+      service: "oura",
       success: false,
       message: e instanceof Error ? e.message : "Unknown error",
     });
@@ -57,6 +80,13 @@ const scheduled: ExportedHandlerScheduledHandler<Env> = async (event, env) => {
     console.log("GitHub sync completed:", result);
   } catch (e) {
     console.error("GitHub sync failed:", e);
+  }
+
+  try {
+    const result = await runOuraSync(env);
+    console.log("Oura sync completed:", result);
+  } catch (e) {
+    console.error("Oura sync failed:", e);
   }
 };
 

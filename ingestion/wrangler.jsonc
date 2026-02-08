@@ -12,7 +12,8 @@
     "crons": ["0 0 * * *"]
   },
   "vars": {
-    "GITHUB_USERNAME": "ta93abe"
+    "GITHUB_USERNAME": "ta93abe",
+    "OURA_REDIRECT_URI": "https://ingestion.ta93abe.workers.dev/oura/callback"
   },
   "d1_databases": [
     {
@@ -21,5 +22,8 @@
       "database_id": "30fb49b7-8321-4792-8706-06c9205ce026"
     }
   ]
-  // シークレット: wrangler secret put GITHUB_TOKEN
+  // シークレット:
+  //   wrangler secret put GITHUB_TOKEN
+  //   wrangler secret put OURA_CLIENT_ID
+  //   wrangler secret put OURA_CLIENT_SECRET
 }

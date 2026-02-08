@@ -77,6 +77,129 @@ select
 from github_commits
 group by strftime('%Y-W%W', author_date)
 order by week desc;
+
+create table if not exists oauth_tokens (
+    id text primary key,
+    access_token text not null,
+    refresh_token text not null,
+    token_type text default 'Bearer',
+    expires_at text not null,
+    scope text,
+    created_at text default (datetime('now')),
+    updated_at text default (datetime('now'))
+);
+
+create table if not exists oura_daily_sleep (
+    id text primary key,
+    day text not null unique,
+    score integer,
+    timestamp text,
+    deep_sleep integer,
+    efficiency integer,
+    latency integer,
+    rem_sleep integer,
+    restfulness integer,
+    timing integer,
+    total_sleep integer,
+    synced_at text default (datetime('now'))
+);
+
+create table if not exists oura_daily_activity (
+    id text primary key,
+    day text not null unique,
+    score integer,
+    active_calories integer,
+    total_calories integer,
+    steps integer,
+    equivalent_walking_distance real,
+    high_activity_time integer,
+    medium_activity_time integer,
+    low_activity_time integer,
+    sedentary_time integer,
+    resting_time integer,
+    met_average real,
+    meet_daily_targets integer,
+    move_every_hour integer,
+    recovery_time integer,
+    stay_active integer,
+    training_frequency integer,
+    training_volume integer,
+    timestamp text,
+    synced_at text default (datetime('now'))
+);
+
+create table if not exists oura_daily_readiness (
+    id text primary key,
+    day text not null unique,
+    score integer,
+    temperature_deviation real,
+    temperature_trend_deviation real,
+    timestamp text,
+    activity_balance integer,
+    body_temperature integer,
+    hrv_balance integer,
+    previous_day_activity integer,
+    previous_night integer,
+    recovery_index integer,
+    resting_heart_rate integer,
+    sleep_balance integer,
+    synced_at text default (datetime('now'))
+);
+
+create table if not exists oura_heart_rate (
+    id integer primary key autoincrement,
+    bpm integer not null,
+    source text,
+    timestamp text not null,
+    day text not null,
+    synced_at text default (datetime('now'))
+);
+
+create view if not exists v_oura_daily_summary as
+select
+    s.day,
+    s.score as sleep_score,
+    a.score as activity_score,
+    r.score as readiness_score,
+    a.steps,
+    a.total_calories,
+    a.active_calories,
+    r.temperature_deviation,
+    s.deep_sleep as sleep_deep_sleep,
+    s.efficiency as sleep_efficiency,
+    s.total_sleep as sleep_total_sleep
+from oura_daily_sleep s
+left join oura_daily_activity a on s.day = a.day
+left join oura_daily_readiness r on s.day = r.day
+order by s.day desc;
+
+create table if not exists data_sources (
+    id text primary key,
+    name text not null unique,
+    source_type text not null,
+    api_endpoint text,
+    schedule_cron text,
+    is_active integer default 1,
+    config_json text,
+    created_at text default (datetime('now')),
+    updated_at text default (datetime('now'))
+);
+
+create table if not exists sync_state (
+    id text primary key,
+    data_source_id text not null,
+    last_sync_at text,
+    last_cursor text,
+    metadata_json text,
+    updated_at text default (datetime('now')),
+    foreign key (data_source_id) references data_sources(id)
+);
+
+insert or ignore into data_sources (id, name, source_type, api_endpoint, schedule_cron)
+values ('oura', 'Oura Ring', 'api', 'https://api.ouraring.com', '0 0 * * *');
+
+insert or ignore into sync_state (id, data_source_id, last_sync_at)
+values ('oura', 'oura', null);
 `;
 
 beforeAll(async () => {
@@ -107,6 +230,8 @@ describe("ingestion worker", () => {
     expect(json).toHaveProperty("name", "ingestion");
     expect(json).toHaveProperty("services");
     expect(json.services).toContain("github");
+    expect(json.services).toContain("oura");
+    expect(json.endpoints).toHaveProperty("oura");
   });
 
   it("returns health check on GET /health", async () => {
@@ -192,5 +317,20 @@ describe("github service", () => {
     const json = (await res.json()) as { service: string; success: boolean };
     expect(json.service).toBe("github");
     expect(json.success).toBe(true);
+  });
+});
+
+describe("oura routes via index", () => {
+  it("returns stats on GET /oura/stats", async () => {
+    const res = await SELF.fetch("https://example.com/oura/stats");
+    expect(res.status).toBe(200);
+
+    const json = await res.json();
+    expect(json).toHaveProperty("sleep_records");
+  });
+
+  it("redirects on GET /oura/auth", async () => {
+    const res = await SELF.fetch("https://example.com/oura/auth", { redirect: "manual" });
+    expect(res.status).toBe(302);
   });
 });
