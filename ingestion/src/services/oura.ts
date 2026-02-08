@@ -426,22 +426,26 @@ async function syncHeartRate(
     end_datetime: `${endDate}T23:59:59+00:00`,
   });
 
-  // DELETE + INSERT for heart rate (no stable ID)
-  await db
+  // DELETE + INSERT for heart rate (no stable ID), batched for atomicity
+  const deleteStmt = db
     .prepare("DELETE FROM oura_heart_rate WHERE day >= ? AND day <= ?")
-    .bind(startDate, endDate)
-    .run();
+    .bind(startDate, endDate);
 
-  for (const item of data) {
-    const day = item.timestamp.split("T")[0];
-    await db
-      .prepare(
-        `INSERT INTO oura_heart_rate (bpm, source, timestamp, day, synced_at)
-         VALUES (?, ?, ?, ?, datetime('now'))`
-      )
-      .bind(item.bpm, item.source, item.timestamp, day)
-      .run();
+  if (data.length === 0) {
+    await deleteStmt.run();
+    return 0;
   }
+
+  const insertStmt = db.prepare(
+    `INSERT INTO oura_heart_rate (bpm, source, timestamp, day, synced_at)
+     VALUES (?, ?, ?, ?, datetime('now'))`
+  );
+  const inserts = data.map((item) => {
+    const day = item.timestamp.split("T")[0];
+    return insertStmt.bind(item.bpm, item.source, item.timestamp, day);
+  });
+
+  await db.batch([deleteStmt, ...inserts]);
 
   return data.length;
 }
