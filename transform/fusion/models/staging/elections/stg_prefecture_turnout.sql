@@ -8,7 +8,7 @@ renamed as (
         prefecture_id,
         eligible_voters,
         actual_voters,
-        round(cast(actual_voters as double) / cast(eligible_voters as double) * 100, 2) as turnout_rate
+        round(cast(actual_voters as double) / nullif(cast(eligible_voters as double), 0) * 100, 2) as turnout_rate
     from source
 )
 

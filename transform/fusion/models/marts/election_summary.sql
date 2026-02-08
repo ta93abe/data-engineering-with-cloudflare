@@ -27,12 +27,13 @@ winning_party as (
         party_id as winning_party_id,
         seats_won as winning_party_seats,
         total_votes as winning_party_votes
-    from results
-    where (election_id, seats_won) in (
-        select election_id, max(seats_won)
+    from (
+        select
+            *,
+            row_number() over (partition by election_id order by seats_won desc, total_votes desc) as rn
         from results
-        group by 1
     )
+    where rn = 1
 ),
 
 turnout_agg as (
