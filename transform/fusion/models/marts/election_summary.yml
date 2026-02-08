@@ -1,0 +1,97 @@
+models:
+  - name: election_summary
+    description: >
+      選挙サマリーマート。選挙ごとの概要情報（第一党、投票率等）を集約。
+      1行1選挙。投票率データがある選挙のみnational_turnout_rateが算出される。
+    columns:
+      - name: election_id
+        description: 選挙の一意キー。
+        data_tests:
+          - not_null
+          - unique
+      - name: election_name
+        description: 選挙の正式名称。
+      - name: chamber
+        description: 院の識別子（lower/upper）。
+      - name: chamber_name
+        description: 院の日本語名称（衆議院/参議院）。
+      - name: election_date
+        description: 投票日。
+      - name: total_seats
+        description: 総議席数。
+      - name: participating_parties
+        description: 参加政党数（データに含まれる政党の数）。
+      - name: total_votes_cast
+        description: 全政党の総得票数（小選挙区+比例の合計）。
+      - name: winning_party_id
+        description: 第一党の政党ID（最多議席獲得政党）。
+      - name: winning_party_name
+        description: 第一党の正式名称。
+      - name: winning_party_seats
+        description: 第一党の獲得議席数。
+      - name: winning_party_seat_share
+        description: 第一党の議席占有率（%）。
+      - name: total_eligible_voters
+        description: 有権者数合計。投票率データがある選挙のみ。
+      - name: total_actual_voters
+        description: 投票者数合計。投票率データがある選挙のみ。
+      - name: national_turnout_rate
+        description: 全国投票率（%）。投票率データがある選挙のみ算出。
+
+semantic_models:
+  - name: election_summary
+    model: ref('election_summary')
+    description: 選挙ごとの概要情報を集約した分析モデル。
+    defaults:
+      agg_time_dimension: election_date
+    entities:
+      - name: election
+        type: primary
+        expr: election_id
+      - name: winning_party
+        type: foreign
+        expr: winning_party_id
+    dimensions:
+      - name: election_date
+        type: time
+        type_params:
+          time_granularity: day
+      - name: chamber
+        type: categorical
+      - name: chamber_name
+        type: categorical
+      - name: winning_party_name
+        type: categorical
+    measures:
+      - name: election_count
+        description: 選挙回数。
+        agg: count
+        expr: election_id
+      - name: avg_national_turnout
+        description: 平均全国投票率。
+        agg: average
+        expr: national_turnout_rate
+      - name: total_all_votes
+        description: 全選挙の総得票数合計。
+        agg: sum
+        expr: total_votes_cast
+      - name: avg_winning_seat_share
+        description: 第一党の平均議席占有率。
+        agg: average
+        expr: winning_party_seat_share
+
+metrics:
+  - name: elections_held
+    description: 実施された選挙の回数。
+    type: simple
+    label: 選挙回数
+    type_params:
+      measure:
+        name: election_count
+  - name: avg_turnout_across_elections
+    description: 選挙横断の平均投票率。
+    type: simple
+    label: 平均投票率
+    type_params:
+      measure:
+        name: avg_national_turnout

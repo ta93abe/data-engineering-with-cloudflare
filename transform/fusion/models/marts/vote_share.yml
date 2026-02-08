@@ -1,0 +1,138 @@
+models:
+  - name: vote_share
+    description: >
+      得票率分析マート。選挙ごとの政党別得票数・得票率・議席占有率を集約。
+      1行1選挙×1政党。vote_rankで得票数順のランキングを提供。
+    columns:
+      - name: election_id
+        description: 選挙ID。
+      - name: election_name
+        description: 選挙の正式名称。
+      - name: chamber
+        description: 院の識別子（lower/upper）。
+      - name: chamber_name
+        description: 院の日本語名称（衆議院/参議院）。
+      - name: election_date
+        description: 投票日。
+      - name: total_seats
+        description: 当該選挙の総議席数。
+      - name: party_id
+        description: 政党ID。
+      - name: party_name
+        description: 政党の正式名称。
+      - name: party_abbreviation
+        description: 政党の略称。
+      - name: district_votes
+        description: 小選挙区/選挙区での得票数。
+      - name: proportional_votes
+        description: 比例代表での得票数。
+      - name: total_votes
+        description: 総得票数（小選挙区+比例代表）。
+      - name: seats_won
+        description: 獲得議席数。
+      - name: district_vote_share
+        description: 小選挙区/選挙区における政党の得票率（%）。当該選挙の全政党の小選挙区得票数合計に対する割合。
+      - name: proportional_vote_share
+        description: 比例代表における政党の得票率（%）。当該選挙の全政党の比例得票数合計に対する割合。
+      - name: total_vote_share
+        description: 総合得票率（%）。全投票数に対する当該政党の得票割合。
+      - name: seat_share
+        description: 議席占有率（%）。総議席数に対する獲得議席数の割合。
+      - name: vote_rank
+        description: 得票数ランキング。当該選挙内でtotal_votesの降順。
+
+semantic_models:
+  - name: vote_share
+    model: ref('vote_share')
+    description: 選挙ごとの政党別得票率・議席占有率の分析モデル。
+    defaults:
+      agg_time_dimension: election_date
+    entities:
+      - name: election
+        type: foreign
+        expr: election_id
+      - name: party
+        type: foreign
+        expr: party_id
+    dimensions:
+      - name: election_date
+        type: time
+        type_params:
+          time_granularity: day
+      - name: chamber
+        type: categorical
+      - name: chamber_name
+        type: categorical
+      - name: party_name
+        type: categorical
+      - name: party_abbreviation
+        type: categorical
+    measures:
+      - name: total_district_votes
+        description: 小選挙区/選挙区の得票数合計。
+        agg: sum
+        expr: district_votes
+      - name: total_proportional_votes
+        description: 比例代表の得票数合計。
+        agg: sum
+        expr: proportional_votes
+      - name: total_all_votes
+        description: 総得票数合計。
+        agg: sum
+        expr: total_votes
+      - name: total_seats_won
+        description: 獲得議席数合計。
+        agg: sum
+        expr: seats_won
+      - name: avg_vote_share
+        description: 平均得票率。
+        agg: average
+        expr: total_vote_share
+      - name: avg_seat_share
+        description: 平均議席占有率。
+        agg: average
+        expr: seat_share
+
+metrics:
+  - name: total_votes_cast
+    description: 投じられた総票数。
+    type: simple
+    label: 総得票数
+    type_params:
+      measure:
+        name: total_all_votes
+  - name: seats_won_total
+    description: 獲得議席数の合計。
+    type: simple
+    label: 獲得議席数
+    type_params:
+      measure:
+        name: total_seats_won
+  - name: average_vote_share
+    description: 政党の平均得票率。
+    type: simple
+    label: 平均得票率
+    type_params:
+      measure:
+        name: avg_vote_share
+
+unit_tests:
+  - name: test_vote_share_calculation
+    description: 得票率の計算が正しいことを検証。100票中30票で30.00%。
+    model: vote_share
+    given:
+      - input: ref('stg_national_results')
+        rows:
+          - {election_id: 1, party_id: 1, district_votes: 30, proportional_votes: 20, total_votes: 50, seats_won: 3}
+          - {election_id: 1, party_id: 2, district_votes: 70, proportional_votes: 80, total_votes: 150, seats_won: 7}
+      - input: ref('stg_elections')
+        rows:
+          - {election_id: 1, election_name: "テスト選挙", chamber: "lower", chamber_name: "衆議院", election_date: "2024-01-01", total_seats: 10}
+      - input: ref('stg_parties')
+        rows:
+          - {party_id: 1, party_name: "A党", party_abbreviation: "A", founded_year: 2000}
+          - {party_id: 2, party_name: "B党", party_abbreviation: "B", founded_year: 2000}
+    expect:
+      rows:
+        - {election_id: 1, party_id: 2, district_vote_share: 70.0, proportional_vote_share: 80.0, total_vote_share: 75.0, seat_share: 70.0, vote_rank: 1}
+        - {election_id: 1, party_id: 1, district_vote_share: 30.0, proportional_vote_share: 20.0, total_vote_share: 25.0, seat_share: 30.0, vote_rank: 2}
