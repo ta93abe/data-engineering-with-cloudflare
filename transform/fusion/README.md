@@ -1,12 +1,30 @@
-# 🥪 The Jaffle Shop 🦘
+# dbt Fusion Project
 
-_powered by the dbt Fusion engine_
+_powered by the dbt Fusion engine (Rust-based)_
 
-Welcome! This is a sandbox project for exploring the basic functionality of Fusion. It's based on a fictional restaurant called the Jaffle Shop that serves [jaffles](https://en.wikipedia.org/wiki/Pie_iron).
+Databricks SQL Warehouse を接続先とする dbt Fusion プロジェクト。
+Jaffle Shop サンプルモデルを含む。
 
-To get started:
-1. Set up your database connection in `~/.dbt/profiles.yml`. If you got here by running `dbt init`, you should already be good to go.
-2. Run `dbt build`. That's it!
+## セットアップ
 
-> [!NOTE]
-> If you're brand-new to dbt, we recommend starting with the [dbt Learn](https://learn.getdbt.com/) platform. It's a free, interactive way to learn dbt, and it's a great way to get started if you're new to the tool.
+1. dbt Fusion CLI をインストール: `curl -fsSL https://public.cdn.getdbt.com/fs/install/install.sh | sh -s -- --update`
+2. `profiles.yml` を作成（`profiles.yml.example` を参考）
+3. OAuth 認証: `dbtf debug`
+
+## 使い方
+
+```bash
+dbtf seed    # シードデータ投入
+dbtf run     # モデル実行
+dbtf test    # テスト実行
+dbtf build   # seed + run + test
+```
+
+## 構成
+
+```
+development / production (catalog)
+├── raw (schema)       ← seeds
+├── staging (schema)   ← staging models (view)
+└── marts (schema)     ← marts models (table)
+```

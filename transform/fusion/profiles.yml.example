@@ -1,0 +1,20 @@
+fusion:
+  target: dev
+  outputs:
+    dev:
+      type: databricks
+      catalog: development
+      schema: dbt
+      host: <your-databricks-host>.cloud.databricks.com
+      http_path: /sql/1.0/warehouses/<your-warehouse-id>
+      auth_type: oauth
+      threads: 4
+
+    prod:
+      type: databricks
+      catalog: production
+      schema: dbt
+      host: <your-databricks-host>.cloud.databricks.com
+      http_path: /sql/1.0/warehouses/<your-warehouse-id>
+      auth_type: oauth
+      threads: 8

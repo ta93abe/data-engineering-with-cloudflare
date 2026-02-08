@@ -5,3 +5,4 @@ target/
 .user.yml
 .vscode/
 package-lock.yml
+profiles.yml
