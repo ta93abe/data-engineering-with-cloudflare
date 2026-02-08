@@ -26,7 +26,7 @@ app.get("/", (c) => {
       oura: {
         "GET /oura/auth": "Start OAuth2 authorization",
         "GET /oura/callback": "OAuth2 callback",
-        "POST /oura/sync": "Sync Oura data (?start_date=YYYY-MM-DD)",
+        "POST /oura/sync": "Sync Oura data (?start_date&end_date=YYYY-MM-DD)",
         "GET /oura/stats": "Get sync stats",
         "GET /oura/daily-summary": "Daily health summary",
         "GET /oura/sleep": "Sleep data",
