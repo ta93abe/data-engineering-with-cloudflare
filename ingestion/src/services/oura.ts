@@ -467,9 +467,8 @@ export async function runSync(env: Env, overrideStartDate?: string): Promise<Syn
   const lastSyncAt = syncState?.last_sync_at ?? null;
   const { startDate: defaultStart, endDate } = getDateRange(lastSyncAt);
   const startDate = overrideStartDate ?? defaultStart;
-  const hrRange = overrideStartDate
-    ? { startDate: overrideStartDate, endDate }
-    : getHeartRateDateRange(lastSyncAt);
+  // Heart rate API has a 30-day limit; always use getHeartRateDateRange
+  const hrRange = getHeartRateDateRange(lastSyncAt);
 
   const sleepCount = await syncDailySleep(db, token, startDate, endDate);
   const activityCount = await syncDailyActivity(db, token, startDate, endDate);
