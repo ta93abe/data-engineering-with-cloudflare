@@ -3,7 +3,7 @@ version: 2
 # Try using these source definitions instead!
 sources:
   - name: ecom
-    schema: "{{ target.schema }}_raw"
+    schema: raw
     description: E-commerce data for the Jaffle Shop
     tables:
       - name: raw_customers
@@ -15,6 +15,7 @@ sources:
       - name: raw_items
         description: Items included in an order
       - name: raw_stores
+        description: One record per store location
         config:
           loaded_at_field: opened_at
       - name: raw_products

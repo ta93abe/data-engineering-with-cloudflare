@@ -17,5 +17,5 @@
 {% endmacro %}
 
 {% macro fabric__cents_to_dollars(column_name) %}
-    cast({{ column_name }} / 100 as numeric(16,2))
+    cast({{ column_name }} as numeric(16,2)) / 100
 {% endmacro %}
