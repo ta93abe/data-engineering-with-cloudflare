@@ -1,0 +1,8 @@
+dbt_packages/
+dbt_internal_packages/
+logs/
+target/
+.user.yml
+.vscode/
+package-lock.yml
+profiles.yml
