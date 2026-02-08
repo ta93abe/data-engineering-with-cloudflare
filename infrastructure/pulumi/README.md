@@ -16,7 +16,6 @@
 
 現時点で以下のリソースも Pulumi 管轄外です（必要に応じて今後追加検討）:
 
-- **Cloudflare Pages**: 静的サイトホスティング（該当する場合）
 - **Cloudflare DNS**: DNSレコード管理
 - **Cloudflare Access**: 認証・認可
 - **Cloudflare Tunnels**: プライベートネットワーク接続

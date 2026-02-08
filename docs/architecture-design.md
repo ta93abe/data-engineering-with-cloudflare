@@ -803,6 +803,7 @@ Workers (Consumer)
 - [高度なデータプラットフォームツール](./advanced-data-platform-tools.md)
 - [プログラミング言語ガイド](./programming-languages-guide.md)
 - [Rust Workers実装](./rust-workers-guide.md)
+- [Cloudflare Data Platform詳細ガイド](./cloudflare-data-platform.md)
 
 ## 9. まとめ
 
