@@ -71,7 +71,7 @@ semantic_models:
         description: 平均全国投票率。
         agg: average
         expr: national_turnout_rate
-      - name: total_all_votes
+      - name: summary_total_votes
         description: 全選挙の総得票数合計。
         agg: sum
         expr: total_votes_cast
@@ -91,7 +91,7 @@ metrics:
   - name: avg_turnout_across_elections
     description: 選挙横断の平均投票率。
     type: simple
-    label: 平均投票率
+    label: 選挙横断平均投票率
     type_params:
       measure:
         name: avg_national_turnout

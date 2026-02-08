@@ -48,6 +48,9 @@ semantic_models:
     defaults:
       agg_time_dimension: election_date
     entities:
+      - name: vote_share
+        type: primary
+        expr: "concat(cast(election_id as string), '_', cast(party_id as string))"
       - name: election
         type: foreign
         expr: election_id
