@@ -179,7 +179,16 @@ describe("oura oauth2", () => {
     expect(json).toHaveProperty("error", "Missing authorization code");
   });
 
-  it("exchanges code for token on callback", async () => {
+  it("exchanges code for token on callback with valid state", async () => {
+    // Pre-store state for CSRF validation
+    const futureExpiry = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+    await env.DB.prepare(
+      `INSERT OR REPLACE INTO oauth_tokens (id, access_token, refresh_token, expires_at)
+       VALUES ('oura_state', 'test-state-value', '', ?)`
+    )
+      .bind(futureExpiry)
+      .run();
+
     fetchMock
       .get("https://api.ouraring.com")
       .intercept({ path: "/oauth/token", method: "POST" })
@@ -191,7 +200,9 @@ describe("oura oauth2", () => {
         scope: "daily heartrate",
       });
 
-    const res = await SELF.fetch("https://example.com/oura/callback?code=test-auth-code");
+    const res = await SELF.fetch(
+      "https://example.com/oura/callback?code=test-auth-code&state=test-state-value"
+    );
     expect(res.status).toBe(200);
 
     const json = await res.json();
@@ -201,6 +212,24 @@ describe("oura oauth2", () => {
     const token = await env.DB.prepare("SELECT * FROM oauth_tokens WHERE id = 'oura'").first();
     expect(token).not.toBeNull();
     expect(token?.access_token).toBe("new-access-token");
+  });
+
+  it("rejects callback with invalid state", async () => {
+    const futureExpiry = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+    await env.DB.prepare(
+      `INSERT OR REPLACE INTO oauth_tokens (id, access_token, refresh_token, expires_at)
+       VALUES ('oura_state', 'correct-state', '', ?)`
+    )
+      .bind(futureExpiry)
+      .run();
+
+    const res = await SELF.fetch(
+      "https://example.com/oura/callback?code=test-auth-code&state=wrong-state"
+    );
+    expect(res.status).toBe(400);
+
+    const json = await res.json();
+    expect(json).toHaveProperty("error", "Invalid state parameter");
   });
 });
 
@@ -472,12 +501,16 @@ describe("oura sync", () => {
     expect(json.count).toBe(2);
   });
 
-  it("returns error when not authenticated", async () => {
+  it("returns 401 when not authenticated", async () => {
     // Remove token
     await env.DB.prepare("DELETE FROM oauth_tokens WHERE id = 'oura'").run();
 
     const res = await SELF.fetch("https://example.com/oura/sync", { method: "POST" });
-    expect(res.status).toBe(500);
+    expect(res.status).toBe(401);
+
+    const json = (await res.json()) as { success: boolean; message: string };
+    expect(json.success).toBe(false);
+    expect(json.message).toContain("not authenticated");
   });
 });
 

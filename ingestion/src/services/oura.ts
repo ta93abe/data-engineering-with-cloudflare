@@ -172,7 +172,9 @@ async function fetchOura<T>(
     throw new Error("Oura API unauthorized - token may be expired");
   }
   if (!res.ok) {
-    throw new Error(`Oura API error: ${res.status}`);
+    const body = await res.text();
+    const truncated = body.length > 500 ? `${body.slice(0, 500)}...(truncated)` : body;
+    throw new Error(`Oura API error: ${res.status} - ${truncated || "no response body"}`);
   }
 
   return res.json();
@@ -492,8 +494,19 @@ export async function runSync(env: Env): Promise<SyncResult> {
 // ============================================
 
 // OAuth2 authorization
-app.get("/auth", (c) => {
+app.get("/auth", async (c) => {
   const state = crypto.randomUUID();
+
+  // Persist state for CSRF validation (expires in 10 minutes)
+  const stateExpiry = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+  await c.env.DB.prepare(
+    `INSERT INTO oauth_tokens (id, access_token, refresh_token, expires_at)
+     VALUES ('oura_state', ?, '', ?)
+     ON CONFLICT(id) DO UPDATE SET access_token = excluded.access_token, expires_at = excluded.expires_at`
+  )
+    .bind(state, stateExpiry)
+    .run();
+
   const params = new URLSearchParams({
     response_type: "code",
     client_id: c.env.OURA_CLIENT_ID,
@@ -507,8 +520,23 @@ app.get("/auth", (c) => {
 // OAuth2 callback
 app.get("/callback", async (c) => {
   const code = c.req.query("code");
+  const state = c.req.query("state");
   if (!code) {
     return c.json({ error: "Missing authorization code" }, 400);
+  }
+
+  // Validate state for CSRF protection
+  const storedState = await c.env.DB.prepare(
+    "SELECT access_token, expires_at FROM oauth_tokens WHERE id = 'oura_state'"
+  ).first<{ access_token: string; expires_at: string }>();
+
+  await c.env.DB.prepare("DELETE FROM oauth_tokens WHERE id = 'oura_state'").run();
+
+  if (!storedState || storedState.access_token !== state) {
+    return c.json({ error: "Invalid state parameter" }, 400);
+  }
+  if (new Date(storedState.expires_at) < new Date()) {
+    return c.json({ error: "State expired, please retry authorization" }, 400);
   }
 
   const res = await fetch(OURA_TOKEN_URL, {
@@ -550,8 +578,14 @@ app.get("/callback", async (c) => {
 
 // Manual sync
 app.post("/sync", async (c) => {
-  const result = await runSync(c.env);
-  return c.json(result);
+  try {
+    const result = await runSync(c.env);
+    return c.json(result);
+  } catch (e) {
+    const message = e instanceof Error ? e.message : "Unknown error";
+    const status = message.includes("not authenticated") ? 401 : 500;
+    return c.json({ service: "oura", success: false, message }, status);
+  }
 });
 
 // Stats
@@ -567,10 +601,19 @@ app.get("/stats", async (c) => {
   return c.json(stats);
 });
 
+// Parse and clamp limit query parameter
+function parseLimit(raw: string | undefined, defaultVal: number, max = 1000): number {
+  const parsed = Number.parseInt(raw ?? String(defaultVal), 10);
+  if (Number.isNaN(parsed) || parsed < 1) return defaultVal;
+  return Math.min(parsed, max);
+}
+
 // Daily summary
 app.get("/daily-summary", async (c) => {
-  const limit = Number(c.req.query("limit") ?? "30");
-  const results = await c.env.DB.prepare("SELECT * FROM v_oura_daily_summary LIMIT ?")
+  const limit = parseLimit(c.req.query("limit"), 30);
+  const results = await c.env.DB.prepare(
+    "SELECT * FROM v_oura_daily_summary ORDER BY day DESC LIMIT ?"
+  )
     .bind(limit)
     .all();
   return c.json(results.results);
@@ -578,7 +621,7 @@ app.get("/daily-summary", async (c) => {
 
 // Individual data endpoints
 app.get("/sleep", async (c) => {
-  const limit = Number(c.req.query("limit") ?? "30");
+  const limit = parseLimit(c.req.query("limit"), 30);
   const results = await c.env.DB.prepare("SELECT * FROM oura_daily_sleep ORDER BY day DESC LIMIT ?")
     .bind(limit)
     .all();
@@ -586,7 +629,7 @@ app.get("/sleep", async (c) => {
 });
 
 app.get("/activity", async (c) => {
-  const limit = Number(c.req.query("limit") ?? "30");
+  const limit = parseLimit(c.req.query("limit"), 30);
   const results = await c.env.DB.prepare(
     "SELECT * FROM oura_daily_activity ORDER BY day DESC LIMIT ?"
   )
@@ -596,7 +639,7 @@ app.get("/activity", async (c) => {
 });
 
 app.get("/readiness", async (c) => {
-  const limit = Number(c.req.query("limit") ?? "30");
+  const limit = parseLimit(c.req.query("limit"), 30);
   const results = await c.env.DB.prepare(
     "SELECT * FROM oura_daily_readiness ORDER BY day DESC LIMIT ?"
   )
@@ -606,7 +649,7 @@ app.get("/readiness", async (c) => {
 });
 
 app.get("/heart-rate", async (c) => {
-  const limit = Number(c.req.query("limit") ?? "288");
+  const limit = parseLimit(c.req.query("limit"), 288);
   const results = await c.env.DB.prepare(
     "SELECT * FROM oura_heart_rate ORDER BY timestamp DESC LIMIT ?"
   )
