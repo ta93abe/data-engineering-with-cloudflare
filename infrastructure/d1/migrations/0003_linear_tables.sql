@@ -75,8 +75,8 @@ SELECT
     project_name,
     count(*) AS total_issues,
     sum(CASE WHEN state_type = 'completed' THEN 1 ELSE 0 END) AS completed,
-    sum(CASE WHEN state_type = 'cancelled' THEN 1 ELSE 0 END) AS cancelled,
-    sum(CASE WHEN state_type IN ('backlog', 'unstarted') THEN 1 ELSE 0 END) AS pending,
+    sum(CASE WHEN state_type = 'canceled' THEN 1 ELSE 0 END) AS canceled,
+    sum(CASE WHEN state_type IN ('triage', 'backlog', 'unstarted') THEN 1 ELSE 0 END) AS pending,
     sum(CASE WHEN state_type = 'started' THEN 1 ELSE 0 END) AS in_progress,
     round(100.0 * sum(CASE WHEN state_type = 'completed' THEN 1 ELSE 0 END) / count(*), 1) AS completion_rate
 FROM linear_issues
