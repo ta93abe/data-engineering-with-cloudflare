@@ -143,9 +143,9 @@ const LABELS_QUERY = `
 async function syncIssues(db: D1Database, apiKey: string): Promise<number> {
   const issues = await fetchAllPages<LinearIssue>(apiKey, ISSUES_QUERY, "issues");
 
-  for (const issue of issues) {
+  const statements = issues.map((issue) => {
     const labelNames = JSON.stringify(issue.labels.nodes.map((l) => l.name));
-    await db
+    return db
       .prepare(
         `INSERT INTO linear_issues (id, identifier, title, description_length, priority, estimate,
            state_name, state_type, label_names, project_name, cycle_number, assignee_name,
@@ -189,8 +189,11 @@ async function syncIssues(db: D1Database, apiKey: string): Promise<number> {
         issue.completedAt,
         issue.canceledAt,
         issue.dueDate
-      )
-      .run();
+      );
+  });
+
+  if (statements.length > 0) {
+    await db.batch(statements);
   }
 
   return issues.length;
@@ -199,8 +202,8 @@ async function syncIssues(db: D1Database, apiKey: string): Promise<number> {
 async function syncProjects(db: D1Database, apiKey: string): Promise<number> {
   const projects = await fetchAllPages<LinearProject>(apiKey, PROJECTS_QUERY, "projects");
 
-  for (const project of projects) {
-    await db
+  const statements = projects.map((project) => {
+    return db
       .prepare(
         `INSERT INTO linear_projects (id, name, state, progress, start_date, target_date,
            created_at, updated_at, completed_at, synced_at)
@@ -225,8 +228,11 @@ async function syncProjects(db: D1Database, apiKey: string): Promise<number> {
         project.createdAt,
         project.updatedAt,
         project.completedAt
-      )
-      .run();
+      );
+  });
+
+  if (statements.length > 0) {
+    await db.batch(statements);
   }
 
   return projects.length;
@@ -240,8 +246,8 @@ async function syncLabels(db: D1Database, apiKey: string): Promise<number> {
   );
   const labels = data.issueLabels.nodes;
 
-  for (const label of labels) {
-    await db
+  const statements = labels.map((label) => {
+    return db
       .prepare(
         `INSERT INTO linear_labels (id, name, color, synced_at)
          VALUES (?, ?, ?, datetime('now'))
@@ -250,8 +256,11 @@ async function syncLabels(db: D1Database, apiKey: string): Promise<number> {
            color = excluded.color,
            synced_at = excluded.synced_at`
       )
-      .bind(label.id, label.name, label.color)
-      .run();
+      .bind(label.id, label.name, label.color);
+  });
+
+  if (statements.length > 0) {
+    await db.batch(statements);
   }
 
   return labels.length;
