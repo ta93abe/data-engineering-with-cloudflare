@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import github, { runSync as runGitHubSync } from "./services/github";
+import linear, { runSync as runLinearSync } from "./services/linear";
 import oura, { runSync as runOuraSync } from "./services/oura";
 import type { Env, SyncResult } from "./types";
 
@@ -8,12 +9,13 @@ const app = new Hono<{ Bindings: Env }>();
 // Service routes
 app.route("/github", github);
 app.route("/oura", oura);
+app.route("/linear", linear);
 
 // Root
 app.get("/", (c) => {
   return c.json({
     name: "ingestion",
-    services: ["github", "oura"],
+    services: ["github", "oura", "linear"],
     endpoints: {
       "POST /sync": "Sync all services",
       "GET /health": "Health check",
@@ -33,6 +35,13 @@ app.get("/", (c) => {
         "GET /oura/activity": "Activity data",
         "GET /oura/readiness": "Readiness data",
         "GET /oura/heart-rate": "Heart rate data",
+      },
+      linear: {
+        "POST /linear/sync": "Sync Linear data",
+        "GET /linear/stats": "Get sync stats",
+        "GET /linear/weekly": "Weekly completion stats",
+        "GET /linear/labels": "Label summary",
+        "GET /linear/projects": "Project progress",
       },
     },
   });
@@ -62,6 +71,16 @@ app.post("/sync", async (c) => {
     });
   }
 
+  try {
+    results.push(await runLinearSync(c.env));
+  } catch (e) {
+    results.push({
+      service: "linear",
+      success: false,
+      message: e instanceof Error ? e.message : "Unknown error",
+    });
+  }
+
   return c.json({
     results,
     success: results.every((r) => r.success),
@@ -74,6 +93,7 @@ app.get("/health", (c) => c.json({ status: "ok" }));
 // Scheduled handler (Cron)
 // "0 0 * * *"    → GitHub (1日1回 UTC 0:00 / JST 9:00)
 // "0 */12 * * *" → Oura   (12時間毎 UTC 0:00,12:00 / JST 9:00,21:00)
+// "0 */6 * * *"  → Linear (6時間毎 UTC 0:00,6:00,12:00,18:00)
 const scheduled: ExportedHandlerScheduledHandler<Env> = async (event, env) => {
   console.log("Scheduled sync started:", event.cron);
 
@@ -92,6 +112,15 @@ const scheduled: ExportedHandlerScheduledHandler<Env> = async (event, env) => {
       console.log("Oura sync completed:", result);
     } catch (e) {
       console.error("Oura sync failed:", e);
+    }
+  }
+
+  if (event.cron === "0 */6 * * *") {
+    try {
+      const result = await runLinearSync(env);
+      console.log("Linear sync completed:", result);
+    } catch (e) {
+      console.error("Linear sync failed:", e);
     }
   }
 };

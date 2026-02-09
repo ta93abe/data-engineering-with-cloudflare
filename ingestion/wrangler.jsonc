@@ -9,7 +9,7 @@
     "head_sampling_rate": 1
   },
   "triggers": {
-    "crons": ["0 0 * * *", "0 */12 * * *"]
+    "crons": ["0 0 * * *", "0 */12 * * *", "0 */6 * * *"]
   },
   "vars": {
     "GITHUB_USERNAME": "ta93abe",
@@ -26,4 +26,5 @@
   //   wrangler secret put GITHUB_TOKEN
   //   wrangler secret put OURA_CLIENT_ID
   //   wrangler secret put OURA_CLIENT_SECRET
+  //   wrangler secret put LINEAR_API_KEY
 }
