@@ -65,10 +65,11 @@ CREATE TABLE IF NOT EXISTS withings_activity (
   synced_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
--- Daily summary view (measures + sleep + activity joined by date)
+-- Daily summary view
+-- Uses subqueries to pick the latest measure per date (avoids cartesian product)
 CREATE VIEW IF NOT EXISTS v_withings_daily_summary AS
 SELECT
-  COALESCE(m.date, s.date, a.date) AS date,
+  d.date,
   m.weight,
   m.fat_ratio,
   m.fat_mass,
@@ -85,41 +86,36 @@ SELECT
   a.calories,
   a.total_calories,
   a.active
-FROM withings_measures m
-LEFT JOIN withings_sleep s ON m.date = s.date
-LEFT JOIN withings_activity a ON m.date = a.date
-UNION
-SELECT
-  COALESCE(s.date, a.date) AS date,
-  NULL, NULL, NULL, NULL, NULL,
-  s.total_sleep_duration,
-  s.deep_sleep_duration,
-  s.light_sleep_duration,
-  s.rem_sleep_duration,
-  s.sleep_score,
-  s.sleep_efficiency,
-  a.steps,
-  a.distance,
-  a.calories,
-  a.total_calories,
-  a.active
-FROM withings_sleep s
-LEFT JOIN withings_activity a ON s.date = a.date
-WHERE s.date NOT IN (SELECT date FROM withings_measures)
-UNION
-SELECT
-  a.date,
-  NULL, NULL, NULL, NULL, NULL,
-  NULL, NULL, NULL, NULL, NULL, NULL,
-  a.steps,
-  a.distance,
-  a.calories,
-  a.total_calories,
-  a.active
-FROM withings_activity a
-WHERE a.date NOT IN (SELECT date FROM withings_measures)
-  AND a.date NOT IN (SELECT date FROM withings_sleep);
+FROM (
+  SELECT date FROM withings_measures
+  UNION
+  SELECT date FROM withings_sleep
+  UNION
+  SELECT date FROM withings_activity
+) d
+LEFT JOIN (
+  SELECT m1.*
+  FROM withings_measures m1
+  INNER JOIN (
+    SELECT date, MAX(grpid) AS max_grpid FROM withings_measures GROUP BY date
+  ) m2 ON m1.grpid = m2.max_grpid
+) m ON d.date = m.date
+LEFT JOIN (
+  SELECT s1.*
+  FROM withings_sleep s1
+  INNER JOIN (
+    SELECT date, MAX(id) AS max_id FROM withings_sleep GROUP BY date
+  ) s2 ON s1.id = s2.max_id
+) s ON d.date = s.date
+LEFT JOIN withings_activity a ON d.date = a.date
+ORDER BY d.date DESC;
 
--- Initialize sync_state for Withings
-INSERT OR IGNORE INTO sync_state (id, last_sync_at, last_cursor, updated_at)
-VALUES ('withings', NULL, NULL, datetime('now'));
+-- =============================================
+-- Initial Data
+-- =============================================
+
+INSERT OR IGNORE INTO data_sources (id, name, source_type, api_endpoint, schedule_cron)
+VALUES ('withings', 'Withings', 'api', 'https://wbsapi.withings.net', '0 */12 * * *');
+
+INSERT OR IGNORE INTO sync_state (id, data_source_id, last_sync_at)
+VALUES ('withings', 'withings', NULL);

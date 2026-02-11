@@ -222,7 +222,6 @@ async function syncMeasures(
   let offset = 0;
   let totalCount = 0;
 
-  // eslint-disable-next-line no-constant-condition
   while (true) {
     const body = await postWithings<MeasureBody>(WITHINGS_MEASURE_URL, token, {
       action: "getmeas",
