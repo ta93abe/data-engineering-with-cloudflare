@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import github, { runSync as runGitHubSync } from "./services/github";
 import linear, { runSync as runLinearSync } from "./services/linear";
 import oura, { runSync as runOuraSync } from "./services/oura";
+import withings, { runSync as runWithingsSync } from "./services/withings";
 import type { Env, SyncResult } from "./types";
 
 const app = new Hono<{ Bindings: Env }>();
@@ -10,12 +11,13 @@ const app = new Hono<{ Bindings: Env }>();
 app.route("/github", github);
 app.route("/oura", oura);
 app.route("/linear", linear);
+app.route("/withings", withings);
 
 // Root
 app.get("/", (c) => {
   return c.json({
     name: "ingestion",
-    services: ["github", "oura", "linear"],
+    services: ["github", "oura", "linear", "withings"],
     endpoints: {
       "POST /sync": "Sync all services",
       "GET /health": "Health check",
@@ -42,6 +44,16 @@ app.get("/", (c) => {
         "GET /linear/weekly": "Weekly completion stats",
         "GET /linear/labels": "Label summary",
         "GET /linear/projects": "Project progress",
+      },
+      withings: {
+        "GET /withings/auth": "Start OAuth2 authorization",
+        "GET /withings/callback": "OAuth2 callback",
+        "POST /withings/sync": "Sync Withings data (?start_date&end_date=YYYY-MM-DD)",
+        "GET /withings/stats": "Get sync stats",
+        "GET /withings/measures": "Body measurements (weight, fat, etc.)",
+        "GET /withings/sleep": "Sleep data",
+        "GET /withings/activity": "Activity data",
+        "GET /withings/daily-summary": "Daily health summary",
       },
     },
   });
@@ -81,6 +93,16 @@ app.post("/sync", async (c) => {
     });
   }
 
+  try {
+    results.push(await runWithingsSync(c.env));
+  } catch (e) {
+    results.push({
+      service: "withings",
+      success: false,
+      message: e instanceof Error ? e.message : "Unknown error",
+    });
+  }
+
   return c.json({
     results,
     success: results.every((r) => r.success),
@@ -112,6 +134,13 @@ const scheduled: ExportedHandlerScheduledHandler<Env> = async (event, env) => {
       console.log("Oura sync completed:", result);
     } catch (e) {
       console.error("Oura sync failed:", e);
+    }
+
+    try {
+      const result = await runWithingsSync(env);
+      console.log("Withings sync completed:", result);
+    } catch (e) {
+      console.error("Withings sync failed:", e);
     }
   }
 

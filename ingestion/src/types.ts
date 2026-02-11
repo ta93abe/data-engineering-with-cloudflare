@@ -6,6 +6,9 @@ export interface Env {
   OURA_CLIENT_SECRET: string;
   OURA_REDIRECT_URI: string;
   LINEAR_API_KEY: string;
+  WITHINGS_CLIENT_ID: string;
+  WITHINGS_CLIENT_SECRET: string;
+  WITHINGS_REDIRECT_URI: string;
 }
 
 export interface SyncResult {
