@@ -41,3 +41,12 @@ logs/
 
 # Jupyter
 .ipynb_checkpoints/
+
+.playwright-mcp/
+
+# Evidence
+dashboard/voting/.evidence/
+dashboard/voting/build/
+dashboard/voting/node_modules/
+dashboard/voting/static/data/
+dashboard/voting/.env
