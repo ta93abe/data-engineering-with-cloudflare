@@ -45,8 +45,7 @@ logs/
 .playwright-mcp/
 
 # Evidence
-dashboard/voting/.evidence/template/
-dashboard/voting/.evidence/meta/
+dashboard/voting/.evidence/
 dashboard/voting/build/
 dashboard/voting/node_modules/
 dashboard/voting/static/data/
