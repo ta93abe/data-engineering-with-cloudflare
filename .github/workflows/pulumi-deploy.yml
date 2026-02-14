@@ -15,14 +15,18 @@ env:
   PULUMI_CONFIG_PASSPHRASE: ${{ secrets.PULUMI_CONFIG_PASSPHRASE }}
   SNOWFLAKE_ORGANIZATION_NAME: ${{ secrets.SNOWFLAKE_ORGANIZATION_NAME }}
   SNOWFLAKE_ACCOUNT_NAME: ${{ secrets.SNOWFLAKE_ACCOUNT_NAME }}
-  SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
-  SNOWFLAKE_PRIVATE_KEY: ${{ secrets.SNOWFLAKE_PRIVATE_KEY }}
-  SNOWFLAKE_ROLE: SYSADMIN
+  SNOWFLAKE_USER: PULUMI_SVC
+  SNOWFLAKE_AUTHENTICATOR: OAUTH
+  SNOWFLAKE_ROLE: PULUMI_ROLE
 
 jobs:
   deploy:
     name: Deploy
     runs-on: ubuntu-latest
+    environment: pulumi
+    permissions:
+      id-token: write
+      contents: read
     defaults:
       run:
         working-directory: infrastructure/pulumi
@@ -37,6 +41,13 @@ jobs:
 
       - name: Install dependencies
         run: go mod tidy
+
+      - name: Get Snowflake OIDC token
+        run: |
+          OIDC_TOKEN=$(curl -sS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=https://${SNOWFLAKE_ORGANIZATION_NAME}-${SNOWFLAKE_ACCOUNT_NAME}.snowflakecomputing.com" | jq -r '.value')
+          echo "::add-mask::$OIDC_TOKEN"
+          echo "SNOWFLAKE_TOKEN=$OIDC_TOKEN" >> "$GITHUB_ENV"
 
       - name: Login to R2 backend
         run: pulumi login 's3://pulumi?endpoint=https://${{ secrets.CLOUDFLARE_ACCOUNT_ID }}.r2.cloudflarestorage.com&region=auto&s3ForcePathStyle=true'
