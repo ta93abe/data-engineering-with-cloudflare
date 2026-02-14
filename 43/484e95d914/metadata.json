@@ -1,0 +1,32 @@
+{
+  "cli_version": "0.4.4",
+  "checkpoint_id": "43484e95d914",
+  "strategy": "manual-commit",
+  "branch": "feat/add-snowflake-provider",
+  "checkpoints_count": 2,
+  "files_touched": [
+    ".claude/settings.local.json",
+    ".github/workflows/pulumi-deploy.yml",
+    ".github/workflows/pulumi-preview.yml",
+    "infrastructure/pulumi/cloudflare.go",
+    "infrastructure/pulumi/main.go",
+    "infrastructure/pulumi/pulumi",
+    "infrastructure/pulumi/snowflake.go"
+  ],
+  "sessions": [
+    {
+      "metadata": "/43/484e95d914/0/metadata.json",
+      "transcript": "/43/484e95d914/0/full.jsonl",
+      "context": "/43/484e95d914/0/context.md",
+      "content_hash": "/43/484e95d914/0/content_hash.txt",
+      "prompt": "/43/484e95d914/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 30,
+    "cache_creation_tokens": 71137,
+    "cache_read_tokens": 1369698,
+    "output_tokens": 2237,
+    "api_call_count": 24
+  }
+}
