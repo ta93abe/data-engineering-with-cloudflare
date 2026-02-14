@@ -3,15 +3,10 @@
   "checkpoint_id": "43484e95d914",
   "strategy": "manual-commit",
   "branch": "feat/add-snowflake-provider",
-  "checkpoints_count": 2,
+  "checkpoints_count": 1,
   "files_touched": [
-    ".claude/settings.local.json",
     ".github/workflows/pulumi-deploy.yml",
-    ".github/workflows/pulumi-preview.yml",
-    "infrastructure/pulumi/cloudflare.go",
-    "infrastructure/pulumi/main.go",
-    "infrastructure/pulumi/pulumi",
-    "infrastructure/pulumi/snowflake.go"
+    ".github/workflows/pulumi-preview.yml"
   ],
   "sessions": [
     {
@@ -23,10 +18,10 @@
     }
   ],
   "token_usage": {
-    "input_tokens": 30,
-    "cache_creation_tokens": 71137,
-    "cache_read_tokens": 1369698,
-    "output_tokens": 2237,
-    "api_call_count": 24
+    "input_tokens": 27,
+    "cache_creation_tokens": 26377,
+    "cache_read_tokens": 1583220,
+    "output_tokens": 4010,
+    "api_call_count": 19
   }
 }

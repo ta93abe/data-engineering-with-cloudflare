@@ -3,33 +3,31 @@
   "checkpoint_id": "43484e95d914",
   "session_id": "bb630e62-73e7-4715-911c-365bdd5fbe35",
   "strategy": "manual-commit",
-  "created_at": "2026-02-14T13:12:09.522934Z",
+  "created_at": "2026-02-14T14:10:10.258148Z",
   "branch": "feat/add-snowflake-provider",
-  "checkpoints_count": 2,
+  "checkpoints_count": 1,
   "files_touched": [
-    ".claude/settings.local.json",
     ".github/workflows/pulumi-deploy.yml",
-    ".github/workflows/pulumi-preview.yml",
-    "infrastructure/pulumi/cloudflare.go",
-    "infrastructure/pulumi/main.go",
-    "infrastructure/pulumi/pulumi",
-    "infrastructure/pulumi/snowflake.go"
+    ".github/workflows/pulumi-preview.yml"
   ],
   "agent": "Claude Code",
+  "transcript_identifier_at_start": "383b1ebe-d6e6-434a-899d-a8533748191b",
+  "checkpoint_transcript_start": 159,
+  "transcript_lines_at_start": 159,
   "token_usage": {
-    "input_tokens": 30,
-    "cache_creation_tokens": 71137,
-    "cache_read_tokens": 1369698,
-    "output_tokens": 2237,
-    "api_call_count": 24
+    "input_tokens": 27,
+    "cache_creation_tokens": 26377,
+    "cache_read_tokens": 1583220,
+    "output_tokens": 4010,
+    "api_call_count": 19
   },
   "initial_attribution": {
-    "calculated_at": "2026-02-14T13:12:09.428067Z",
+    "calculated_at": "2026-02-14T14:10:10.061266Z",
     "agent_lines": 0,
-    "human_added": 173,
-    "human_modified": 0,
+    "human_added": 183,
+    "human_modified": 6,
     "human_removed": 0,
-    "total_committed": 173,
+    "total_committed": 183,
     "agent_percentage": 0
   },
   "transcript_path": ".claude/projects/-Users-ta93abe-Developer-github-com-ta93abe-data-engineering-with-cloudflare/bb630e62-73e7-4715-911c-365bdd5fbe35.jsonl"

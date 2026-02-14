@@ -22,3 +22,15 @@ main.go を Cloudflare リソースと Snowflake リソースで別ファイル�
 
 そうして
 
+### Prompt 4
+
+作る前にテラフォームのユーザーやロール、ウェアハウスを作りたいね。
+
+### Prompt 5
+
+Snowflake って OIDC 対応しているんだっけ？use context7
+
+### Prompt 6
+
+OIDCにする。
+
