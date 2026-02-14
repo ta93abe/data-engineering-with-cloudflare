@@ -103,3 +103,31 @@ Snowflake って OIDC 対応しているんだっけ？use context7
 ---
 
 OIDCにする。
+
+---
+
+Snowsight で実行するものは何？
+
+---
+
+今後データベースやウェアハウス以外も作る可能性がある。
+
+---
+
+他にACCOUNTADMINが作れるオブジェクトは？
+
+---
+
+snowpark container sevices, native app あたりは作るよ
+
+---
+
+resource monitor は？
+
+---
+
+SQL compilation error: Invalid object type 'ACCOUNT' for privilege 'CREATE RESOURCE MONITOR'.
+
+---
+
+snowsight で実行するクエリ、workspaceは Git管理したい。
