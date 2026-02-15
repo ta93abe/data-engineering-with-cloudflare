@@ -292,3 +292,289 @@ PRのレビューコメントに対応し、問題なければマージまで行
 
 
 ARGUMENTS: review
+
+---
+
+environment なしにしたい。
+
+---
+
+修正した。
+
+---
+
+bootstrap.sql は実行した。re-run して。
+
+---
+
+作った。
+
+---
+
+This session is being continued from a previous conversation that ran out of context. The summary below covers the earlier portion of the conversation.
+
+Analysis:
+Let me chronologically analyze the conversation:
+
+1. **Initial Plan**: User provided a detailed implementation plan for TA-307 (Snowflake resources in Pulumi). The plan specified adding Snowflake provider to existing Go Pulumi project.
+
+2. **Step 1-5 Implementation**: 
+   - Created branch `feat/add-snowflake-provider`
+   - Added `pulumi-snowflake/sdk/v2` dependency
+   - Modified `main.go` to add Snowflake Database (RAW), Schema (INGESTION), Warehouse (ANALYTICS_WH)
+   - Updated CI/CD workflows with Snowflake env vars (initially RSA key-pair auth)
+   - Build succeeded after fixing import path
+
+3. **User requested file split**: "main.go を Cloudflare リソースと Snowflake リソースで別ファイルに分割する"
+   - Created `cloudflare.go` with `CloudflareOutputs` struct and `createCloudflareResources()`
+   - Created `snowflake.go` with `SnowflakeOutputs` struct and `createSnowflakeResources()`
+   - Simplified `main.go` to just call these functions
+   - First commit made
+
+4. **User asked about Snowflake OIDC**: Used context7 to research. Found Snowflake supports WIF OIDC with GitHub Actions.
+
+5. **Switch to OIDC auth**: User chose OIDC over RSA key-pair
+   - Updated both workflows: removed `SNOWFLAKE_PRIVATE_KEY`, added `environment: pulumi`, `id-token: write` permission, OIDC token retrieval step
+   - Changed user to `PULUMI_SVC`, role to `PULUMI_ROLE`, authenticator to `OAUTH`
+   - Deleted generated RSA key files
+   - Second commit made
+
+6. **User wanted bootstrap SQL in Git**: Created `infrastructure/snowflake/bootstrap.sql`
+   - User corrected: "infrastracture じゃないね。snowflake フォルダを作ってそこで管理する"
+   - Moved to `snowflake/bootstrap.sql`
+
+7. **User asked about security**: Confirmed bootstrap.sql contains no sensitive info - OIDC config is all public information.
+
+8. **User asked about OIDC private info**: Explained only the JWT token itself is secret.
+
+9. **User asked about required env vars**: Only 2 secrets needed (SNOWFLAKE_ORGANIZATION_NAME, SNOWFLAKE_ACCOUNT_NAME).
+
+10. **User asked about Cloudflare OIDC**: Researched - Cloudflare API does NOT support OIDC.
+
+11. **PR created**: #38 at https://github.com/ta93abe/data-engineering-with-cloudflare/pull/38
+
+12. **PR review**: Analyzed review comments from Gemini and CodeRabbit
+    - Fixed: OIDC token validation (empty/null check)
+    - Fixed: `go.mod` indirect annotation via `go mod tidy`
+    - Skipped: AutoResume type change (plan explicitly chose `pulumi.String("true")`)
+    - Skipped: Constants extraction (over-engineering)
+    - Skipped: bootstrap.sql permission reduction (user's explicit choice)
+
+13. **User wanted to remove environment**: "environment なしにしたい"
+    - Started splitting into two users (PULUMI_PREVIEW_SVC, PULUMI_DEPLOY_SVC)
+    - User immediately said "じゃあわけない" (don't split)
+    - Reverted all changes back to single user + environment: pulumi
+
+14. **Bootstrap SQL permissions evolution**:
+    - Started with CREATE DATABASE + CREATE WAREHOUSE
+    - User asked for more → added ROLE, USER, INTEGRATION
+    - User mentioned Snowpark/Native App → added COMPUTE POOL, APPLICATION, APPLICATION PACKAGE, BIND SERVICE ENDPOINT
+    - User asked about RESOURCE MONITOR → got SQL error `Invalid object type 'ACCOUNT'` → removed it (ACCOUNTADMIN only)
+    - Final set: 11 GRANT statements
+
+15. **CI Debugging**: Pulumi Preview failing with `Invalid OAuth access token (390303)`
+    - OIDC token retrieval succeeds (passes validation)
+    - Snowflake rejects the token
+    - Re-ran workflow after user created bootstrap + environment → still failing
+    - Added debug step to log OIDC token claims (sub, aud, iss)
+    - Currently waiting for debug output
+
+Key errors:
+- `go build` failed initially because import path needed `go get` for the specific sub-package
+- `go.sum` was in `.gitignore`, couldn't be added
+- `git add` from wrong working directory
+- `GRANT CREATE RESOURCE MONITOR ON ACCOUNT` → SQL compilation error
+- OIDC auth: `Invalid OAuth access token` - still debugging
+
+Current state: Branch has 6 commits, PR #38 open, CI failing due to OIDC auth issue. Debug commit pushed to inspect token claims.
+
+Summary:
+1. Primary Request and Intent:
+   - Implement TA-307: Add Snowflake provider to Pulumi IaC project (Go) with Database (RAW), Schema (INGESTION), and Warehouse (ANALYTICS_WH)
+   - Split `main.go` into separate files per provider (`cloudflare.go`, `snowflake.go`)
+   - Use GitHub Actions OIDC (WIF) authentication for Snowflake instead of RSA key-pair
+   - Git-manage the Snowflake bootstrap SQL in `snowflake/bootstrap.sql`
+   - Create PR and handle review feedback
+   - Debug failing CI (OIDC auth issue with Snowflake)
+
+2. Key Technical Concepts:
+   - Pulumi IaC in Go with Cloudflare and Snowflake providers
+   - Snowflake Workload Identity Federation (WIF) with GitHub Actions OIDC
+   - GitHub Actions OIDC token (`id-token: write` permission, `ACTIONS_ID_TOKEN_REQUEST_*` env vars)
+   - Snowflake `CREATE USER ... WORKLOAD_IDENTITY (TYPE = OIDC, ISSUER, SUBJECT)` for OIDC auth
+   - GitHub Environments for consistent OIDC `sub` claim (`environment:pulumi`)
+   - Snowflake provider v2 `AutoResume` uses `pulumi.StringPtrInput` (not Bool)
+   - Cloudflare API does NOT support OIDC - only API Token
+   - `GRANT CREATE RESOURCE MONITOR ON ACCOUNT` is invalid - ACCOUNTADMIN only
+   - OIDC: only the JWT token itself is secret; issuer, subject, audience are all public info
+
+3. Files and Code Sections:
+   - **`infrastructure/pulumi/main.go`** - Simplified entry point
+     - Calls `createCloudflareResources()` and `createSnowflakeResources()`
+     - Exports all outputs from both providers
+     ```go
+     package main
+
+     import (
+     	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
+     	"github.com/pulumi/pulumi/sdk/v3/go/pulumi/config"
+     )
+
+     func main() {
+     	pulumi.Run(func(ctx *pulumi.Context) error {
+     		cfg := config.New(ctx, "")
+     		accountId := cfg.Require("accountId")
+
+     		cf, err := createCloudflareResources(ctx, accountId)
+     		if err != nil {
+     			return err
+     		}
+
+     		sf, err := createSnowflakeResources(ctx)
+     		if err != nil {
+     			return err
+     		}
+
+     		// Outputs
+     		ctx.Export("d1DatabaseId", cf.D1DatabaseId)
+     		ctx.Export("d1DatabaseName", cf.D1DatabaseName)
+     		ctx.Export("r2BucketName", cf.R2BucketName)
+     		ctx.Export("kvNamespaceId", cf.KvNamespaceId)
+     		ctx.Export("snowflakeDatabaseName", sf.DatabaseName)
+     		ctx.Export("snowflakeSchemaName", sf.SchemaName)
+     		ctx.Export("snowflakeWarehouseName", sf.WarehouseName)
+
+     		return nil
+     	})
+     }
+     ```
+
+   - **`infrastructure/pulumi/cloudflare.go`** - New file for Cloudflare resources
+     - Contains `CloudflareOutputs` struct and `createCloudflareResources()` function
+     - Manages D1 Database (raw, protected), R2 Bucket (data-lake, APAC), Workers KV (data-cache)
+
+   - **`infrastructure/pulumi/snowflake.go`** - New file for Snowflake resources
+     - Contains `SnowflakeOutputs` struct and `createSnowflakeResources()` function
+     - Creates Database RAW, Schema INGESTION, Warehouse ANALYTICS_WH (XSMALL, auto_suspend=60, auto_resume="true")
+     - Note: `AutoResume` uses `pulumi.String("true")` not `pulumi.Bool(true)` per plan's design decision about Provider v2 `StringPtrInput` type
+
+   - **`infrastructure/pulumi/go.mod`** - Added `pulumi-snowflake/sdk/v2 v2.12.0`, updated pulumi SDK to v3.220.0
+
+   - **`.github/workflows/pulumi-preview.yml`** - Updated for Snowflake OIDC auth
+     - Added `environment: pulumi`, `id-token: write` permission
+     - Env vars: `SNOWFLAKE_USER: PULUMI_SVC`, `SNOWFLAKE_AUTHENTICATOR: OAUTH`, `SNOWFLAKE_ROLE: PULUMI_ROLE`
+     - OIDC token step with validation and debug logging (current state):
+     ```yaml
+     - name: Get Snowflake OIDC token
+       run: |
+         OIDC_TOKEN=$(curl -sS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+           "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=https://${SNOWFLAKE_ORGANIZATION_NAME}-${SNOWFLAKE_ACCOUNT_NAME}.snowflakecomputing.com" | jq -r '.value')
+         if [ -z "$OIDC_TOKEN" ] || [ "$OIDC_TOKEN" = "null" ]; then
+           echo "::error::Failed to retrieve Snowflake OIDC token"
+           exit 1
+         fi
+         # Debug: show token claims (sub, aud, iss) without exposing the full token
+         echo "$OIDC_TOKEN" | cut -d. -f2 | base64 -d 2>/dev/null | jq '{sub, aud, iss}' || true
+         echo "::add-mask::$OIDC_TOKEN"
+         echo "SNOWFLAKE_TOKEN=$OIDC_TOKEN" >> "$GITHUB_ENV"
+     ```
+
+   - **`.github/workflows/pulumi-deploy.yml`** - Same OIDC changes as preview (without debug line)
+
+   - **`snowflake/bootstrap.sql`** - Bootstrap SQL for Snowsight manual execution
+     - Creates PULUMI_ROLE, PULUMI_SVC (OIDC with subject `repo:ta93abe/data-engineering-with-cloudflare:environment:pulumi`)
+     - 11 account-level grants including CREATE DATABASE, WAREHOUSE, ROLE, USER, INTEGRATION, NETWORK POLICY, SHARE, COMPUTE POOL, APPLICATION, APPLICATION PACKAGE, BIND SERVICE ENDPOINT
+     ```sql
+     -- 1. ロール作成
+     USE ROLE USERADMIN;
+     CREATE ROLE IF NOT EXISTS PULUMI_ROLE
+       COMMENT = 'Role for Pulumi infrastructure management';
+     GRANT ROLE PULUMI_ROLE TO ROLE SYSADMIN;
+
+     -- 2. サービスユーザー作成（GitHub Actions OIDC 認証）
+     CREATE USER IF NOT EXISTS PULUMI_SVC
+       TYPE = SERVICE
+       WORKLOAD_IDENTITY = (
+         TYPE = OIDC
+         ISSUER = 'https://token.actions.githubusercontent.com'
+         SUBJECT = 'repo:ta93abe/data-engineering-with-cloudflare:environment:pulumi'
+       )
+       DEFAULT_ROLE = PULUMI_ROLE
+       COMMENT = 'Service user for Pulumi IaC (GitHub Actions OIDC)';
+     GRANT ROLE PULUMI_ROLE TO USER PULUMI_SVC;
+
+     -- 3. 権限付与
+     USE ROLE SECURITYADMIN;
+     GRANT CREATE DATABASE ON ACCOUNT TO ROLE PULUMI_ROLE;
+     GRANT CREATE WAREHOUSE ON ACCOUNT TO ROLE PULUMI_ROLE;
+     GRANT CREATE ROLE ON ACCOUNT TO ROLE PULUMI_ROLE;
+     GRANT CREATE USER ON ACCOUNT TO ROLE PULUMI_ROLE;
+     GRANT CREATE INTEGRATION ON ACCOUNT TO ROLE PULUMI_ROLE;
+     GRANT CREATE NETWORK POLICY ON ACCOUNT TO ROLE PULUMI_ROLE;
+     GRANT CREATE SHARE ON ACCOUNT TO ROLE PULUMI_ROLE;
+     GRANT CREATE COMPUTE POOL ON ACCOUNT TO ROLE PULUMI_ROLE;
+     GRANT CREATE APPLICATION ON ACCOUNT TO ROLE PULUMI_ROLE;
+     GRANT CREATE APPLICATION PACKAGE ON ACCOUNT TO ROLE PULUMI_ROLE;
+     GRANT BIND SERVICE ENDPOINT ON ACCOUNT TO ROLE PULUMI_ROLE;
+     ```
+
+4. Errors and fixes:
+   - **`go build` failed with missing module**: Import path `github.com/pulumi/pulumi-snowflake/sdk/v2/go/snowflake` needed explicit `go get` for the sub-package. Fixed by running `go get github.com/pulumi/pulumi-snowflake/sdk/v2/go/snowflake`.
+   - **`git add` failed - wrong working directory**: Commands ran from `infrastructure/pulumi/` instead of project root. Fixed by using absolute path from project root.
+   - **`go.sum` in `.gitignore`**: Couldn't add `go.sum` to git. Excluded it from staging.
+   - **`GRANT CREATE RESOURCE MONITOR ON ACCOUNT` SQL error**: Snowflake returned `SQL compilation error: Invalid object type 'ACCOUNT' for privilege 'CREATE RESOURCE MONITOR'`. Resource monitors are ACCOUNTADMIN-only. Removed the grant.
+   - **CodeRabbit review - OIDC token validation**: No validation for empty/null tokens. Fixed by adding `if [ -z "$OIDC_TOKEN" ] || [ "$OIDC_TOKEN" = "null" ]` check.
+   - **CodeRabbit review - go.mod indirect**: `pulumi-snowflake/sdk/v2` marked `// indirect` but directly imported. Fixed with `go mod tidy`.
+   - **`Invalid OAuth access token (390303)`**: OIDC token is retrieved successfully but Snowflake rejects it. STILL DEBUGGING - added debug step to log JWT claims (sub, aud, iss).
+   - **User said "environment なしにしたい" then "じゃあわけない"**: Started splitting into two users for different OIDC subjects, but user decided to keep single user + environment approach. Reverted all changes.
+
+5. Problem Solving:
+   - Successfully split Pulumi code by provider for maintainability
+   - Successfully implemented OIDC auth pattern for CI/CD (replacing RSA key-pair)
+   - Resolved all PR review comments appropriately
+   - **ONGOING**: Debugging Snowflake OIDC authentication failure. The token retrieval succeeds but Snowflake returns `Invalid OAuth access token (390303)`. Possible causes: audience mismatch, Pulumi Snowflake provider may not fully support WIF OIDC (roadmap said "before end of 2025"), or the `OAUTH` authenticator may not be the correct one for WIF tokens. Debug commit pushed to inspect token claims.
+
+6. All user messages:
+   - "Implement the following plan: [TA-307 plan]"
+   - "システムでファイルを分割したい。"
+   - "main.go を Cloudflare リソースと Snowflake リソースで別ファイルに分割する"
+   - "そうして" (commit the changes)
+   - "Snowflake って OIDC 対応しているんだっけ？use context7"
+   - "OIDCにする。"
+   - "今後データベースやウェアハウス以外も作る可能性がある。"
+   - "他にACCOUNTADMINが作れるオブジェクトは？"
+   - "snowpark container sevices, native app あたりは作るよ"
+   - "resource monitor は？"
+   - "SQL compilation error: Invalid object type 'ACCOUNT' for privilege 'CREATE RESOURCE MONITOR'."
+   - "Snowsight で実行するものは何？"
+   - "bootstrap.sql はセキュリティ的に大丈夫？"
+   - "OIDCにおいてなにがプライベートな情報なの"
+   - "環境変数何が必要？"
+   - "cloudflare も oidc 認証できない？"
+   - "/pr" (create PR)
+   - "/pr review"
+   - "environment なしにしたい。"
+   - "じゃあわけない。"
+   - "Snowflake って OIDC 対応しているんだっけ？" (duplicate via context7)
+   - "snowflake フォルダを作ってそこで管理する。" (correction about file location)
+   - "修正した。" (made fixes to GitHub/Snowflake setup)
+   - "bootstrap.sql は実行した。re-run して。"
+   - "作った。" (created GitHub environment)
+
+7. Pending Tasks:
+   - Debug and fix the Snowflake OIDC authentication failure (`Invalid OAuth access token 390303`)
+   - Once debug output is available, determine root cause (audience mismatch, authenticator type, or provider WIF support)
+   - Remove debug logging step after fixing
+   - Merge PR #38 once CI passes
+
+8. Current Work:
+   Debugging Snowflake OIDC authentication failure in PR #38. The Pulumi Preview CI job fails with `open snowflake connection: 390303 (08004): Invalid OAuth access token`. The OIDC token is successfully retrieved from GitHub (passes empty/null validation), but Snowflake rejects it. User confirmed bootstrap.sql was executed in Snowsight and GitHub Environment `pulumi` was created. A debug commit (`4be2165`) was pushed to log the OIDC token's `sub`, `aud`, and `iss` claims to diagnose the mismatch. The latest push triggered a new Pulumi Preview run.
+
+   Branch: `feat/add-snowflake-provider` (6 commits)
+   PR: https://github.com/ta93abe/data-engineering-with-cloudflare/pull/38
+
+9. Optional Next Step:
+   Check the debug output from the latest Pulumi Preview run to see the OIDC token's `sub`, `aud`, and `iss` claims. Based on those values, determine why Snowflake is rejecting the token - likely the `aud` (audience) value doesn't match what Snowflake expects, or the Pulumi Snowflake provider's `OAUTH` authenticator may not be compatible with WIF OIDC tokens. The Terraform provider roadmap noted "Workload Identity Federation will be supported before the end of 2025" - it's possible the current provider version doesn't fully support it yet, which may require falling back to key-pair auth.
+
+If you need specific details from before compaction (like exact code snippets, error messages, or content you generated), read the full transcript at: /Users/ta93abe/.REDACTED.jsonl
+Please continue the conversation from where we left off without asking the user any further questions. Continue with the last task that you were asked to work on.

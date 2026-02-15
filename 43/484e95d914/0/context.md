@@ -130,3 +130,32 @@ PRを作成する。
 **PR形式:**
 ```...
 
+### Prompt 21
+
+environment なしにしたい。
+
+### Prompt 22
+
+修正した。
+
+### Prompt 23
+
+bootstrap.sql は実行した。re-run して。
+
+### Prompt 24
+
+作った。
+
+### Prompt 25
+
+This session is being continued from a previous conversation that ran out of context. The summary below covers the earlier portion of the conversation.
+
+Analysis:
+Let me chronologically analyze the conversation:
+
+1. **Initial Plan**: User provided a detailed implementation plan for TA-307 (Snowflake resources in Pulumi). The plan specified adding Snowflake provider to existing Go Pulumi project.
+
+2. **Step 1-5 Implementation**: 
+   - Created branch `feat/add-snowflake-provider`
+   - Added `pulum...
+
