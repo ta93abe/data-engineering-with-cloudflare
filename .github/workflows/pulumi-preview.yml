@@ -50,6 +50,8 @@ jobs:
             echo "::error::Failed to retrieve Snowflake OIDC token"
             exit 1
           fi
+          # Debug: show token claims (sub, aud, iss) without exposing the full token
+          echo "$OIDC_TOKEN" | cut -d. -f2 | base64 -d 2>/dev/null | jq '{sub, aud, iss}' || true
           echo "::add-mask::$OIDC_TOKEN"
           echo "SNOWFLAKE_TOKEN=$OIDC_TOKEN" >> "$GITHUB_ENV"
 
