@@ -159,3 +159,48 @@ Let me chronologically analyze the conversation:
    - Created branch `feat/add-snowflake-provider`
    - Added `pulum...
 
+### Prompt 26
+
+OIDC トークンの audience が間違っていた
+どこを変更したの？
+
+### Prompt 27
+
+audienceパラメータってどのファイルで指定してる？
+
+### Prompt 28
+
+Base directory for this skill: /Users/ta93abe/.claude/skills/pr
+
+# pr
+
+Pull Requestの作成・レビュー対応を行うスキル。
+
+## サブコマンド
+
+### /pr create (デフォルト)
+
+PRを作成する。
+
+**動作:**
+1. `git status` で現在のブランチと変更を確認
+2. `git log main..HEAD` でコミット履歴を確認
+3. `git diff main...HEAD` で全体の変更を確認
+4. 変更内容を分析してPRの説明文を生成
+5. `gh pr create` でPRを作成
+
+**PR形式:**
+```...
+
+### Prompt 29
+
+Linear の TA-307 を Done にして
+
+### Prompt 30
+
+snowflake/*.sql をGit管理したい。Git Integrationを作りたい。
+
+### Prompt 31
+
+[Request interrupted by user for tool use]
+

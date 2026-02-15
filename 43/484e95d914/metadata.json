@@ -2,8 +2,8 @@
   "cli_version": "0.4.4",
   "checkpoint_id": "43484e95d914",
   "strategy": "manual-commit",
-  "branch": "feat/add-snowflake-provider",
-  "checkpoints_count": 2,
+  "branch": "feat/add-snowflake-git-integration",
+  "checkpoints_count": 0,
   "files_touched": [
     ".github/workflows/pulumi-deploy.yml",
     ".github/workflows/pulumi-preview.yml",
@@ -23,10 +23,10 @@
     }
   ],
   "token_usage": {
-    "input_tokens": 62,
-    "cache_creation_tokens": 81266,
-    "cache_read_tokens": 5874017,
-    "output_tokens": 5627,
-    "api_call_count": 50
+    "input_tokens": 36,
+    "cache_creation_tokens": 47129,
+    "cache_read_tokens": 2881400,
+    "output_tokens": 2869,
+    "api_call_count": 22
   }
 }
