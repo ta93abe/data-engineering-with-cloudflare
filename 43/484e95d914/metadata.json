@@ -5,7 +5,8 @@
   "branch": "feat/add-snowflake-provider",
   "checkpoints_count": 1,
   "files_touched": [
-    "infrastructure/snowflake/bootstrap.sql"
+    ".github/workflows/pulumi-deploy.yml",
+    ".github/workflows/pulumi-preview.yml"
   ],
   "sessions": [
     {
@@ -17,10 +18,10 @@
     }
   ],
   "token_usage": {
-    "input_tokens": 25,
-    "cache_creation_tokens": 3840,
-    "cache_read_tokens": 1232034,
-    "output_tokens": 1143,
-    "api_call_count": 12
+    "input_tokens": 33,
+    "cache_creation_tokens": 151534,
+    "cache_read_tokens": 2144186,
+    "output_tokens": 2297,
+    "api_call_count": 19
   }
 }

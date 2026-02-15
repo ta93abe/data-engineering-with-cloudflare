@@ -62,3 +62,71 @@ SQL compilation error: Invalid object type 'ACCOUNT' for privilege 'CREATE RESOU
 
 snowsight で実行するクエリ、workspaceは Git管理したい。
 
+### Prompt 14
+
+infrastracture じゃないね。snowflake フォルダを作ってそこで管理する。
+
+### Prompt 15
+
+bootstrap.sql はセキュリティ的に大丈夫？
+
+### Prompt 16
+
+OIDCにおいてなにがプライベートな情報なの
+
+### Prompt 17
+
+環境変数何が必要？
+
+### Prompt 18
+
+cloudflare も oidc 認証できない？
+
+### Prompt 19
+
+Base directory for this skill: /Users/ta93abe/.claude/skills/pr
+
+# pr
+
+Pull Requestの作成・レビュー対応を行うスキル。
+
+## サブコマンド
+
+### /pr create (デフォルト)
+
+PRを作成する。
+
+**動作:**
+1. `git status` で現在のブランチと変更を確認
+2. `git log main..HEAD` でコミット履歴を確認
+3. `git diff main...HEAD` で全体の変更を確認
+4. 変更内容を分析してPRの説明文を生成
+5. `gh pr create` でPRを作成
+
+**PR形式:**
+```...
+
+### Prompt 20
+
+Base directory for this skill: /Users/ta93abe/.claude/skills/pr
+
+# pr
+
+Pull Requestの作成・レビュー対応を行うスキル。
+
+## サブコマンド
+
+### /pr create (デフォルト)
+
+PRを作成する。
+
+**動作:**
+1. `git status` で現在のブランチと変更を確認
+2. `git log main..HEAD` でコミット履歴を確認
+3. `git diff main...HEAD` で全体の変更を確認
+4. 変更内容を分析してPRの説明文を生成
+5. `gh pr create` でPRを作成
+
+**PR形式:**
+```...
+
