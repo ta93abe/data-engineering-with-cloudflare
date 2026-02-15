@@ -15,7 +15,8 @@ env:
   SNOWFLAKE_ORGANIZATION_NAME: ${{ secrets.SNOWFLAKE_ORGANIZATION_NAME }}
   SNOWFLAKE_ACCOUNT_NAME: ${{ secrets.SNOWFLAKE_ACCOUNT_NAME }}
   SNOWFLAKE_USER: PULUMI_SVC
-  SNOWFLAKE_AUTHENTICATOR: OAUTH
+  SNOWFLAKE_AUTHENTICATOR: WORKLOAD_IDENTITY
+  SNOWFLAKE_WORKLOAD_IDENTITY_PROVIDER: OIDC
   SNOWFLAKE_ROLE: PULUMI_ROLE
 
 jobs:
@@ -50,8 +51,6 @@ jobs:
             echo "::error::Failed to retrieve Snowflake OIDC token"
             exit 1
           fi
-          # Debug: show token claims (sub, aud, iss) without exposing the full token
-          echo "$OIDC_TOKEN" | cut -d. -f2 | base64 -d 2>/dev/null | jq '{sub, aud, iss}' || true
           echo "::add-mask::$OIDC_TOKEN"
           echo "SNOWFLAKE_TOKEN=$OIDC_TOKEN" >> "$GITHUB_ENV"
 
