@@ -6,9 +6,6 @@
   "checkpoints_count": 3,
   "files_touched": [
     ".claude/settings.local.json",
-    ".github/workflows/dbt-ci.yml",
-    ".github/workflows/dbt-deploy.yml",
-    ".github/workflows/dbt-merge.yml",
     ".github/workflows/pulumi-deploy.yml",
     ".github/workflows/pulumi-preview.yml",
     ".gitignore",
@@ -17,7 +14,8 @@
     "infrastructure/pulumi/pulumi",
     "infrastructure/pulumi/snowflake.go",
     "infrastructure/snowflake/bootstrap.sql",
-    "snowflake/bootstrap.sql"
+    "snowflake/bootstrap.sql",
+    "transform/core/profiles.yml"
   ],
   "sessions": [
     {
@@ -43,10 +41,10 @@
     }
   ],
   "token_usage": {
-    "input_tokens": 114,
-    "cache_creation_tokens": 149621,
-    "cache_read_tokens": 7262909,
-    "output_tokens": 6308,
-    "api_call_count": 78
+    "input_tokens": 106,
+    "cache_creation_tokens": 157136,
+    "cache_read_tokens": 7653782,
+    "output_tokens": 6474,
+    "api_call_count": 79
   }
 }
