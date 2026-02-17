@@ -10,6 +10,8 @@ type SnowflakeOutputs struct {
 	SchemaName        pulumi.StringOutput
 	WarehouseName     pulumi.StringOutput
 	AdminDatabaseName pulumi.StringOutput
+	CoreDatabaseName  pulumi.StringOutput
+	DbtRoleName       pulumi.StringOutput
 	GitRepositoryName pulumi.StringOutput
 }
 
@@ -59,6 +61,27 @@ func createSnowflakeResources(ctx *pulumi.Context) (*SnowflakeOutputs, error) {
 	}
 
 	// ===========================================
+	// Snowflake Database for dbt
+	// ===========================================
+	coreDb, err := snowflake.NewDatabase(ctx, "core", &snowflake.DatabaseArgs{
+		Name: pulumi.String("CORE"),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// ===========================================
+	// Snowflake Role for dbt
+	// ===========================================
+	dbtRole, err := snowflake.NewAccountRole(ctx, "dbtRole", &snowflake.AccountRoleArgs{
+		Name:    pulumi.String("DBT_ROLE"),
+		Comment: pulumi.String("Role for dbt service user to run transformations"),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// ===========================================
 	// Snowflake Git API Integration (Execute)
 	// ApiIntegration resource does not support git_https_api provider
 	// ===========================================
@@ -89,6 +112,8 @@ func createSnowflakeResources(ctx *pulumi.Context) (*SnowflakeOutputs, error) {
 		SchemaName:        sfSchema.Name,
 		WarehouseName:     sfWarehouse.Name,
 		AdminDatabaseName: adminDb.Name,
+		CoreDatabaseName:  coreDb.Name,
+		DbtRoleName:       dbtRole.Name,
 		GitRepositoryName: gitRepo.Name,
 	}, nil
 }

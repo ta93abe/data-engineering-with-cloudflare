@@ -31,6 +31,8 @@ func main() {
 		ctx.Export("snowflakeSchemaName", sf.SchemaName)
 		ctx.Export("snowflakeWarehouseName", sf.WarehouseName)
 		ctx.Export("snowflakeAdminDatabaseName", sf.AdminDatabaseName)
+		ctx.Export("snowflakeCoreDatabaseName", sf.CoreDatabaseName)
+		ctx.Export("snowflakeDbtRoleName", sf.DbtRoleName)
 		ctx.Export("snowflakeGitRepositoryName", sf.GitRepositoryName)
 
 		return nil
