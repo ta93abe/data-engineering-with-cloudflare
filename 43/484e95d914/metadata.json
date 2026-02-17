@@ -6,6 +6,9 @@
   "checkpoints_count": 3,
   "files_touched": [
     ".claude/settings.local.json",
+    ".github/workflows/dbt-ci.yml",
+    ".github/workflows/dbt-deploy.yml",
+    ".github/workflows/dbt-merge.yml",
     ".github/workflows/pulumi-deploy.yml",
     ".github/workflows/pulumi-preview.yml",
     ".gitignore",
@@ -41,10 +44,10 @@
     }
   ],
   "token_usage": {
-    "input_tokens": 106,
-    "cache_creation_tokens": 157136,
-    "cache_read_tokens": 7653782,
-    "output_tokens": 6474,
-    "api_call_count": 79
+    "input_tokens": 98,
+    "cache_creation_tokens": 289976,
+    "cache_read_tokens": 6511742,
+    "output_tokens": 6516,
+    "api_call_count": 70
   }
 }
