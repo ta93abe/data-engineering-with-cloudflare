@@ -3,7 +3,7 @@
   "checkpoint_id": "43484e95d914",
   "strategy": "manual-commit",
   "branch": "feat/add-snowflake-git-integration",
-  "checkpoints_count": 5,
+  "checkpoints_count": 3,
   "files_touched": [
     ".claude/settings.local.json",
     ".github/workflows/dbt-ci.yml",
@@ -17,9 +17,7 @@
     "infrastructure/pulumi/pulumi",
     "infrastructure/pulumi/snowflake.go",
     "infrastructure/snowflake/bootstrap.sql",
-    "snowflake/bootstrap.sql",
-    "transform/core/profiles.yml",
-    "transform/core/pyproject.toml"
+    "snowflake/bootstrap.sql"
   ],
   "sessions": [
     {
@@ -45,10 +43,10 @@
     }
   ],
   "token_usage": {
-    "input_tokens": 131,
-    "cache_creation_tokens": 167737,
-    "cache_read_tokens": 9418885,
-    "output_tokens": 13596,
-    "api_call_count": 92
+    "input_tokens": 108,
+    "cache_creation_tokens": 198559,
+    "cache_read_tokens": 6988724,
+    "output_tokens": 7529,
+    "api_call_count": 78
   }
 }

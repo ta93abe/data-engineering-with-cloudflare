@@ -113,3 +113,36 @@ PRを作成する。
 5. `gh pr create` でPRを作成
 6. 変更の種類...
 
+### Prompt 14
+
+Base directory for this skill: /Users/ta93abe/.claude/skills/pr
+
+# pr
+
+Pull Requestの作成・レビュー対応を行うスキル。
+
+## サブコマンド
+
+### /pr create (デフォルト)
+
+PRを作成する。
+
+**動作:**
+1. `git status` で現在のブランチと変更を確認
+2. `git log main..HEAD` でコミット履歴を確認
+3. `git diff main...HEAD` で全体の変更を確認
+4. 変更内容を分析してPRの説明文を生成
+5. `gh pr create` でPRを作成
+6. 変更の種類...
+
+### Prompt 15
+
+This session is being continued from a previous conversation that ran out of context. The summary below covers the earlier portion of the conversation.
+
+Analysis:
+Let me chronologically analyze the conversation:
+
+1. **Initial commit**: User invoked `/commit` for a small `.serena/project.yml` change. I committed it as `chore: Add base_modes and default_modes config to Serena project settings`.
+
+2. **Main request**: User asked to set up Snowflake resources (service user, role, warehouse, database)...
+
