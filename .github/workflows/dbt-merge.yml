@@ -44,7 +44,7 @@ jobs:
           echo "SNOWFLAKE_TOKEN=$OIDC_TOKEN" >> "$GITHUB_ENV"
 
       - name: dbt merge
-        uses: ta93abe/dbt-jobs@v0.1.1
+        uses: ta93abe/dbt-jobs@v0.1.2
         with:
           type: merge
           adapter: snowflake

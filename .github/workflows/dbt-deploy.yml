@@ -3,6 +3,10 @@ name: dbt Deploy
 on:
   workflow_dispatch:
 
+concurrency:
+  group: dbt-deploy
+  cancel-in-progress: false
+
 permissions:
   actions: read
   contents: read
@@ -38,7 +42,7 @@ jobs:
           echo "SNOWFLAKE_TOKEN=$OIDC_TOKEN" >> "$GITHUB_ENV"
 
       - name: dbt deploy
-        uses: ta93abe/dbt-jobs@v0.1.1
+        uses: ta93abe/dbt-jobs@v0.1.2
         with:
           type: deploy
           adapter: snowflake

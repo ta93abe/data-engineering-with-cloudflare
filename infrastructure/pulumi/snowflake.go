@@ -99,10 +99,10 @@ func createSnowflakeResources(ctx *pulumi.Context) (*SnowflakeOutputs, error) {
 		return nil, err
 	}
 
-	// Grant ALL PRIVILEGES on CORE database
+	// Grant USAGE, CREATE SCHEMA, MONITOR on CORE database
 	_, err = snowflake.NewGrantPrivilegesToAccountRole(ctx, "dbtGrantCoreDb", &snowflake.GrantPrivilegesToAccountRoleArgs{
 		AccountRoleName: dbtRole.FullyQualifiedName,
-		AllPrivileges:   pulumi.Bool(true),
+		Privileges:      pulumi.ToStringArray([]string{"USAGE", "CREATE SCHEMA", "MONITOR"}),
 		OnAccountObject: &snowflake.GrantPrivilegesToAccountRoleOnAccountObjectArgs{
 			ObjectType: pulumi.String("DATABASE"),
 			ObjectName: coreDb.FullyQualifiedName,
@@ -167,19 +167,6 @@ func createSnowflakeResources(ctx *pulumi.Context) (*SnowflakeOutputs, error) {
 		return nil, err
 	}
 
-	// Grant CREATE SCHEMA on CORE (for dbt to create staging/marts schemas)
-	_, err = snowflake.NewGrantPrivilegesToAccountRole(ctx, "dbtGrantCoreCreateSchema", &snowflake.GrantPrivilegesToAccountRoleArgs{
-		AccountRoleName: dbtRole.FullyQualifiedName,
-		Privileges:      pulumi.ToStringArray([]string{"CREATE SCHEMA"}),
-		OnAccountObject: &snowflake.GrantPrivilegesToAccountRoleOnAccountObjectArgs{
-			ObjectType: pulumi.String("DATABASE"),
-			ObjectName: coreDb.FullyQualifiedName,
-		},
-	})
-	if err != nil {
-		return nil, err
-	}
-
 	// ===========================================
 	// Snowflake Service User for dbt
 	// ===========================================
@@ -187,10 +174,10 @@ func createSnowflakeResources(ctx *pulumi.Context) (*SnowflakeOutputs, error) {
 		Name:             pulumi.String("DBT_SERVICE_USER"),
 		LoginName:        pulumi.String("DBT_SERVICE_USER"),
 		Comment:          pulumi.String("Service user for dbt transformations via GitHub Actions"),
-		DefaultRole:      pulumi.String("DBT_ROLE"),
-		DefaultWarehouse: pulumi.String("ANALYTICS_WH"),
-		DefaultNamespace: pulumi.String("CORE"),
-	}, pulumi.DependsOn([]pulumi.Resource{dbtRole, sfWarehouse, coreDb}))
+		DefaultRole:      dbtRole.Name,
+		DefaultWarehouse: sfWarehouse.Name,
+		DefaultNamespace: coreDb.Name,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -200,11 +187,11 @@ func createSnowflakeResources(ctx *pulumi.Context) (*SnowflakeOutputs, error) {
 	// ===========================================
 	_, err = snowflake.NewExecute(ctx, "dbtUserWif", &snowflake.ExecuteArgs{
 		Execute: pulumi.Sprintf(
-			"ALTER USER %s SET DEFAULT_WORKLOAD_IDENTITY = '(oidc=<issuer=https://token.actions.githubusercontent.com subject=repo:ta93abe/data-engineering-with-cloudflare:environment:dbt oidcAudienceList=(snowflakecomputing.com)>)'",
+			"ALTER USER %s SET WORKLOAD_IDENTITY = (TYPE = OIDC ISSUER = 'https://token.actions.githubusercontent.com' SUBJECT = 'repo:ta93abe/data-engineering-with-cloudflare:environment:dbt')",
 			dbtUser.Name,
 		),
 		Revert: pulumi.Sprintf(
-			"ALTER USER %s UNSET DEFAULT_WORKLOAD_IDENTITY",
+			"ALTER USER %s UNSET WORKLOAD_IDENTITY",
 			dbtUser.Name,
 		),
 	}, pulumi.DependsOn([]pulumi.Resource{dbtUser}))
