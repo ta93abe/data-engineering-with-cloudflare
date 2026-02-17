@@ -26,6 +26,9 @@ Thumbs.db
 
 # Serena MCP (commit .serena/ for project config)
 
+# Go
+infrastructure/pulumi/pulumi
+
 # Node
 node_modules/
 

@@ -40,3 +40,15 @@ core:
         s3_secret_access_key: "{{ env_var('R2_SECRET_ACCESS_KEY', '') }}"
         s3_url_style: 'path'
       threads: 8
+
+    snowflake:
+      type: snowflake
+      account: "{{ env_var('SNOWFLAKE_ORGANIZATION_NAME') }}-{{ env_var('SNOWFLAKE_ACCOUNT_NAME') }}"
+      user: DBT_SERVICE_USER
+      role: DBT_ROLE
+      authenticator: WORKLOAD_IDENTITY
+      token: "{{ env_var('SNOWFLAKE_TOKEN') }}"
+      warehouse: ANALYTICS_WH
+      database: CORE
+      schema: public
+      threads: 4
