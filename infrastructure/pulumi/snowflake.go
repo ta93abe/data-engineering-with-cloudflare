@@ -152,20 +152,7 @@ func createSnowflakeResources(ctx *pulumi.Context) (*SnowflakeOutputs, error) {
 		return nil, err
 	}
 
-	// Grant SELECT on future tables in RAW.INGESTION
-	_, err = snowflake.NewGrantPrivilegesToAccountRole(ctx, "dbtGrantRawFutureTablesSelect", &snowflake.GrantPrivilegesToAccountRoleArgs{
-		AccountRoleName: dbtRole.FullyQualifiedName,
-		Privileges:      pulumi.ToStringArray([]string{"SELECT"}),
-		OnSchemaObject: &snowflake.GrantPrivilegesToAccountRoleOnSchemaObjectArgs{
-			Future: &snowflake.GrantPrivilegesToAccountRoleOnSchemaObjectFutureArgs{
-				ObjectTypePlural: pulumi.String("TABLES"),
-				InSchema:         sfSchema.FullyQualifiedName,
-			},
-		},
-	})
-	if err != nil {
-		return nil, err
-	}
+
 
 	// ===========================================
 	// Snowflake Service User for dbt
