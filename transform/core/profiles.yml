@@ -47,6 +47,7 @@ core:
       user: DBT_SERVICE_USER
       role: DBT_ROLE
       authenticator: WORKLOAD_IDENTITY
+      workload_identity_provider: OIDC
       token: "{{ env_var('SNOWFLAKE_TOKEN') }}"
       warehouse: ANALYTICS_WH
       database: CORE
