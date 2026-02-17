@@ -82,6 +82,104 @@ func createSnowflakeResources(ctx *pulumi.Context) (*SnowflakeOutputs, error) {
 	}
 
 	// ===========================================
+	// Grants for DBT_ROLE
+	// ===========================================
+
+	// Grant USAGE on warehouse
+	_, err = snowflake.NewGrantPrivilegesToAccountRole(ctx, "dbtGrantWarehouse", &snowflake.GrantPrivilegesToAccountRoleArgs{
+		AccountRoleName: dbtRole.FullyQualifiedName,
+		Privileges:      pulumi.ToStringArray([]string{"USAGE"}),
+		OnAccountObject: &snowflake.GrantPrivilegesToAccountRoleOnAccountObjectArgs{
+			ObjectType: pulumi.String("WAREHOUSE"),
+			ObjectName: sfWarehouse.FullyQualifiedName,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// Grant ALL PRIVILEGES on CORE database
+	_, err = snowflake.NewGrantPrivilegesToAccountRole(ctx, "dbtGrantCoreDb", &snowflake.GrantPrivilegesToAccountRoleArgs{
+		AccountRoleName: dbtRole.FullyQualifiedName,
+		AllPrivileges:   pulumi.Bool(true),
+		OnAccountObject: &snowflake.GrantPrivilegesToAccountRoleOnAccountObjectArgs{
+			ObjectType: pulumi.String("DATABASE"),
+			ObjectName: coreDb.FullyQualifiedName,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// Grant USAGE on RAW database
+	_, err = snowflake.NewGrantPrivilegesToAccountRole(ctx, "dbtGrantRawDbUsage", &snowflake.GrantPrivilegesToAccountRoleArgs{
+		AccountRoleName: dbtRole.FullyQualifiedName,
+		Privileges:      pulumi.ToStringArray([]string{"USAGE"}),
+		OnAccountObject: &snowflake.GrantPrivilegesToAccountRoleOnAccountObjectArgs{
+			ObjectType: pulumi.String("DATABASE"),
+			ObjectName: sfDatabase.FullyQualifiedName,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// Grant USAGE on all schemas in RAW
+	_, err = snowflake.NewGrantPrivilegesToAccountRole(ctx, "dbtGrantRawSchemasUsage", &snowflake.GrantPrivilegesToAccountRoleArgs{
+		AccountRoleName: dbtRole.FullyQualifiedName,
+		Privileges:      pulumi.ToStringArray([]string{"USAGE"}),
+		OnSchema: &snowflake.GrantPrivilegesToAccountRoleOnSchemaArgs{
+			AllSchemasInDatabase: sfDatabase.FullyQualifiedName,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// Grant SELECT on all tables in RAW
+	_, err = snowflake.NewGrantPrivilegesToAccountRole(ctx, "dbtGrantRawTablesSelect", &snowflake.GrantPrivilegesToAccountRoleArgs{
+		AccountRoleName: dbtRole.FullyQualifiedName,
+		Privileges:      pulumi.ToStringArray([]string{"SELECT"}),
+		OnSchemaObject: &snowflake.GrantPrivilegesToAccountRoleOnSchemaObjectArgs{
+			All: &snowflake.GrantPrivilegesToAccountRoleOnSchemaObjectAllArgs{
+				ObjectTypePlural: pulumi.String("TABLES"),
+				InDatabase:       sfDatabase.FullyQualifiedName,
+			},
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// Grant SELECT on future tables in RAW
+	_, err = snowflake.NewGrantPrivilegesToAccountRole(ctx, "dbtGrantRawFutureTablesSelect", &snowflake.GrantPrivilegesToAccountRoleArgs{
+		AccountRoleName: dbtRole.FullyQualifiedName,
+		Privileges:      pulumi.ToStringArray([]string{"SELECT"}),
+		OnSchemaObject: &snowflake.GrantPrivilegesToAccountRoleOnSchemaObjectArgs{
+			Future: &snowflake.GrantPrivilegesToAccountRoleOnSchemaObjectFutureArgs{
+				ObjectTypePlural: pulumi.String("TABLES"),
+				InDatabase:       sfDatabase.FullyQualifiedName,
+			},
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// Grant CREATE SCHEMA on CORE (for dbt to create staging/marts schemas)
+	_, err = snowflake.NewGrantPrivilegesToAccountRole(ctx, "dbtGrantCoreCreateSchema", &snowflake.GrantPrivilegesToAccountRoleArgs{
+		AccountRoleName: dbtRole.FullyQualifiedName,
+		Privileges:      pulumi.ToStringArray([]string{"CREATE SCHEMA"}),
+		OnAccountObject: &snowflake.GrantPrivilegesToAccountRoleOnAccountObjectArgs{
+			ObjectType: pulumi.String("DATABASE"),
+			ObjectName: coreDb.FullyQualifiedName,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// ===========================================
 	// Snowflake Git API Integration (Execute)
 	// ApiIntegration resource does not support git_https_api provider
 	// ===========================================
