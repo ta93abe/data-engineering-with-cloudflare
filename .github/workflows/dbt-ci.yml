@@ -1,0 +1,56 @@
+name: dbt CI
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+    paths:
+      - "transform/core/**"
+      - ".github/workflows/dbt-ci.yml"
+
+permissions:
+  actions: read
+  contents: read
+  id-token: write
+  pull-requests: write
+
+env:
+  SNOWFLAKE_ORGANIZATION_NAME: ${{ secrets.SNOWFLAKE_ORGANIZATION_NAME }}
+  SNOWFLAKE_ACCOUNT_NAME: ${{ secrets.SNOWFLAKE_ACCOUNT_NAME }}
+  SNOWFLAKE_USER: DBT_SERVICE_USER
+  SNOWFLAKE_ROLE: DBT_ROLE
+  SNOWFLAKE_WAREHOUSE: ANALYTICS_WH
+  SNOWFLAKE_DATABASE: CORE
+  SNOWFLAKE_AUTHENTICATOR: WORKLOAD_IDENTITY
+  SNOWFLAKE_WORKLOAD_IDENTITY_PROVIDER: OIDC
+
+jobs:
+  ci:
+    name: CI
+    runs-on: ubuntu-latest
+    environment: dbt
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Get Snowflake OIDC token
+        run: |
+          OIDC_TOKEN=$(curl -sS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=snowflakecomputing.com" | jq -r '.value')
+          if [ -z "$OIDC_TOKEN" ] || [ "$OIDC_TOKEN" = "null" ]; then
+            echo "::error::Failed to retrieve Snowflake OIDC token"
+            exit 1
+          fi
+          echo "::add-mask::$OIDC_TOKEN"
+          echo "SNOWFLAKE_TOKEN=$OIDC_TOKEN" >> "$GITHUB_ENV"
+
+      - name: dbt ci
+        uses: ta93abe/dbt-jobs@v0.1.1
+        with:
+          type: ci
+          adapter: snowflake
+          project-dir: transform/core
+          profile-dir: transform/core
+          target: snowflake
+          command: |
+            dbt build --select state:modified+
+          deferral: main
+          post-pr-comment: true
