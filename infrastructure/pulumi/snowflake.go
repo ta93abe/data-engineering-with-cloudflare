@@ -169,23 +169,6 @@ func createSnowflakeResources(ctx *pulumi.Context) (*SnowflakeOutputs, error) {
 		return nil, err
 	}
 
-	// ===========================================
-	// WIF (OIDC) configuration for dbt service user
-	// ===========================================
-	_, err = snowflake.NewExecute(ctx, "dbtUserWif", &snowflake.ExecuteArgs{
-		Execute: pulumi.Sprintf(
-			"ALTER USER %s SET WORKLOAD_IDENTITY = (TYPE = OIDC ISSUER = 'https://token.actions.githubusercontent.com' SUBJECT = 'repo:ta93abe/data-engineering-with-cloudflare:environment:dbt')",
-			dbtUser.Name,
-		),
-		Revert: pulumi.Sprintf(
-			"ALTER USER %s UNSET WORKLOAD_IDENTITY",
-			dbtUser.Name,
-		),
-	}, pulumi.DependsOn([]pulumi.Resource{dbtUser}))
-	if err != nil {
-		return nil, err
-	}
-
 	// Grant DBT_ROLE to DBT_SERVICE_USER
 	_, err = snowflake.NewGrantAccountRole(ctx, "dbtGrantRoleToUser", &snowflake.GrantAccountRoleArgs{
 		RoleName: dbtRole.Name,
