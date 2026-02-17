@@ -2,7 +2,7 @@
   "cli_version": "0.4.4",
   "checkpoint_id": "43484e95d914",
   "strategy": "manual-commit",
-  "branch": "fix/pulumi-future-grant-scope",
+  "branch": "fix/remove-future-tables-grant",
   "checkpoints_count": 3,
   "files_touched": [
     ".claude/settings.local.json",
@@ -40,10 +40,10 @@
     }
   ],
   "token_usage": {
-    "input_tokens": 105,
-    "cache_creation_tokens": 148130,
-    "cache_read_tokens": 6253059,
-    "output_tokens": 6426,
-    "api_call_count": 73
+    "input_tokens": 107,
+    "cache_creation_tokens": 154327,
+    "cache_read_tokens": 6673517,
+    "output_tokens": 6728,
+    "api_call_count": 75
   }
 }
