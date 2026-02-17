@@ -6,13 +6,14 @@ import (
 )
 
 type SnowflakeOutputs struct {
-	DatabaseName      pulumi.StringOutput
-	SchemaName        pulumi.StringOutput
-	WarehouseName     pulumi.StringOutput
-	AdminDatabaseName pulumi.StringOutput
-	CoreDatabaseName  pulumi.StringOutput
-	DbtRoleName       pulumi.StringOutput
-	GitRepositoryName pulumi.StringOutput
+	DatabaseName       pulumi.StringOutput
+	SchemaName         pulumi.StringOutput
+	WarehouseName      pulumi.StringOutput
+	AdminDatabaseName  pulumi.StringOutput
+	CoreDatabaseName   pulumi.StringOutput
+	DbtRoleName        pulumi.StringOutput
+	DbtServiceUserName pulumi.StringOutput
+	GitRepositoryName  pulumi.StringOutput
 }
 
 func createSnowflakeResources(ctx *pulumi.Context) (*SnowflakeOutputs, error) {
@@ -180,6 +181,47 @@ func createSnowflakeResources(ctx *pulumi.Context) (*SnowflakeOutputs, error) {
 	}
 
 	// ===========================================
+	// Snowflake Service User for dbt
+	// ===========================================
+	dbtUser, err := snowflake.NewServiceUser(ctx, "dbtServiceUser", &snowflake.ServiceUserArgs{
+		Name:             pulumi.String("DBT_SERVICE_USER"),
+		LoginName:        pulumi.String("DBT_SERVICE_USER"),
+		Comment:          pulumi.String("Service user for dbt transformations via GitHub Actions"),
+		DefaultRole:      pulumi.String("DBT_ROLE"),
+		DefaultWarehouse: pulumi.String("ANALYTICS_WH"),
+		DefaultNamespace: pulumi.String("CORE"),
+	}, pulumi.DependsOn([]pulumi.Resource{dbtRole, sfWarehouse, coreDb}))
+	if err != nil {
+		return nil, err
+	}
+
+	// ===========================================
+	// WIF (OIDC) configuration for dbt service user
+	// ===========================================
+	_, err = snowflake.NewExecute(ctx, "dbtUserWif", &snowflake.ExecuteArgs{
+		Execute: pulumi.Sprintf(
+			"ALTER USER %s SET DEFAULT_WORKLOAD_IDENTITY = '(oidc=<issuer=https://token.actions.githubusercontent.com subject=repo:ta93abe/data-engineering-with-cloudflare:environment:dbt oidcAudienceList=(snowflakecomputing.com)>)'",
+			dbtUser.Name,
+		),
+		Revert: pulumi.Sprintf(
+			"ALTER USER %s UNSET DEFAULT_WORKLOAD_IDENTITY",
+			dbtUser.Name,
+		),
+	}, pulumi.DependsOn([]pulumi.Resource{dbtUser}))
+	if err != nil {
+		return nil, err
+	}
+
+	// Grant DBT_ROLE to DBT_SERVICE_USER
+	_, err = snowflake.NewGrantAccountRole(ctx, "dbtGrantRoleToUser", &snowflake.GrantAccountRoleArgs{
+		RoleName: dbtRole.Name,
+		UserName: dbtUser.Name,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// ===========================================
 	// Snowflake Git API Integration (Execute)
 	// ApiIntegration resource does not support git_https_api provider
 	// ===========================================
@@ -206,12 +248,13 @@ func createSnowflakeResources(ctx *pulumi.Context) (*SnowflakeOutputs, error) {
 	}
 
 	return &SnowflakeOutputs{
-		DatabaseName:      sfDatabase.Name,
-		SchemaName:        sfSchema.Name,
-		WarehouseName:     sfWarehouse.Name,
-		AdminDatabaseName: adminDb.Name,
-		CoreDatabaseName:  coreDb.Name,
-		DbtRoleName:       dbtRole.Name,
-		GitRepositoryName: gitRepo.Name,
+		DatabaseName:       sfDatabase.Name,
+		SchemaName:         sfSchema.Name,
+		WarehouseName:      sfWarehouse.Name,
+		AdminDatabaseName:  adminDb.Name,
+		CoreDatabaseName:   coreDb.Name,
+		DbtRoleName:        dbtRole.Name,
+		DbtServiceUserName: dbtUser.Name,
+		GitRepositoryName:  gitRepo.Name,
 	}, nil
 }
