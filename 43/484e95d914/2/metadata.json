@@ -3,29 +3,35 @@
   "checkpoint_id": "43484e95d914",
   "session_id": "7994762e-0d9e-41d0-8b61-0aa6d542767c",
   "strategy": "manual-commit",
-  "created_at": "2026-02-17T11:56:12.39487Z",
+  "created_at": "2026-02-17T12:11:52.077447Z",
   "branch": "feat/add-snowflake-git-integration",
-  "checkpoints_count": 1,
+  "checkpoints_count": 3,
   "files_touched": [
-    "docs/plans/2026-02-17-snowflake-dbt-resources-design.md"
+    ".github/workflows/dbt-ci.yml",
+    ".github/workflows/dbt-deploy.yml",
+    ".github/workflows/dbt-merge.yml",
+    "transform/core/profiles.yml",
+    "transform/core/pyproject.toml"
   ],
   "agent": "Claude Code",
-  "transcript_identifier_at_start": "41995ec2-bf7f-4439-bb3f-f11c9a55e1ab",
+  "transcript_identifier_at_start": "0e082624-8a14-4878-a63a-9ae98b5bdedf",
+  "checkpoint_transcript_start": 457,
+  "transcript_lines_at_start": 457,
   "token_usage": {
-    "input_tokens": 335,
-    "cache_creation_tokens": 97120,
-    "cache_read_tokens": 4871529,
-    "output_tokens": 16485,
-    "api_call_count": 58
+    "input_tokens": 48,
+    "cache_creation_tokens": 27764,
+    "cache_read_tokens": 4666818,
+    "output_tokens": 8209,
+    "api_call_count": 35
   },
   "initial_attribution": {
-    "calculated_at": "2026-02-17T11:56:11.812432Z",
-    "agent_lines": 0,
-    "human_added": 0,
-    "human_modified": 194,
-    "human_removed": 156,
-    "total_committed": 194,
-    "agent_percentage": 0
+    "calculated_at": "2026-02-17T12:11:51.439078Z",
+    "agent_lines": 172,
+    "human_added": 561,
+    "human_modified": 8,
+    "human_removed": 0,
+    "total_committed": 741,
+    "agent_percentage": 23.21187584345479
   },
   "transcript_path": ".claude/projects/-Users-ta93abe-Developer-github-com-ta93abe-data-engineering-with-cloudflare/7994762e-0d9e-41d0-8b61-0aa6d542767c.jsonl"
 }
