@@ -1,0 +1,26 @@
+{
+  "cli_version": "0.4.5",
+  "checkpoint_id": "b9b5b2a67bc6",
+  "strategy": "manual-commit",
+  "branch": "chore/bump-dbt-jobs-v0.2.0",
+  "checkpoints_count": 0,
+  "files_touched": [
+    "infrastructure/pulumi/snowflake.go"
+  ],
+  "sessions": [
+    {
+      "metadata": "/b9/b5b2a67bc6/0/metadata.json",
+      "transcript": "/b9/b5b2a67bc6/0/full.jsonl",
+      "context": "/b9/b5b2a67bc6/0/context.md",
+      "content_hash": "/b9/b5b2a67bc6/0/content_hash.txt",
+      "prompt": "/b9/b5b2a67bc6/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 72,
+    "cache_creation_tokens": 600756,
+    "cache_read_tokens": 4486549,
+    "output_tokens": 7963,
+    "api_call_count": 51
+  }
+}
