@@ -150,3 +150,15 @@ Let me chronologically analyze the conversation:
 
 v0.1.3 リリースした。
 
+### Prompt 17
+
+マージしよう。
+
+### Prompt 18
+
+main に戻ってぷるして
+
+### Prompt 19
+
+最新のpulumi deploy のエラー直して
+

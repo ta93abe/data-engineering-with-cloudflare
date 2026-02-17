@@ -928,3 +928,15 @@ Please continue the conversation from where we left off without asking the user 
 ---
 
 v0.1.3 リリースした。
+
+---
+
+マージしよう。
+
+---
+
+main に戻ってぷるして
+
+---
+
+最新のpulumi deploy のエラー直して

@@ -2,13 +2,10 @@
   "cli_version": "0.4.4",
   "checkpoint_id": "43484e95d914",
   "strategy": "manual-commit",
-  "branch": "feat/add-snowflake-git-integration",
+  "branch": "fix/pulumi-future-grant-scope",
   "checkpoints_count": 3,
   "files_touched": [
     ".claude/settings.local.json",
-    ".github/workflows/dbt-ci.yml",
-    ".github/workflows/dbt-deploy.yml",
-    ".github/workflows/dbt-merge.yml",
     ".github/workflows/pulumi-deploy.yml",
     ".github/workflows/pulumi-preview.yml",
     ".gitignore",
@@ -43,10 +40,10 @@
     }
   ],
   "token_usage": {
-    "input_tokens": 100,
-    "cache_creation_tokens": 148395,
-    "cache_read_tokens": 6019215,
-    "output_tokens": 6211,
-    "api_call_count": 72
+    "input_tokens": 105,
+    "cache_creation_tokens": 148130,
+    "cache_read_tokens": 6253059,
+    "output_tokens": 6426,
+    "api_call_count": 73
   }
 }
