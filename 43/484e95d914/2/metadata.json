@@ -1,0 +1,31 @@
+{
+  "cli_version": "0.4.4",
+  "checkpoint_id": "43484e95d914",
+  "session_id": "7994762e-0d9e-41d0-8b61-0aa6d542767c",
+  "strategy": "manual-commit",
+  "created_at": "2026-02-17T11:56:12.39487Z",
+  "branch": "feat/add-snowflake-git-integration",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "docs/plans/2026-02-17-snowflake-dbt-resources-design.md"
+  ],
+  "agent": "Claude Code",
+  "transcript_identifier_at_start": "41995ec2-bf7f-4439-bb3f-f11c9a55e1ab",
+  "token_usage": {
+    "input_tokens": 335,
+    "cache_creation_tokens": 97120,
+    "cache_read_tokens": 4871529,
+    "output_tokens": 16485,
+    "api_call_count": 58
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-02-17T11:56:11.812432Z",
+    "agent_lines": 0,
+    "human_added": 0,
+    "human_modified": 194,
+    "human_removed": 156,
+    "total_committed": 194,
+    "agent_percentage": 0
+  },
+  "transcript_path": ".claude/projects/-Users-ta93abe-Developer-github-com-ta93abe-data-engineering-with-cloudflare/7994762e-0d9e-41d0-8b61-0aa6d542767c.jsonl"
+}
