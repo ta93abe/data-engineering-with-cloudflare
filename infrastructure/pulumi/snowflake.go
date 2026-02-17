@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/pulumi/pulumi-snowflake/sdk/v2/go/snowflake"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
+	"github.com/pulumi/pulumi/sdk/v3/go/pulumi/config"
 )
 
 type SnowflakeOutputs struct {
@@ -157,6 +158,9 @@ func createSnowflakeResources(ctx *pulumi.Context) (*SnowflakeOutputs, error) {
 	// ===========================================
 	// Snowflake Service User for dbt
 	// ===========================================
+	cfg := config.New(ctx, "")
+	dbtRsaPublicKey := cfg.Require("dbtRsaPublicKey")
+
 	dbtUser, err := snowflake.NewServiceUser(ctx, "dbtServiceUser", &snowflake.ServiceUserArgs{
 		Name:             pulumi.String("DBT_SERVICE_USER"),
 		LoginName:        pulumi.String("DBT_SERVICE_USER"),
@@ -164,6 +168,7 @@ func createSnowflakeResources(ctx *pulumi.Context) (*SnowflakeOutputs, error) {
 		DefaultRole:      dbtRole.Name,
 		DefaultWarehouse: sfWarehouse.Name,
 		DefaultNamespace: coreDb.Name,
+		RsaPublicKey:     pulumi.String(dbtRsaPublicKey),
 	})
 	if err != nil {
 		return nil, err
