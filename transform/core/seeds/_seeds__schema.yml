@@ -56,8 +56,9 @@ seeds:
         data_tests:
           - not_null
           - relationships:
-              to: ref('users')
-              field: user_id
+              arguments:
+                to: ref('users')
+                field: user_id
       - name: order_date
         description: "注文日"
       - name: status
@@ -82,15 +83,17 @@ seeds:
         data_tests:
           - not_null
           - relationships:
-              to: ref('orders')
-              field: order_id
+              arguments:
+                to: ref('orders')
+                field: order_id
       - name: product_id
         description: "商品ID (FK)"
         data_tests:
           - not_null
           - relationships:
-              to: ref('products')
-              field: product_id
+              arguments:
+                to: ref('products')
+                field: product_id
       - name: quantity
         description: "数量"
       - name: unit_price
