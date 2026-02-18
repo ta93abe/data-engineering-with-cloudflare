@@ -49,5 +49,5 @@ core:
       private_key_path: "{{ env_var('SNOWFLAKE_PRIVATE_KEY_PATH', '') }}"
       warehouse: ANALYTICS_WH
       database: CORE
-      schema: public
+      schema: "{{ env_var('SNOWFLAKE_SCHEMA', 'PUBLIC') }}"
       threads: 4
