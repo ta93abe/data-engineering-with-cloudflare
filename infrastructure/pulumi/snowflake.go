@@ -138,6 +138,18 @@ func createSnowflakeResources(ctx *pulumi.Context) (*SnowflakeOutputs, error) {
 		return nil, err
 	}
 
+	// Grant required privileges on all schemas in CORE
+	_, err = snowflake.NewGrantPrivilegesToAccountRole(ctx, "dbtGrantCoreSchemasAll", &snowflake.GrantPrivilegesToAccountRoleArgs{
+		AccountRoleName: dbtRole.FullyQualifiedName,
+		Privileges:      pulumi.ToStringArray([]string{"USAGE", "MODIFY", "CREATE TABLE", "CREATE VIEW"}),
+		OnSchema: &snowflake.GrantPrivilegesToAccountRoleOnSchemaArgs{
+			AllSchemasInDatabase: coreDb.FullyQualifiedName,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	// Grant SELECT on all tables in RAW
 	_, err = snowflake.NewGrantPrivilegesToAccountRole(ctx, "dbtGrantRawTablesSelect", &snowflake.GrantPrivilegesToAccountRoleArgs{
 		AccountRoleName: dbtRole.FullyQualifiedName,

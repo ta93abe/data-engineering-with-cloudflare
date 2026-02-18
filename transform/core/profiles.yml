@@ -46,8 +46,8 @@ core:
       account: "{{ env_var('SNOWFLAKE_ORGANIZATION_NAME') }}-{{ env_var('SNOWFLAKE_ACCOUNT_NAME') }}"
       user: DBT_SERVICE_USER
       role: DBT_ROLE
-      private_key_content: "{{ env_var('SNOWFLAKE_PRIVATE_KEY') }}"
+      private_key_path: "{{ env_var('SNOWFLAKE_PRIVATE_KEY_PATH') }}"
       warehouse: ANALYTICS_WH
       database: CORE
-      schema: public
+      schema: "{{ env_var('SNOWFLAKE_SCHEMA', 'PUBLIC') }}"
       threads: 4
