@@ -168,7 +168,7 @@ func createSnowflakeResources(ctx *pulumi.Context) (*SnowflakeOutputs, error) {
 		DefaultRole:      dbtRole.Name,
 		DefaultWarehouse: sfWarehouse.Name,
 		DefaultNamespace: coreDb.Name,
-		RsaPublicKey:     pulumi.String(dbtRsaPublicKey),
+		RsaPublicKey:     pulumi.StringPtr(dbtRsaPublicKey),
 	})
 	if err != nil {
 		return nil, err
