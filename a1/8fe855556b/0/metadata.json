@@ -1,0 +1,31 @@
+{
+  "cli_version": "0.4.5",
+  "checkpoint_id": "a18fe855556b",
+  "session_id": "6121f7c8-3df8-4ee1-b9b4-43b7d6ca7355",
+  "strategy": "manual-commit",
+  "created_at": "2026-02-18T03:58:35.581168Z",
+  "branch": "chore/bump-dbt-jobs-v0.2.0",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "infrastructure/pulumi/Pulumi.dev.yaml",
+    "infrastructure/pulumi/snowflake.go"
+  ],
+  "agent": "Claude Code",
+  "token_usage": {
+    "input_tokens": 72,
+    "cache_creation_tokens": 600756,
+    "cache_read_tokens": 4486549,
+    "output_tokens": 7963,
+    "api_call_count": 51
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-02-18T03:58:35.291134Z",
+    "agent_lines": 0,
+    "human_added": 1,
+    "human_modified": 1,
+    "human_removed": 0,
+    "total_committed": 1,
+    "agent_percentage": 0
+  },
+  "transcript_path": ".claude/projects/-Users-ta93abe-Developer-github-com-ta93abe-data-engineering-with-cloudflare/6121f7c8-3df8-4ee1-b9b4-43b7d6ca7355.jsonl"
+}
