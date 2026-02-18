@@ -3,7 +3,7 @@
   "checkpoint_id": "f4aafa060ac7",
   "strategy": "manual-commit",
   "branch": "fix/extend-dim-dates-range",
-  "checkpoints_count": 1,
+  "checkpoints_count": 2,
   "files_touched": [
     "transform/core/models/marts/core/dim_dates.sql"
   ],
@@ -14,13 +14,20 @@
       "context": "/f4/aafa060ac7/0/context.md",
       "content_hash": "/f4/aafa060ac7/0/content_hash.txt",
       "prompt": "/f4/aafa060ac7/0/prompt.txt"
+    },
+    {
+      "metadata": "/f4/aafa060ac7/1/metadata.json",
+      "transcript": "/f4/aafa060ac7/1/full.jsonl",
+      "context": "/f4/aafa060ac7/1/context.md",
+      "content_hash": "/f4/aafa060ac7/1/content_hash.txt",
+      "prompt": "/f4/aafa060ac7/1/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 72,
-    "cache_creation_tokens": 600756,
-    "cache_read_tokens": 4486549,
-    "output_tokens": 7963,
-    "api_call_count": 51
+    "input_tokens": 85,
+    "cache_creation_tokens": 647409,
+    "cache_read_tokens": 5087174,
+    "output_tokens": 8398,
+    "api_call_count": 61
   }
 }
