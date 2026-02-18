@@ -1,0 +1,27 @@
+{
+  "cli_version": "0.4.5",
+  "checkpoint_id": "9b5c0f04bd04",
+  "strategy": "manual-commit",
+  "branch": "fix/dbt-snowflake-key-pair-auth",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "infrastructure/pulumi/snowflake.go",
+    "transform/core/profiles.yml"
+  ],
+  "sessions": [
+    {
+      "metadata": "/9b/5c0f04bd04/0/metadata.json",
+      "transcript": "/9b/5c0f04bd04/0/full.jsonl",
+      "context": "/9b/5c0f04bd04/0/context.md",
+      "content_hash": "/9b/5c0f04bd04/0/content_hash.txt",
+      "prompt": "/9b/5c0f04bd04/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 72,
+    "cache_creation_tokens": 600756,
+    "cache_read_tokens": 4486549,
+    "output_tokens": 7963,
+    "api_call_count": 51
+  }
+}
