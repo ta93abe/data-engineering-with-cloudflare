@@ -1,0 +1,29 @@
+{
+  "cli_version": "0.4.5",
+  "checkpoint_id": "43dc467186cd",
+  "strategy": "manual-commit",
+  "branch": "fix/dbt-snowflake-key-pair-auth",
+  "checkpoints_count": 1,
+  "files_touched": [
+    ".github/workflows/dbt-ci.yml",
+    ".github/workflows/dbt-deploy.yml",
+    ".github/workflows/dbt-merge.yml",
+    "transform/core/profiles.yml"
+  ],
+  "sessions": [
+    {
+      "metadata": "/43/dc467186cd/0/metadata.json",
+      "transcript": "/43/dc467186cd/0/full.jsonl",
+      "context": "/43/dc467186cd/0/context.md",
+      "content_hash": "/43/dc467186cd/0/content_hash.txt",
+      "prompt": "/43/dc467186cd/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 72,
+    "cache_creation_tokens": 600756,
+    "cache_read_tokens": 4486549,
+    "output_tokens": 7963,
+    "api_call_count": 51
+  }
+}

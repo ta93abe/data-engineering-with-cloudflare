@@ -1,0 +1,33 @@
+{
+  "cli_version": "0.4.5",
+  "checkpoint_id": "43dc467186cd",
+  "session_id": "6121f7c8-3df8-4ee1-b9b4-43b7d6ca7355",
+  "strategy": "manual-commit",
+  "created_at": "2026-02-18T11:26:48.280624Z",
+  "branch": "fix/dbt-snowflake-key-pair-auth",
+  "checkpoints_count": 1,
+  "files_touched": [
+    ".github/workflows/dbt-deploy.yml",
+    ".github/workflows/dbt-merge.yml",
+    "transform/core/profiles.yml",
+    ".github/workflows/dbt-ci.yml"
+  ],
+  "agent": "Claude Code",
+  "token_usage": {
+    "input_tokens": 72,
+    "cache_creation_tokens": 600756,
+    "cache_read_tokens": 4486549,
+    "output_tokens": 7963,
+    "api_call_count": 51
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-02-18T11:26:47.982064Z",
+    "agent_lines": 19,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 19,
+    "agent_percentage": 100
+  },
+  "transcript_path": ".claude/projects/-Users-ta93abe-Developer-github-com-ta93abe-data-engineering-with-cloudflare/6121f7c8-3df8-4ee1-b9b4-43b7d6ca7355.jsonl"
+}
