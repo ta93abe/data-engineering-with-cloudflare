@@ -2,7 +2,7 @@ version: 2
 
 models:
   - name: dim_dates
-    description: "Date dimension for 2024"
+    description: "Date dimension table providing calendar attributes for each day"
     columns:
       - name: date_day
         description: "Primary key - calendar date"
