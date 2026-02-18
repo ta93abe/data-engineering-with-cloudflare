@@ -1,0 +1,34 @@
+{
+  "cli_version": "0.4.5",
+  "checkpoint_id": "2a3137858940",
+  "session_id": "7994762e-0d9e-41d0-8b61-0aa6d542767c",
+  "strategy": "manual-commit",
+  "created_at": "2026-02-18T12:30:06.28637Z",
+  "branch": "fix/dbt-snowflake-key-pair-auth",
+  "checkpoints_count": 0,
+  "files_touched": [
+    "infrastructure/pulumi/snowflake.go"
+  ],
+  "agent": "Claude Code",
+  "turn_id": "cbbf3b163b8a",
+  "transcript_identifier_at_start": "3d643eb5-04b2-4181-9d28-70752a225e42",
+  "checkpoint_transcript_start": 2233,
+  "transcript_lines_at_start": 2233,
+  "token_usage": {
+    "input_tokens": 16,
+    "cache_creation_tokens": 39296,
+    "cache_read_tokens": 1455247,
+    "output_tokens": 3210,
+    "api_call_count": 15
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-02-18T12:30:02.896821Z",
+    "agent_lines": 0,
+    "human_added": 10,
+    "human_modified": 2,
+    "human_removed": 0,
+    "total_committed": 10,
+    "agent_percentage": 0
+  },
+  "transcript_path": ".claude/projects/-Users-ta93abe-Developer-github-com-ta93abe-data-engineering-with-cloudflare/7994762e-0d9e-41d0-8b61-0aa6d542767c.jsonl"
+}
