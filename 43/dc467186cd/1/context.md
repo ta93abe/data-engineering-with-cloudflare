@@ -310,3 +310,14 @@ PRを作成する。
 
 dbt-jobs がちゃんと動くか確認したい。
 
+### Prompt 39
+
+This session is being continued from a previous conversation that ran out of context. The summary below covers the earlier portion of the conversation.
+
+Analysis:
+Let me chronologically analyze the conversation:
+
+1. **Context from previous session**: The conversation is a continuation of a previous session that set up Snowflake resources for dbt. Key completed work includes:
+   - Snowflake resources in Pulumi (CORE DB, DBT_ROLE, DBT_SERVICE_USER with WIF/OIDC)
+   - dbt profiles.yml with Snowflak...
+
