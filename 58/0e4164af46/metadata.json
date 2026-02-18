@@ -1,0 +1,26 @@
+{
+  "cli_version": "0.4.5",
+  "checkpoint_id": "580e4164af46",
+  "strategy": "manual-commit",
+  "branch": "fix/dim-dates-cross-db-compat",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "transform/core/models/marts/core/dim_dates.sql"
+  ],
+  "sessions": [
+    {
+      "metadata": "/58/0e4164af46/0/metadata.json",
+      "transcript": "/58/0e4164af46/0/full.jsonl",
+      "context": "/58/0e4164af46/0/context.md",
+      "content_hash": "/58/0e4164af46/0/content_hash.txt",
+      "prompt": "/58/0e4164af46/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 72,
+    "cache_creation_tokens": 600756,
+    "cache_read_tokens": 4486549,
+    "output_tokens": 7963,
+    "api_call_count": 51
+  }
+}
