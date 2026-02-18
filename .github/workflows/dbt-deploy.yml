@@ -31,7 +31,7 @@ jobs:
           echo "SNOWFLAKE_PRIVATE_KEY_PATH=$RUNNER_TEMP/snowflake_key.p8" >> "$GITHUB_ENV"
 
       - name: dbt deploy
-        uses: ta93abe/dbt-jobs@v0.2.0
+        uses: ta93abe/dbt-jobs@v0.2.1
         with:
           type: deploy
           adapter: snowflake
