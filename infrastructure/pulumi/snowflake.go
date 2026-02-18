@@ -138,10 +138,10 @@ func createSnowflakeResources(ctx *pulumi.Context) (*SnowflakeOutputs, error) {
 		return nil, err
 	}
 
-	// Grant ALL PRIVILEGES on all schemas in CORE (for dbt to manage schemas)
+	// Grant required privileges on all schemas in CORE
 	_, err = snowflake.NewGrantPrivilegesToAccountRole(ctx, "dbtGrantCoreSchemasAll", &snowflake.GrantPrivilegesToAccountRoleArgs{
 		AccountRoleName: dbtRole.FullyQualifiedName,
-		AllPrivileges:   pulumi.BoolPtr(true),
+		Privileges:      pulumi.ToStringArray([]string{"USAGE", "MODIFY", "CREATE TABLE", "CREATE VIEW"}),
 		OnSchema: &snowflake.GrantPrivilegesToAccountRoleOnSchemaArgs{
 			AllSchemasInDatabase: coreDb.FullyQualifiedName,
 		},
