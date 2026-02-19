@@ -23,6 +23,11 @@ models:
       +materialized: view
       +schema: staging
 
+    raw_vault:
+      +materialized: incremental
+      +schema: raw_vault
+      +tags: ["datavault"]
+
     marts:
       +materialized: table
       +schema: marts
