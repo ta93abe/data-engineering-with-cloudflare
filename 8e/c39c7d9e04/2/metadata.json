@@ -1,0 +1,49 @@
+{
+  "cli_version": "0.4.5",
+  "checkpoint_id": "8ec39c7d9e04",
+  "session_id": "f0a849fe-ef06-4267-a279-8a0432972a80",
+  "strategy": "manual-commit",
+  "created_at": "2026-02-19T10:18:31.937883Z",
+  "branch": "feat/datavault-phase1",
+  "checkpoints_count": 0,
+  "files_touched": [
+    "transform/fusion/dbt_project.yml",
+    "transform/fusion/models/raw_vault/satellites/sat_patient_details.sql",
+    "transform/fusion/packages.yml",
+    "transform/fusion/seeds/datavault/raw_visits.csv",
+    "transform/fusion/models/raw_vault/hubs/hub_doctor.sql",
+    "transform/fusion/models/raw_vault/hubs/hub_patient.sql",
+    "transform/fusion/models/raw_vault/hubs/hub_visit.sql",
+    "transform/fusion/models/raw_vault/links/link_visit.sql",
+    "transform/fusion/models/staging/datavault/stg_doctors.sql",
+    "transform/fusion/models/staging/datavault/stg_patients.sql",
+    "transform/fusion/seeds/datavault/raw_patients.csv",
+    "transform/fusion/models/raw_vault/satellites/sat_doctor_details.sql",
+    "transform/fusion/models/raw_vault/satellites/sat_visit_details.sql",
+    "docs/plans/2026-02-19-datavault-medical-design.md",
+    "transform/fusion/models/staging/datavault/stg_visits.sql",
+    "transform/fusion/seeds/datavault/raw_doctors.csv",
+    "docs/datavault-learning-notes.md"
+  ],
+  "agent": "Claude Code",
+  "turn_id": "e0be041e33d4",
+  "checkpoint_transcript_start": 261,
+  "transcript_lines_at_start": 261,
+  "token_usage": {
+    "input_tokens": 2,
+    "cache_creation_tokens": 804,
+    "cache_read_tokens": 226413,
+    "output_tokens": 2,
+    "api_call_count": 2
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-02-19T10:18:31.783853Z",
+    "agent_lines": 0,
+    "human_added": 723,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 723,
+    "agent_percentage": 0
+  },
+  "transcript_path": ".claude/projects/-Users-ta93abe-Developer-github-com-ta93abe-data-engineering-with-cloudflare/f0a849fe-ef06-4267-a279-8a0432972a80.jsonl"
+}
