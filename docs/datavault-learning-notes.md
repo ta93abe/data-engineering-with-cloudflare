@@ -456,9 +456,227 @@ Bridge テーブルは「物理テーブルとして事前結合」するので�
 ただし、元テーブルが更新されるたびに再構築が必要。
 小規模なら View（仮想テーブル）でも十分だが、大規模データでは Bridge の効果が大きい。
 
-## 次のステップ
+## Phase 4: Information Mart
 
-- **Phase 4**: Information Mart（dim/fact テーブル、Star Schema への変換）
+### Information Mart とは
+
+Data Vault の最終層。Raw Vault / Business Vault の正規化されたデータを
+**Star Schema（Dimension + Fact）** に変換し、BI ツールやアナリストが直接クエリできる形にする。
+
+```
+Data Vault の全体像:
+
+Seeds → Staging → Raw Vault → Business Vault → Information Mart
+                  (真実の記録)  (ビジネス解釈)    (分析用Star Schema)
+```
+
+### 実装したもの
+
+**Dimension テーブル（4つ）**
+
+| テーブル | 行数 | 内容 |
+|---------|------|------|
+| dim_patient | 20 | Hub + 最新Sat + Visit Summary |
+| dim_doctor | 10 | Hub + 最新Sat |
+| dim_medication | 15 | Hub + 最新Sat |
+| dim_date | 46 | 診察日付範囲を動的生成 |
+
+**Fact テーブル（2つ）**
+
+| テーブル | 行数 | 粒度 |
+|---------|------|------|
+| fct_visits | 40 | 1診察 = 1行 |
+| fct_prescriptions | 40 | 1処方 = 1行 |
+
+### Data Vault → Star Schema の変換パターン
+
+#### Hub + Satellite → Dimension
+
+```sql
+-- 基本パターン: Hub（ビジネスキー）+ 最新の Satellite（属性）
+WITH sat_latest AS (
+    SELECT *, ROW_NUMBER() OVER (
+        PARTITION BY PATIENT_HK ORDER BY LOAD_DATETIME DESC
+    ) AS rn
+    FROM sat_patient_details
+)
+SELECT h.PATIENT_ID, s.FIRST_NAME, s.LAST_NAME, ...
+FROM hub_patient h
+INNER JOIN sat_latest s ON h.PATIENT_HK = s.PATIENT_HK AND s.rn = 1
+```
+
+`ROW_NUMBER()` + `rn = 1` で「最新レコードのみ」を取得する。
+これは SCD Type 1（最新値で上書き）のアプローチ。
+
+#### Link + Satellite → Fact
+
+```sql
+-- Link（関係）+ Satellite（属性）→ Fact
+SELECT
+    lv.PATIENT_HK,    -- dim_patient への FK
+    lv.DOCTOR_HK,     -- dim_doctor への FK
+    vs.VISIT_DATE,     -- dim_date への FK
+    vs.TREATMENT_COST  -- メジャー（計測値）
+FROM link_visit lv
+INNER JOIN sat_visit_details vs ON lv.VISIT_HK = vs.VISIT_HK
+```
+
+#### Business Vault の活用
+
+`fct_prescriptions` では Bridge テーブルを活用している：
+
+```sql
+-- Bridge がなければ: link_visit → link_prescription の2段JOIN
+-- Bridge があるから: 1回の JOIN で患者HKを取得
+INNER JOIN bridge_patient_medication b
+    ON pl.LINK_PRESCRIPTION_HK = b.LINK_PRESCRIPTION_HK
+```
+
+`dim_patient` では Computed Satellite を活用している：
+
+```sql
+-- 診察統計を Dimension に埋め込み
+LEFT JOIN sat_patient_visit_summary vs
+    ON h.PATIENT_HK = vs.PATIENT_HK
+```
+
+### dim_date の生成
+
+日付ディメンションは Raw Vault から取得するのではなく、動的に生成する：
+
+```sql
+-- Databricks の SEQUENCE + EXPLODE で日付配列を生成
+SELECT EXPLODE(SEQUENCE(min_date, max_date, INTERVAL 1 DAY)) AS date_day
+```
+
+曜日名は日本語（月〜日）、四半期、週番号、平日フラグなどを付与。
+
+### 分析クエリの例
+
+Star Schema が完成すると、以下のようなクエリが簡潔に書ける：
+
+```sql
+-- 月別の診察回数と治療費合計
+SELECT
+    d.YEAR_MONTH,
+    COUNT(*) AS visit_count,
+    SUM(f.TREATMENT_COST) AS total_cost
+FROM fct_visits f
+JOIN dim_date d ON f.VISIT_DATE = d.DATE_KEY
+GROUP BY d.YEAR_MONTH
+
+-- 専門科別の処方薬トップ
+SELECT
+    doc.SPECIALTY,
+    med.MEDICATION_NAME,
+    COUNT(*) AS prescription_count
+FROM fct_prescriptions fp
+JOIN bridge_patient_medication b ON fp.LINK_PRESCRIPTION_HK = b.LINK_PRESCRIPTION_HK
+JOIN dim_doctor doc ON ...
+JOIN dim_medication med ON fp.MEDICATION_HK = med.MEDICATION_HK
+GROUP BY doc.SPECIALTY, med.MEDICATION_NAME
+```
+
+### 学んだこと
+
+#### Star Schema と Data Vault の役割分担
+
+- **Data Vault（Raw Vault + Business Vault）**: データの「保管」に最適化。履歴完全保持、変更に強い
+- **Star Schema（Information Mart）**: データの「分析」に最適化。JOIN が少なく、BI ツールと相性が良い
+- 両方を使い分けることで「変更に強い保管」と「高速な分析」を両立できる
+
+#### SCD Type 1 vs Type 2
+
+今回の Dimension は全て SCD Type 1（最新値のみ）で実装した。
+Data Vault の Satellite には全履歴が残っているので、
+必要なら SCD Type 2（履歴保持）のDimension も作れる：
+
+```sql
+-- SCD Type 2: 全履歴を Dimension に展開
+SELECT
+    PATIENT_HK,
+    LOAD_DATETIME AS VALID_FROM,
+    LEAD(LOAD_DATETIME) OVER (...) AS VALID_TO,
+    FIRST_NAME, LAST_NAME, ADDRESS, ...
+FROM sat_patient_details
+```
+
+#### 全体アーキテクチャの振り返り
+
+```
+Phase 1-2: Seeds → Staging → Raw Vault
+           データの「真実の記録」を作る
+
+Phase 3:   Raw Vault → Business Vault
+           ビジネスルールを適用し、クエリを最適化
+
+Phase 4:   Business Vault → Information Mart
+           分析用の Star Schema に変換
+```
+
+Data Vault は「一度作ったら終わり」ではなく、
+ソースシステムの変更に対して Raw Vault を拡張し、
+Business Vault と Information Mart を再構築できる柔軟なアーキテクチャ。
+
+## ディレクトリ構成（最終）
+
+```
+transform/fusion/
+├── packages.yml
+├── dbt_project.yml
+├── seeds/datavault/
+│   ├── raw_patients.csv               # Phase 1
+│   ├── raw_doctors.csv                # Phase 1
+│   ├── raw_visits.csv                 # Phase 1
+│   ├── raw_departments.csv            # Phase 2
+│   ├── raw_medications.csv            # Phase 2
+│   ├── raw_insurance_companies.csv    # Phase 2
+│   ├── raw_prescriptions.csv          # Phase 2
+│   └── raw_patient_insurance.csv      # Phase 2
+└── models/
+    ├── staging/datavault/
+    │   ├── stg_patients.sql           # Phase 1
+    │   ├── stg_doctors.sql            # Phase 1
+    │   ├── stg_visits.sql             # Phase 1
+    │   ├── stg_departments.sql        # Phase 2
+    │   ├── stg_medications.sql        # Phase 2
+    │   ├── stg_insurance_companies.sql # Phase 2
+    │   ├── stg_prescriptions.sql      # Phase 2
+    │   └── stg_patient_insurance.sql  # Phase 2
+    ├── raw_vault/
+    │   ├── hubs/
+    │   │   ├── hub_patient.sql        # Phase 1
+    │   │   ├── hub_doctor.sql         # Phase 1
+    │   │   ├── hub_visit.sql          # Phase 1
+    │   │   ├── hub_department.sql     # Phase 2
+    │   │   ├── hub_medication.sql     # Phase 2
+    │   │   └── hub_insurance_company.sql # Phase 2
+    │   ├── links/
+    │   │   ├── link_visit.sql         # Phase 1
+    │   │   ├── link_prescription.sql  # Phase 2
+    │   │   └── link_patient_insurance.sql # Phase 2
+    │   └── satellites/
+    │       ├── sat_patient_details.sql     # Phase 1
+    │       ├── sat_doctor_details.sql      # Phase 1
+    │       ├── sat_visit_details.sql       # Phase 1
+    │       ├── sat_department_details.sql  # Phase 2
+    │       ├── sat_medication_details.sql  # Phase 2
+    │       ├── sat_insurance_details.sql   # Phase 2
+    │       ├── sat_prescription_details.sql # Phase 2
+    │       ├── sat_patient_insurance_details.sql # Phase 2
+    │       └── eff_sat_patient_insurance.sql # Phase 2
+    ├── business_vault/                     # Phase 3
+    │   ├── pit_patient.sql
+    │   ├── bridge_patient_medication.sql
+    │   └── sat_patient_visit_summary.sql
+    └── marts/datavault/                    # Phase 4
+        ├── dim_patient.sql
+        ├── dim_doctor.sql
+        ├── dim_medication.sql
+        ├── dim_date.sql
+        ├── fct_visits.sql
+        └── fct_prescriptions.sql
+```
 
 ## 参考
 

@@ -36,3 +36,5 @@ models:
     marts:
       +materialized: table
       +schema: marts
+      datavault:
+        +tags: ["datavault"]
