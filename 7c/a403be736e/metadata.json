@@ -1,0 +1,30 @@
+{
+  "cli_version": "0.4.5",
+  "checkpoint_id": "7ca403be736e",
+  "strategy": "manual-commit",
+  "branch": "feat/datavault-phase1",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "transform/fusion/tests/datavault/bridge_references_valid.sql",
+    "transform/fusion/tests/datavault/dim_patient_completeness.sql",
+    "transform/fusion/tests/datavault/fct_prescriptions_cost_calculation.sql",
+    "transform/fusion/tests/datavault/hub_link_referential_integrity.sql",
+    "transform/fusion/tests/datavault/satellite_no_orphan_records.sql"
+  ],
+  "sessions": [
+    {
+      "metadata": "/7c/a403be736e/0/metadata.json",
+      "transcript": "/7c/a403be736e/0/full.jsonl",
+      "context": "/7c/a403be736e/0/context.md",
+      "content_hash": "/7c/a403be736e/0/content_hash.txt",
+      "prompt": "/7c/a403be736e/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 72,
+    "cache_creation_tokens": 600756,
+    "cache_read_tokens": 4486549,
+    "output_tokens": 7963,
+    "api_call_count": 51
+  }
+}
