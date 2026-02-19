@@ -1,0 +1,52 @@
+{
+  "cli_version": "0.4.5",
+  "checkpoint_id": "b04a5941b81a",
+  "strategy": "manual-commit",
+  "branch": "feat/datavault-phase1",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "transform/fusion/models/business_vault/bridge_patient_medication.sql",
+    "transform/fusion/models/business_vault/pit_patient.sql",
+    "transform/fusion/models/business_vault/sat_patient_visit_summary.sql",
+    "transform/fusion/models/marts/datavault/dim_date.sql",
+    "transform/fusion/models/marts/datavault/dim_doctor.sql",
+    "transform/fusion/models/marts/datavault/dim_medication.sql",
+    "transform/fusion/models/marts/datavault/dim_patient.sql",
+    "transform/fusion/models/marts/datavault/fct_prescriptions.sql",
+    "transform/fusion/models/marts/datavault/fct_visits.sql",
+    "transform/fusion/models/raw_vault/hubs/hub_department.sql",
+    "transform/fusion/models/raw_vault/hubs/hub_doctor.sql",
+    "transform/fusion/models/raw_vault/hubs/hub_insurance_company.sql",
+    "transform/fusion/models/raw_vault/hubs/hub_medication.sql",
+    "transform/fusion/models/raw_vault/hubs/hub_patient.sql",
+    "transform/fusion/models/raw_vault/hubs/hub_visit.sql",
+    "transform/fusion/models/raw_vault/links/link_patient_insurance.sql",
+    "transform/fusion/models/raw_vault/links/link_prescription.sql",
+    "transform/fusion/models/raw_vault/links/link_visit.sql",
+    "transform/fusion/models/raw_vault/satellites/eff_sat_patient_insurance.sql",
+    "transform/fusion/models/raw_vault/satellites/sat_department_details.sql",
+    "transform/fusion/models/raw_vault/satellites/sat_doctor_details.sql",
+    "transform/fusion/models/raw_vault/satellites/sat_insurance_details.sql",
+    "transform/fusion/models/raw_vault/satellites/sat_medication_details.sql",
+    "transform/fusion/models/raw_vault/satellites/sat_patient_details.sql",
+    "transform/fusion/models/raw_vault/satellites/sat_patient_insurance_details.sql",
+    "transform/fusion/models/raw_vault/satellites/sat_prescription_details.sql",
+    "transform/fusion/models/raw_vault/satellites/sat_visit_details.sql"
+  ],
+  "sessions": [
+    {
+      "metadata": "/b0/4a5941b81a/0/metadata.json",
+      "transcript": "/b0/4a5941b81a/0/full.jsonl",
+      "context": "/b0/4a5941b81a/0/context.md",
+      "content_hash": "/b0/4a5941b81a/0/content_hash.txt",
+      "prompt": "/b0/4a5941b81a/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 72,
+    "cache_creation_tokens": 600756,
+    "cache_read_tokens": 4486549,
+    "output_tokens": 7963,
+    "api_call_count": 51
+  }
+}
