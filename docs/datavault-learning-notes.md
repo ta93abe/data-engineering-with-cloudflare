@@ -199,38 +199,145 @@ Raw Vault モデルは全て `materialized='incremental'`。
 初回は全件ロード、2回目以降は「まだ存在しないキー」だけを INSERT する。
 これが Data Vault の「Insert-only」哲学を実現している。
 
+## Phase 2: Raw Vault 拡張
+
+### 追加したもの
+
+**Seeds（5テーブル）**
+
+| テーブル | 件数 | 内容 |
+|---------|------|------|
+| raw_departments | 10行 | 病院の部門（内科、外科等） |
+| raw_medications | 15行 | 薬品マスタ（内服/外用/注射） |
+| raw_insurance_companies | 6行 | 保険会社（社保/国保/共済） |
+| raw_prescriptions | 40行 | 処方箋（診察×薬の関係） |
+| raw_patient_insurance | 21行 | 患者保険関係（切替履歴含む） |
+
+**Raw Vault（11モデル）**
+
+| 種別 | モデル | ポイント |
+|------|--------|---------|
+| Hub | hub_department, hub_medication, hub_insurance_company | Phase 1 と同じパターン |
+| Link | link_prescription | visit_hk × medication_hk の標準Link（2キー） |
+| Link | link_patient_insurance | patient_hk × insurance_hk |
+| Satellite | sat_department_details, sat_medication_details, sat_insurance_details | Phase 1 と同じパターン |
+| Satellite | sat_prescription_details | Link の PK をキーにした Satellite |
+| Satellite | sat_patient_insurance_details | 保険契約の詳細情報 |
+| **Eff Sat** | **eff_sat_patient_insurance** | **新パターン：有効期間管理** |
+
+### ビルド結果
+
+| テーブル | 行数 |
+|---------|------|
+| hub_department | 10 |
+| hub_medication | 15 |
+| hub_insurance_company | 6 |
+| link_prescription | 40 |
+| link_patient_insurance | 21 |
+| sat_department_details | 10 |
+| sat_medication_details | 15 |
+| sat_insurance_details | 6 |
+| sat_prescription_details | 40 |
+| sat_patient_insurance_details | 21 |
+| eff_sat_patient_insurance | 21 |
+
+### 新パターン: Effectivity Satellite
+
+通常の Satellite は「属性が変わったか」を hashdiff で検出するが、
+**Effectivity Satellite** は「関係がいつ有効で、いつ終了したか」を管理する。
+
+```sql
+-- eff_sat_patient_insurance.sql
+{{ config(materialized='incremental', meta={'is_auto_end_dating': true}) }}
+
+{{ automate_dv.eff_sat(src_pk=src_pk, src_dfk=src_dfk, src_sfk=src_sfk,
+                       src_start_date=src_start_date,
+                       src_end_date=src_end_date, ...) }}
+```
+
+パラメータの意味：
+- `src_dfk` (driving FK): 関係の主体（PATIENT_HK = 保険を「持つ」側）
+- `src_sfk` (secondary FK): 関係の対象（INSURANCE_HK = 「持たれる」側）
+- `src_start_date` / `src_end_date`: 関係の有効期間
+- `is_auto_end_dating: true`: 関係の終了日を自動推論
+
+### 動作確認: PAT-002 の保険切り替え
+
+```
+START_DATE | END_DATE   | 保険
+───────────┼────────────┼───────────────
+2023-01-01 | 2025-12-31 | 国保（INS-002）← 終了
+2026-01-01 |            | IT健保（INS-004）← 現在有効
+```
+
+異なる `LINK_PATIENT_INSURANCE_HK` で2レコード。
+Link 自体には有効期間の概念がなく、Effectivity Satellite が「いつからいつまで」を管理する。
+
+### 新パターン: Link に紐づく Satellite
+
+`sat_prescription_details` は Hub ではなく **Link のハッシュキー** をPKとしている。
+処方箋の「用量・頻度・日数」は、診察×薬の関係に付随する属性だから。
+
+```sql
+-- sat_prescription_details.sql
+{%- set src_pk = "LINK_PRESCRIPTION_HK" -%}  -- ← Link の PK
+```
+
+これは「関係そのものに属性がある」場合のパターン。
+Hub の Satellite = エンティティの属性、Link の Satellite = 関係の属性。
+
 ## ディレクトリ構成
 
 ```
 transform/fusion/
-├── packages.yml                      # automate-dv 追加
-├── dbt_project.yml                   # raw_vault 設定追加
+├── packages.yml
+├── dbt_project.yml
 ├── seeds/datavault/
 │   ├── raw_patients.csv
 │   ├── raw_doctors.csv
-│   └── raw_visits.csv
+│   ├── raw_visits.csv
+│   ├── raw_departments.csv          # Phase 2
+│   ├── raw_medications.csv          # Phase 2
+│   ├── raw_insurance_companies.csv  # Phase 2
+│   ├── raw_prescriptions.csv        # Phase 2
+│   └── raw_patient_insurance.csv    # Phase 2
 └── models/
     ├── staging/datavault/
     │   ├── stg_patients.sql
     │   ├── stg_doctors.sql
-    │   └── stg_visits.sql
+    │   ├── stg_visits.sql
+    │   ├── stg_departments.sql          # Phase 2
+    │   ├── stg_medications.sql          # Phase 2
+    │   ├── stg_insurance_companies.sql  # Phase 2
+    │   ├── stg_prescriptions.sql        # Phase 2
+    │   └── stg_patient_insurance.sql    # Phase 2
     └── raw_vault/
         ├── hubs/
         │   ├── hub_patient.sql
         │   ├── hub_doctor.sql
-        │   └── hub_visit.sql
+        │   ├── hub_visit.sql
+        │   ├── hub_department.sql          # Phase 2
+        │   ├── hub_medication.sql          # Phase 2
+        │   └── hub_insurance_company.sql   # Phase 2
         ├── links/
-        │   └── link_visit.sql
+        │   ├── link_visit.sql
+        │   ├── link_prescription.sql        # Phase 2
+        │   └── link_patient_insurance.sql   # Phase 2
         └── satellites/
             ├── sat_patient_details.sql
             ├── sat_doctor_details.sql
-            └── sat_visit_details.sql
+            ├── sat_visit_details.sql
+            ├── sat_department_details.sql          # Phase 2
+            ├── sat_medication_details.sql          # Phase 2
+            ├── sat_insurance_details.sql           # Phase 2
+            ├── sat_prescription_details.sql        # Phase 2
+            ├── sat_patient_insurance_details.sql   # Phase 2
+            └── eff_sat_patient_insurance.sql       # Phase 2
 ```
 
 ## 次のステップ
 
-- **Phase 2**: 薬・処方箋・部門・保険を追加（標準 Link、Effectivity Satellite）
-- **Phase 3**: Business Vault（PIT テーブル、Bridge テーブル）
+- **Phase 3**: Business Vault（PIT テーブル、Bridge テーブル、Computed Satellite）
 - **Phase 4**: Information Mart（dim/fact テーブル、Star Schema への変換）
 
 ## 参考

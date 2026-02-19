@@ -1,0 +1,16 @@
+medication_id,medication_name,type,manufacturer,unit_price,load_date,record_source
+MED-001,ロキソプロフェン,内服,第一三共,15.80,2026-01-01,HOSPITAL_SYSTEM
+MED-002,アムロジピン,内服,大日本住友,25.50,2026-01-01,HOSPITAL_SYSTEM
+MED-003,メトホルミン,内服,大日本住友,10.10,2026-01-01,HOSPITAL_SYSTEM
+MED-004,デキサメタゾン軟膏,外用,日医工,22.30,2026-01-01,HOSPITAL_SYSTEM
+MED-005,ヒアルロン酸ナトリウム,注射,生化学工業,185.00,2026-01-01,HOSPITAL_SYSTEM
+MED-006,オロパタジン点眼液,外用,協和キリン,45.60,2026-01-01,HOSPITAL_SYSTEM
+MED-007,セフカペンピボキシル,内服,塩野義,58.30,2026-01-01,HOSPITAL_SYSTEM
+MED-008,エスシタロプラム,内服,持田製薬,89.70,2026-01-01,HOSPITAL_SYSTEM
+MED-009,サルブタモール吸入,外用,グラクソ・スミスクライン,126.40,2026-01-01,HOSPITAL_SYSTEM
+MED-010,アセトアミノフェン,内服,あゆみ製薬,5.70,2026-01-01,HOSPITAL_SYSTEM
+MED-011,プレドニゾロン,内服,塩野義,9.80,2026-01-01,HOSPITAL_SYSTEM
+MED-012,低用量エストロゲン配合剤,内服,バイエル,78.50,2026-01-01,HOSPITAL_SYSTEM
+MED-013,リバーロキサバン,内服,バイエル,215.30,2026-01-01,HOSPITAL_SYSTEM
+MED-014,アダパレンゲル,外用,ガルデルマ,67.90,2026-01-01,HOSPITAL_SYSTEM
+MED-015,葉酸,内服,日本製薬,9.60,2026-01-01,HOSPITAL_SYSTEM
