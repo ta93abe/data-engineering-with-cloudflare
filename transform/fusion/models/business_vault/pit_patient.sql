@@ -1,5 +1,3 @@
-{{ config(materialized='table') }}
-
 WITH as_of_dates AS (
     SELECT DISTINCT LOAD_DATETIME AS AS_OF_DATE
     FROM {{ ref('hub_patient') }}

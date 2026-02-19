@@ -1,5 +1,3 @@
-{{ config(materialized='table') }}
-
 WITH visit_link AS (
     SELECT
         LINK_VISIT_HK,

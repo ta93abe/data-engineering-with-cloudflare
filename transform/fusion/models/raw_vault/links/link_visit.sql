@@ -1,5 +1,3 @@
-{{ config(materialized='incremental') }}
-
 {%- set source_model = "stg_visits" -%}
 {%- set src_pk = "LINK_VISIT_HK" -%}
 {%- set src_fk = ["PATIENT_HK", "DOCTOR_HK", "VISIT_HK"] -%}

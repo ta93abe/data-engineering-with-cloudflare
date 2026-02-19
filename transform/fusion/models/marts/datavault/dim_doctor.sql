@@ -1,5 +1,3 @@
-{{ config(materialized='table') }}
-
 WITH hub AS (
     SELECT
         DOCTOR_HK,

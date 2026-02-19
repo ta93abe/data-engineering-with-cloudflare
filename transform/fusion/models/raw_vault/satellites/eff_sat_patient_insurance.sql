@@ -1,4 +1,4 @@
-{{ config(materialized='incremental', meta={'is_auto_end_dating': true}) }}
+{{ config(meta={'is_auto_end_dating': true}) }}
 
 {%- set source_model = "stg_patient_insurance" -%}
 {%- set src_pk = "LINK_PATIENT_INSURANCE_HK" -%}

@@ -1,5 +1,3 @@
-{{ config(materialized='table') }}
-
 WITH patient_visits AS (
     SELECT
         lv.LINK_VISIT_HK,

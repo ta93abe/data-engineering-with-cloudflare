@@ -1,5 +1,3 @@
-{{ config(materialized='table') }}
-
 WITH prescription_link AS (
     SELECT
         LINK_PRESCRIPTION_HK,

@@ -1,5 +1,3 @@
-{{ config(materialized='incremental') }}
-
 {%- set source_model = "stg_medications" -%}
 {%- set src_pk = "MEDICATION_HK" -%}
 {%- set src_hashdiff = {"source_column": "MEDICATION_HASHDIFF", "alias": "HASHDIFF"} -%}

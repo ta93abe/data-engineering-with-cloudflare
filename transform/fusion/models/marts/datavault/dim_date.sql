@@ -1,5 +1,3 @@
-{{ config(materialized='table') }}
-
 WITH date_range AS (
     SELECT
         MIN(CAST(EFFECTIVE_FROM AS DATE)) AS min_date,
