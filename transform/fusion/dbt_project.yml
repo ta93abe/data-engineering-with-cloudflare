@@ -5,6 +5,7 @@ profile: fusion
 
 flags:
   use_managed_iceberg: true
+  use_materialization_v2: true
 
 seed-paths: ["seeds"]
 model-paths: ["models"]
