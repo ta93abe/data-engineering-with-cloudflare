@@ -28,6 +28,11 @@ models:
       +schema: raw_vault
       +tags: ["datavault"]
 
+    business_vault:
+      +materialized: table
+      +schema: business_vault
+      +tags: ["datavault"]
+
     marts:
       +materialized: table
       +schema: marts

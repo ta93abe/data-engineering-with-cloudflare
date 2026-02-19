@@ -333,11 +333,131 @@ transform/fusion/
             ├── sat_prescription_details.sql        # Phase 2
             ├── sat_patient_insurance_details.sql   # Phase 2
             └── eff_sat_patient_insurance.sql       # Phase 2
+    └── business_vault/                            # Phase 3
+        ├── pit_patient.sql
+        ├── bridge_patient_medication.sql
+        └── sat_patient_visit_summary.sql
 ```
+
+## Phase 3: Business Vault
+
+### Business Vault とは
+
+Raw Vault は「ソースから届いたデータをそのまま保存する」層。
+Business Vault は Raw Vault のデータに**ビジネスルールや計算ロジック**を適用する層。
+
+Raw Vault がデータの「真実の記録」なら、Business Vault は「ビジネスの解釈」を加えたもの。
+
+### automate-dv の PIT/Bridge マクロについて
+
+automate-dv には `pit()` と `bridge()` マクロが存在するが、**v0.11.0 で非推奨（deprecated）** になった。
+理由はユーザビリティとパフォーマンスの問題。将来の改善版リリースが予定されている。
+
+今回は非推奨マクロに依存せず、**手書き SQL** で実装した。
+これは実際にはより良い学習アプローチ：
+- PIT/Bridge の内部ロジックを直接理解できる
+- どの dbt アダプターでも動作する
+
+### 実装したもの
+
+| テーブル | 行数 | 種別 |
+|---------|------|------|
+| pit_patient | 40 | PIT（Point-In-Time）テーブル |
+| bridge_patient_medication | 40 | Bridge テーブル |
+| sat_patient_visit_summary | 20 | Computed Satellite |
+
+### PIT テーブル（pit_patient）
+
+PITテーブルの目的は「任意の時点で、各 Satellite のどのレコードが最新だったか」を高速に特定すること。
+
+```
+PATIENT_HK | AS_OF_DATE | SAT_PATIENT_DETAILS_LDTS
+───────────┼────────────┼─────────────────────────
+abc123...  | 2026-01-01 | 2026-01-01T00:00:00Z
+abc123...  | 2026-02-01 | 2026-01-01T00:00:00Z  ← 1月時点のレコードがまだ最新
+def456...  | 2026-01-01 | 2026-01-01T00:00:00Z
+def456...  | 2026-02-01 | 2026-02-01T00:00:00Z  ← 2月に更新があった
+```
+
+PIT がないと、「2026年1月時点での患者情報」を取得するたびに
+Satellite 全件から `MAX(LOAD_DATETIME) WHERE LOAD_DATETIME <= '2026-01-01'` を計算する必要がある。
+PIT があれば、そのルックアップ結果が事前計算されている。
+
+**実装のポイント:**
+
+```sql
+-- as_of_dates: Raw Vault 内の全 LOAD_DATETIME を収集
+-- hub × as_of_date の全組み合わせを CROSS JOIN で作成
+-- 各組み合わせに対して MAX(LOAD_DATETIME <= AS_OF_DATE) で最新を特定
+```
+
+Satellite が複数ある場合（例: `sat_patient_details` + `sat_patient_insurance_details`）、
+それぞれの LDTS カラムを追加すれば、1クエリで全 Satellite の最新を取得できる。
+
+### Bridge テーブル（bridge_patient_medication）
+
+Bridge テーブルの目的は「離れた Hub 間の JOIN パスを事前結合」すること。
+
+通常、患者が処方された薬を知るには：
+```sql
+-- Bridge がない場合: 4テーブル JOIN
+hub_patient → link_visit → link_prescription → hub_medication
+```
+
+Bridge があれば：
+```sql
+-- Bridge がある場合: 1テーブルで完結
+SELECT * FROM bridge_patient_medication WHERE PATIENT_HK = 'xxx'
+```
+
+**結果のイメージ:**
+
+```
+PATIENT_HK | LINK_VISIT_HK | VISIT_HK | LINK_PRESCRIPTION_HK | MEDICATION_HK
+───────────┼───────────────┼──────────┼──────────────────────┼──────────────
+abc123...  | visit_hk_1    | vis_hk_1 | presc_hk_1           | med_hk_1
+abc123...  | visit_hk_2    | vis_hk_2 | presc_hk_2           | med_hk_2
+```
+
+### Computed Satellite（sat_patient_visit_summary）
+
+通常の Satellite は「ソースからの事実」を記録するが、
+Computed Satellite は「計算・集約された派生データ」を保持する。
+
+```
+PATIENT_HK | TOTAL_VISITS | DISTINCT_DOCTORS | TOTAL_TREATMENT_COST | DISTINCT_MEDICATIONS
+───────────┼──────────────┼──────────────────┼──────────────────────┼─────────────────────
+abc123...  | 3            | 2                | 9400.00              | 2
+def456...  | 2            | 1                | 5000.00              | 1
+```
+
+`RECORD_SOURCE = 'COMPUTED'` として、ソースシステムからのデータと明確に区別している。
+
+### 学んだこと
+
+#### Raw Vault vs Business Vault の分離
+
+なぜ Business Vault を Raw Vault と分けるのか？
+
+- **Raw Vault は不変**: ソースデータの「真実の記録」。ビジネスルールの変更に影響されない
+- **Business Vault は変わりうる**: ビジネスルールが変われば再計算できる
+- **トレーサビリティ**: 計算結果の元データが Raw Vault に残っているので、いつでも検証可能
+
+#### PIT テーブルの設計判断
+
+PIT テーブルの `as_of_dates`（時間軸）は設計の重要な判断ポイント：
+- **全 LOAD_DATETIME を使う**（今回の実装）: 精度が高いが行数が多くなる
+- **日次/月次の固定間隔**: 行数を制御できるが精度が下がる
+- **ビジネス要件に合わせた日付**: 月末、四半期末など
+
+#### Bridge vs View
+
+Bridge テーブルは「物理テーブルとして事前結合」するので、クエリ時のJOINコストがゼロ。
+ただし、元テーブルが更新されるたびに再構築が必要。
+小規模なら View（仮想テーブル）でも十分だが、大規模データでは Bridge の効果が大きい。
 
 ## 次のステップ
 
-- **Phase 3**: Business Vault（PIT テーブル、Bridge テーブル、Computed Satellite）
 - **Phase 4**: Information Mart（dim/fact テーブル、Star Schema への変換）
 
 ## 参考
