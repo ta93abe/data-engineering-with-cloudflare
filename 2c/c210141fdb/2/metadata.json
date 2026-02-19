@@ -1,0 +1,37 @@
+{
+  "cli_version": "0.4.5",
+  "checkpoint_id": "2cc210141fdb",
+  "session_id": "f0a849fe-ef06-4267-a279-8a0432972a80",
+  "strategy": "manual-commit",
+  "created_at": "2026-02-19T12:47:01.327173Z",
+  "branch": "feat/datavault-phase1",
+  "checkpoints_count": 0,
+  "files_touched": [
+    "transform/fusion/models/business_vault/sat_patient_visit_summary.sql",
+    "docs/datavault-learning-notes.md",
+    "transform/fusion/dbt_project.yml",
+    "transform/fusion/models/business_vault/bridge_patient_medication.sql",
+    "transform/fusion/models/business_vault/pit_patient.sql"
+  ],
+  "agent": "Claude Code",
+  "turn_id": "e0be041e33d4",
+  "checkpoint_transcript_start": 277,
+  "transcript_lines_at_start": 277,
+  "token_usage": {
+    "input_tokens": 73,
+    "cache_creation_tokens": 91706,
+    "cache_read_tokens": 5509865,
+    "output_tokens": 3765,
+    "api_call_count": 62
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-02-19T12:47:01.182125Z",
+    "agent_lines": 0,
+    "human_added": 302,
+    "human_modified": 1,
+    "human_removed": 0,
+    "total_committed": 302,
+    "agent_percentage": 0
+  },
+  "transcript_path": ".claude/projects/-Users-ta93abe-Developer-github-com-ta93abe-data-engineering-with-cloudflare/f0a849fe-ef06-4267-a279-8a0432972a80.jsonl"
+}
