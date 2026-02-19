@@ -21,3 +21,7 @@ models:
         description: 専門科
       - name: LICENSE_NUMBER
         description: 医師免許番号
+      - name: HUB_LOAD_DATETIME
+        description: Hub レコードの初回ロード日時
+      - name: SAT_LOAD_DATETIME
+        description: 最新 Satellite レコードのロード日時

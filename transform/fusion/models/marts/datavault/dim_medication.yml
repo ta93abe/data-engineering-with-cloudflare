@@ -19,3 +19,7 @@ models:
         description: 製造元
       - name: UNIT_PRICE
         description: 単価
+      - name: HUB_LOAD_DATETIME
+        description: Hub レコードの初回ロード日時
+      - name: SAT_LOAD_DATETIME
+        description: 最新 Satellite レコードのロード日時

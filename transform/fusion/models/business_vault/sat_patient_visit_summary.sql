@@ -1,4 +1,17 @@
-WITH patient_visits AS (
+WITH visit_details_latest AS (
+    SELECT
+        VISIT_HK,
+        DIAGNOSIS_CODE,
+        TREATMENT_COST,
+        LOAD_DATETIME,
+        ROW_NUMBER() OVER (
+            PARTITION BY VISIT_HK
+            ORDER BY LOAD_DATETIME DESC
+        ) AS rn
+    FROM {{ ref('sat_visit_details') }}
+),
+
+patient_visits AS (
     SELECT
         lv.PATIENT_HK,
         lv.VISIT_HK,
@@ -7,8 +20,9 @@ WITH patient_visits AS (
         svd.TREATMENT_COST,
         svd.LOAD_DATETIME
     FROM {{ ref('link_visit') }} lv
-    INNER JOIN {{ ref('sat_visit_details') }} svd
+    INNER JOIN visit_details_latest svd
         ON lv.VISIT_HK = svd.VISIT_HK
+        AND svd.rn = 1
 ),
 
 patient_prescriptions AS (

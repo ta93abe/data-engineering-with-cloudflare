@@ -39,3 +39,7 @@ models:
         description: 最終診察日
       - name: DISTINCT_MEDICATIONS
         description: 処方された薬の種類数
+      - name: HUB_LOAD_DATETIME
+        description: Hub レコードの初回ロード日時
+      - name: SAT_LOAD_DATETIME
+        description: 最新 Satellite レコードのロード日時
