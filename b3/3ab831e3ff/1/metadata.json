@@ -1,9 +1,11 @@
 {
   "cli_version": "0.4.5",
   "checkpoint_id": "b33ab831e3ff",
+  "session_id": "e627d9cb-9a02-4de6-b050-d01a1d03e574",
   "strategy": "manual-commit",
+  "created_at": "2026-02-19T13:24:22.824292Z",
   "branch": "feat/datavault-phase1",
-  "checkpoints_count": 1,
+  "checkpoints_count": 0,
   "files_touched": [
     "transform/fusion/models/business_vault/bridge_patient_medication.sql",
     "transform/fusion/models/business_vault/bridge_patient_medication.yml",
@@ -50,27 +52,26 @@
     "transform/fusion/models/staging/datavault/stg_prescriptions.yml",
     "transform/fusion/models/staging/datavault/stg_visits.yml"
   ],
-  "sessions": [
-    {
-      "metadata": "/b3/3ab831e3ff/0/metadata.json",
-      "transcript": "/b3/3ab831e3ff/0/full.jsonl",
-      "context": "/b3/3ab831e3ff/0/context.md",
-      "content_hash": "/b3/3ab831e3ff/0/content_hash.txt",
-      "prompt": "/b3/3ab831e3ff/0/prompt.txt"
-    },
-    {
-      "metadata": "/b3/3ab831e3ff/1/metadata.json",
-      "transcript": "/b3/3ab831e3ff/1/full.jsonl",
-      "context": "/b3/3ab831e3ff/1/context.md",
-      "content_hash": "/b3/3ab831e3ff/1/content_hash.txt",
-      "prompt": "/b3/3ab831e3ff/1/prompt.txt"
-    }
-  ],
+  "agent": "Claude Code",
+  "turn_id": "435cd9d7dadf",
+  "transcript_identifier_at_start": "7713b65c-b8e4-4d30-b816-7e741e9a8e1c",
+  "checkpoint_transcript_start": 1417,
+  "transcript_lines_at_start": 1417,
   "token_usage": {
-    "input_tokens": 112,
-    "cache_creation_tokens": 670006,
-    "cache_read_tokens": 8377212,
-    "output_tokens": 14938,
-    "api_call_count": 83
-  }
+    "input_tokens": 40,
+    "cache_creation_tokens": 69250,
+    "cache_read_tokens": 3890663,
+    "output_tokens": 6975,
+    "api_call_count": 32
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-02-19T13:24:21.779488Z",
+    "agent_lines": 634,
+    "human_added": 0,
+    "human_modified": 69,
+    "human_removed": 96,
+    "total_committed": 703,
+    "agent_percentage": 90.18492176386913
+  },
+  "transcript_path": ".claude/projects/-Users-ta93abe-Developer-github-com-ta93abe-data-engineering-with-cloudflare/e627d9cb-9a02-4de6-b050-d01a1d03e574.jsonl"
 }
