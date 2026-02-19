@@ -1,10 +1,5 @@
 {{ config(materialized='table') }}
 
-{#
-  Dimension: dim_doctor
-  Hub + Satellite → フラットなディメンション
-#}
-
 WITH hub AS (
     SELECT
         DOCTOR_HK,

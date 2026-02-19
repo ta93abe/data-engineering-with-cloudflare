@@ -1,19 +1,6 @@
 {{ config(materialized='table') }}
 
-{#
-  PIT (Point-In-Time) テーブル: pit_patient
-
-  目的:
-    hub_patient に紐づく複数の Satellite について、
-    各時点（as_of_date）での「最新レコード」の LOAD_DATETIME を保持する。
-    これにより、任意の時点での患者の状態を効率的にクエリできる。
-
-  構造:
-    PATIENT_HK | AS_OF_DATE | SAT_PATIENT_DETAILS_LDTS | SAT_PATIENT_DETAILS_PK
-#}
-
 WITH as_of_dates AS (
-    -- Raw Vault 内の全 LOAD_DATETIME を収集して、PITの時間軸を作る
     SELECT DISTINCT LOAD_DATETIME AS AS_OF_DATE
     FROM {{ ref('hub_patient') }}
 
@@ -28,7 +15,6 @@ hub AS (
     FROM {{ ref('hub_patient') }}
 ),
 
--- Hub × as_of_date の全組み合わせ
 hub_pit AS (
     SELECT
         hub.PATIENT_HK,
@@ -37,7 +23,6 @@ hub_pit AS (
     CROSS JOIN as_of_dates aod
 ),
 
--- 各時点での sat_patient_details の最新 LOAD_DATETIME を特定
 sat_patient_lookup AS (
     SELECT
         hp.PATIENT_HK,

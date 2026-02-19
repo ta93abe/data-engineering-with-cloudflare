@@ -1,0 +1,24 @@
+version: 2
+
+models:
+  - name: sat_prescription_details
+    description: >
+      処方箋の記述属性（用量、頻度、処方日数）。Link のハッシュキーを PK とする
+      「Link に紐づく Satellite」パターン。処方箋の属性は診察×薬品の関係に付随するため。
+    columns:
+      - name: LINK_PRESCRIPTION_HK
+        description: 処方箋Link ハッシュキー（FK → link_prescription、複合PKの一部）
+        data_tests: [not_null]
+      - name: HASHDIFF
+        description: 属性変更検出用ハッシュ
+        data_tests: [not_null]
+      - name: DOSAGE
+        description: 用量
+      - name: FREQUENCY
+        description: 頻度（1日3回等）
+      - name: DURATION_DAYS
+        description: 処方日数
+      - name: LOAD_DATETIME
+        description: ロード日時
+      - name: RECORD_SOURCE
+        description: データソース識別子

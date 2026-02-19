@@ -1,21 +1,5 @@
 {{ config(materialized='table') }}
 
-{#
-  Computed Satellite: sat_patient_visit_summary
-
-  目的:
-    Raw Vault のデータからビジネスルールを適用し、
-    患者ごとの診察統計を計算する。
-    通常の Satellite は「ソースからの事実」を記録するが、
-    Computed Satellite は「計算・集約された派生データ」を保持する。
-
-  計算内容:
-    - 総診察回数、総治療費、平均治療費
-    - 担当医師数（ユニーク）
-    - 初回/最終診察日
-    - 処方された薬の種類数
-#}
-
 WITH patient_visits AS (
     SELECT
         lv.PATIENT_HK,

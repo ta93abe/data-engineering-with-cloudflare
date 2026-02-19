@@ -1,15 +1,5 @@
 {{ config(materialized='table') }}
 
-{#
-  Fact: fct_prescriptions
-  処方箋のファクトテーブル。
-
-  Bridge テーブルを活用して患者情報も含め、
-  処方箋の詳細を分析しやすい形に整形する。
-
-  粒度: 1処方 = 1行
-#}
-
 WITH prescription_link AS (
     SELECT
         LINK_PRESCRIPTION_HK,
@@ -33,7 +23,6 @@ prescription_sat AS (
     FROM {{ ref('sat_prescription_details') }}
 ),
 
--- Bridge を使って患者HKを取得（多段JOIN不要）
 bridge AS (
     SELECT
         PATIENT_HK,
@@ -43,7 +32,6 @@ bridge AS (
     FROM {{ ref('bridge_patient_medication') }}
 ),
 
--- 薬の単価を取得
 medication_sat AS (
     SELECT
         MEDICATION_HK,
@@ -55,7 +43,6 @@ medication_sat AS (
     FROM {{ ref('sat_medication_details') }}
 ),
 
--- 診察日を取得
 visit_sat AS (
     SELECT
         VISIT_HK,

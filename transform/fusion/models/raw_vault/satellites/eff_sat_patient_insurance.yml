@@ -1,0 +1,24 @@
+version: 2
+
+models:
+  - name: eff_sat_patient_insurance
+    description: >
+      患者保険関係の有効期間を管理する Effectivity Satellite。auto end-dating 有効。
+      通常の Satellite が「属性の変更」を検出するのに対し、
+      Effectivity Satellite は「関係がいつ有効で、いつ終了したか」を管理する。
+    columns:
+      - name: LINK_PATIENT_INSURANCE_HK
+        description: 患者保険Link ハッシュキー（FK → link_patient_insurance）
+        data_tests: [not_null]
+      - name: PATIENT_HK
+        description: 患者ハッシュキー（driving FK、関係の主体）
+      - name: INSURANCE_HK
+        description: 保険会社ハッシュキー（secondary FK、関係の対象）
+      - name: START_DATE
+        description: 関係の開始日
+      - name: END_DATE
+        description: 関係の終了日（NULL = 現在有効）
+      - name: LOAD_DATETIME
+        description: ロード日時
+      - name: RECORD_SOURCE
+        description: データソース識別子

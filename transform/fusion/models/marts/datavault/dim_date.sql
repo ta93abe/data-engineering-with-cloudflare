@@ -1,20 +1,12 @@
 {{ config(materialized='table') }}
 
-{#
-  Dimension: dim_date
-  診察データの日付範囲をカバーする日付ディメンション。
-  Raw Vault のデータからは生成せず、必要な範囲を動的に生成する。
-#}
-
 WITH date_range AS (
-    -- 診察データの日付範囲を取得
     SELECT
         MIN(CAST(EFFECTIVE_FROM AS DATE)) AS min_date,
         MAX(CAST(EFFECTIVE_FROM AS DATE)) AS max_date
     FROM {{ ref('sat_visit_details') }}
 ),
 
--- Databricks の SEQUENCE 関数で日付配列を生成
 date_series AS (
     SELECT EXPLODE(SEQUENCE(min_date, max_date, INTERVAL 1 DAY)) AS date_day
     FROM date_range

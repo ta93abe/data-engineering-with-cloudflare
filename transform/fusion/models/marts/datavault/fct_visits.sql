@@ -1,15 +1,5 @@
 {{ config(materialized='table') }}
 
-{#
-  Fact: fct_visits
-  診察のファクトテーブル。
-
-  Link（関係）+ Satellite（属性）を結合して、
-  ディメンションキーとメジャー（計測値）を持つファクトテーブルを作成する。
-
-  粒度: 1診察 = 1行
-#}
-
 WITH visit_link AS (
     SELECT
         LINK_VISIT_HK,

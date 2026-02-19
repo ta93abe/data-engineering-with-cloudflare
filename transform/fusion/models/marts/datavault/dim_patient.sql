@@ -1,13 +1,5 @@
 {{ config(materialized='table') }}
 
-{#
-  Dimension: dim_patient
-  Data Vault → Star Schema 変換
-
-  Hub（ビジネスキー）+ Satellite（最新の属性）を結合して
-  分析用のフラットなディメンションテーブルを作成する。
-#}
-
 WITH hub AS (
     SELECT
         PATIENT_HK,
@@ -16,7 +8,6 @@ WITH hub AS (
     FROM {{ ref('hub_patient') }}
 ),
 
--- 最新の Satellite レコードを取得（SCD Type 1 的アプローチ）
 sat_latest AS (
     SELECT
         PATIENT_HK,
@@ -34,7 +25,6 @@ sat_latest AS (
     FROM {{ ref('sat_patient_details') }}
 ),
 
--- 患者の診察サマリー（Business Vault から）
 visit_summary AS (
     SELECT
         PATIENT_HK,

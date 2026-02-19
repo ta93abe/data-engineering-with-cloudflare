@@ -1,0 +1,16 @@
+version: 2
+
+models:
+  - name: hub_doctor
+    description: 医師ビジネスキーのレジストリ。DOCTOR_ID のユニーク一覧を Insert-only で保持する。
+    columns:
+      - name: DOCTOR_HK
+        description: 医師ハッシュキー（PK）
+        data_tests: [unique, not_null]
+      - name: DOCTOR_ID
+        description: 医師ビジネスキー（DOC-001 形式）
+        data_tests: [unique, not_null]
+      - name: LOAD_DATETIME
+        description: 初回ロード日時
+      - name: RECORD_SOURCE
+        description: データソース識別子

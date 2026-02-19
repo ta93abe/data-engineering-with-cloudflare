@@ -1,19 +1,6 @@
 {{ config(materialized='table') }}
 
-{#
-  Bridge テーブル: bridge_patient_medication
-
-  目的:
-    hub_patient から hub_medication までの多段 JOIN パスを事前結合する。
-    通常のクエリでは patient → link_visit → link_prescription → medication と
-    4テーブルの JOIN が必要だが、Bridge があれば1テーブルで済む。
-
-  パス:
-    hub_patient → link_visit → hub_visit → link_prescription → hub_medication
-#}
-
 WITH patient_visits AS (
-    -- 患者と診察の関係（link_visit から）
     SELECT
         lv.LINK_VISIT_HK,
         lv.PATIENT_HK,
@@ -22,7 +9,6 @@ WITH patient_visits AS (
 ),
 
 visit_prescriptions AS (
-    -- 診察と処方の関係（link_prescription から）
     SELECT
         lp.LINK_PRESCRIPTION_HK,
         lp.VISIT_HK,
