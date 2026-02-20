@@ -28,7 +28,7 @@
 
 ## アーキテクチャ
 
-```
+```text
 Seeds (raw CSV)
   └─ Staging (automate-dv stage macro: ハッシュキー生成)
        └─ Raw Vault
@@ -46,7 +46,7 @@ Seeds (raw CSV)
 
 ## ディレクトリ構造
 
-```
+```text
 transform/fusion/
 ├─ seeds/datavault/
 │   ├─ raw_patients.csv
@@ -74,7 +74,8 @@ transform/fusion/
 │   │   │   ├─ hub_doctor.sql
 │   │   │   ├─ hub_department.sql
 │   │   │   ├─ hub_medication.sql
-│   │   │   └─ hub_insurance_company.sql
+│   │   │   ├─ hub_insurance_company.sql
+│   │   │   └─ hub_visit.sql
 │   │   ├─ links/
 │   │   │   ├─ link_visit.sql
 │   │   │   ├─ link_prescription.sql
@@ -87,6 +88,7 @@ transform/fusion/
 │   │   │   ├─ sat_insurance_details.sql
 │   │   │   ├─ sat_visit_details.sql
 │   │   │   ├─ sat_prescription_details.sql
+│   │   │   ├─ sat_patient_insurance_details.sql
 │   │   │   └─ eff_sat_patient_insurance.sql
 │   │   └─ _raw_vault__schema.yml
 │   ├─ business_vault/
@@ -202,7 +204,7 @@ transform/fusion/
 ### Phase 2: Raw Vault 拡張 (TA-371)
 
 **スコープ**: departments + medications + insurance + prescriptions + patient_insurance
-**成果物**: Hub 2, Link 2, Satellite 4, Effectivity Satellite 1
+**成果物**: Hub 3, Link 2, Satellite 5, Effectivity Satellite 1
 **学習ポイント**: 標準Link (2キー), Effectivity Satellite, 既存Vault拡張
 
 ### Phase 3: Business Vault (TA-372)
