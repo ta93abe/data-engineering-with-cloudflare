@@ -1,0 +1,181 @@
+Base directory for this skill: /Users/ta93abe/.claude/skills/pr
+
+# pr
+
+Pull Requestの作成・レビュー対応を行うスキル。
+
+## サブコマンド
+
+### /pr create (デフォルト)
+
+PRを作成する。
+
+**動作:**
+1. `git status` で現在のブランチと変更を確認
+2. `git log main..HEAD` でコミット履歴を確認
+3. `git diff main...HEAD` で全体の変更を確認
+4. 変更内容を分析してPRの説明文を生成
+5. `gh pr create` でPRを作成
+
+**PR形式:**
+```markdown
+## Summary
+<変更の概要を箇条書き>
+
+## Test plan
+<テスト方法のチェックリスト>
+
+Generated with [Claude Code](https://claude.com/claude-code)
+```
+
+### /pr review
+
+PRのレビューコメントに対応し、問題なければマージまで行う。
+
+**動作:**
+1. `gh pr view` でPR情報を取得
+2. `gh api` でレビューコメントを取得
+3. 各コメントの指摘内容を分析
+4. 必要な修正を実施
+5. 修正をコミット・プッシュ
+6. CIの状態を確認
+7. 重大な問題がなければ `gh pr merge` でマージ
+
+**マージ判断基準:**
+- 重大な問題（セキュリティ、破壊的変更）がない
+- CIが通っている
+- 軽微な指摘は対応済み、または次回対応として許容できる
+
+**マージ方法:**
+- デフォルトは squash merge (`--squash`)
+- マージ後にブランチを削除 (`--delete-branch`)
+
+### /pr status
+
+現在のPRの状態を確認する。
+
+**動作:**
+1. `gh pr status` でPR一覧を表示
+2. CIの状態を確認
+3. レビューの状態を確認
+
+## 注意事項
+
+- PRを作成する前にリモートにプッシュされていることを確認
+- ベースブランチ（通常はmain）との差分を確認
+- CIが通っていることを確認してからマージ依頼
+
+---
+
+そうして
+
+---
+
+j-quants APIを使って株価分析をしたい。Issue にして。
+
+---
+
+edinet のAPI使って決算情報も組み込みたい。
+
+---
+
+どんな分析ができる？
+
+---
+
+家計簿分析のISSUEどれ？
+
+---
+
+https://github.com/hiroppy/mf-dashboard.git
+このレポジトリ参考にしたい。
+ghq でローカルに持ってきて rg でファイル探索して。
+
+---
+
+Issue に追記して
+気になるポイントは全部。
+
+---
+
+1password → Keeperにして
+
+---
+
+Base directory for this skill: /Users/ta93abe/.claude/skills/pr
+
+# pr
+
+Pull Requestの作成・レビュー対応を行うスキル。
+
+## サブコマンド
+
+### /pr create (デフォルト)
+
+PRを作成する。
+
+**動作:**
+1. `git status` で現在のブランチと変更を確認
+2. `git log main..HEAD` でコミット履歴を確認
+3. `git diff main...HEAD` で全体の変更を確認
+4. 変更内容を分析してPRの説明文を生成
+5. `gh pr create` でPRを作成
+
+**PR形式:**
+```markdown
+## Summary
+<変更の概要を箇条書き>
+
+## Test plan
+<テスト方法のチェックリスト>
+
+Generated with [Claude Code](https://claude.com/claude-code)
+```
+
+### /pr review
+
+PRのレビューコメントに対応し、問題なければマージまで行う。
+
+**動作:**
+1. `gh pr view` でPR情報を取得
+2. `gh api` でレビューコメントを取得
+3. 各コメントの指摘内容を分析
+4. 必要な修正を実施
+5. 修正をコミット・プッシュ
+6. CIの状態を確認
+7. 重大な問題がなければ `gh pr merge` でマージ
+
+**マージ判断基準:**
+- 重大な問題（セキュリティ、破壊的変更）がない
+- CIが通っている
+- 軽微な指摘は対応済み、または次回対応として許容できる
+
+**マージ方法:**
+- デフォルトは squash merge (`--squash`)
+- マージ後にブランチを削除 (`--delete-branch`)
+
+### /pr status
+
+現在のPRの状態を確認する。
+
+**動作:**
+1. `gh pr status` でPR一覧を表示
+2. CIの状態を確認
+3. レビューの状態を確認
+
+## 注意事項
+
+- PRを作成する前にリモートにプッシュされていることを確認
+- ベースブランチ（通常はmain）との差分を確認
+- CIが通っていることを確認してからマージ依頼
+
+
+ARGUMENTS: review
+
+---
+
+TA-344 やろう plan mode で
+
+---
+
+[Request interrupted by user]

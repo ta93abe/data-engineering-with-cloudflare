@@ -1,0 +1,36 @@
+{
+  "cli_version": "0.4.5",
+  "checkpoint_id": "10fcdc345915",
+  "session_id": "6121f7c8-3df8-4ee1-b9b4-43b7d6ca7355",
+  "strategy": "manual-commit",
+  "created_at": "2026-02-20T07:57:18.100445Z",
+  "branch": "feat/datavault-phase1",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "docs/plans/2026-02-19-datavault-medical-design.md",
+    "transform/fusion/models/business_vault/pit_patient.sql",
+    "transform/fusion/models/business_vault/sat_patient_visit_summary.sql",
+    "transform/fusion/models/marts/datavault/dim_date.sql",
+    "transform/fusion/models/marts/datavault/fct_prescriptions.sql",
+    "transform/fusion/models/raw_vault/satellites/eff_sat_patient_insurance.yml",
+    "transform/fusion/models/staging/datavault/stg_prescriptions.yml"
+  ],
+  "agent": "Claude Code",
+  "token_usage": {
+    "input_tokens": 72,
+    "cache_creation_tokens": 600756,
+    "cache_read_tokens": 4486549,
+    "output_tokens": 7963,
+    "api_call_count": 51
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-02-20T07:57:17.798571Z",
+    "agent_lines": 0,
+    "human_added": 0,
+    "human_modified": 19,
+    "human_removed": 1,
+    "total_committed": 0,
+    "agent_percentage": 0
+  },
+  "transcript_path": ".claude/projects/-Users-ta93abe-Developer-github-com-ta93abe-data-engineering-with-cloudflare/6121f7c8-3df8-4ee1-b9b4-43b7d6ca7355.jsonl"
+}
