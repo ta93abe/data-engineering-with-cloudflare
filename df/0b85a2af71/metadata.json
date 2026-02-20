@@ -1,0 +1,27 @@
+{
+  "cli_version": "0.4.5",
+  "checkpoint_id": "df0b85a2af71",
+  "strategy": "manual-commit",
+  "branch": "feat/datavault-phase1",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "docs/plans/2026-02-19-datavault-medical-design.md",
+    "transform/fusion/tests/datavault/dim_patient_completeness.sql"
+  ],
+  "sessions": [
+    {
+      "metadata": "/df/0b85a2af71/0/metadata.json",
+      "transcript": "/df/0b85a2af71/0/full.jsonl",
+      "context": "/df/0b85a2af71/0/context.md",
+      "content_hash": "/df/0b85a2af71/0/content_hash.txt",
+      "prompt": "/df/0b85a2af71/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 72,
+    "cache_creation_tokens": 600756,
+    "cache_read_tokens": 4486549,
+    "output_tokens": 7963,
+    "api_call_count": 51
+  }
+}
