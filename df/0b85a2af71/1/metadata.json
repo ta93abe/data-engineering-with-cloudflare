@@ -1,0 +1,34 @@
+{
+  "cli_version": "0.4.5",
+  "checkpoint_id": "df0b85a2af71",
+  "session_id": "e627d9cb-9a02-4de6-b050-d01a1d03e574",
+  "strategy": "manual-commit",
+  "created_at": "2026-02-20T14:40:12.111007Z",
+  "branch": "feat/datavault-phase1",
+  "checkpoints_count": 0,
+  "files_touched": [
+    "docs/plans/2026-02-19-datavault-medical-design.md"
+  ],
+  "agent": "Claude Code",
+  "turn_id": "f482bfe7ec31",
+  "transcript_identifier_at_start": "6657816f-a4ba-456b-ba7d-0f4c657c84a6",
+  "checkpoint_transcript_start": 2303,
+  "transcript_lines_at_start": 2303,
+  "token_usage": {
+    "input_tokens": 25,
+    "cache_creation_tokens": 106025,
+    "cache_read_tokens": 2025194,
+    "output_tokens": 2137,
+    "api_call_count": 23
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-02-20T14:40:10.529309Z",
+    "agent_lines": 0,
+    "human_added": 3,
+    "human_modified": 4,
+    "human_removed": 0,
+    "total_committed": 3,
+    "agent_percentage": 0
+  },
+  "transcript_path": ".claude/projects/-Users-ta93abe-Developer-github-com-ta93abe-data-engineering-with-cloudflare/e627d9cb-9a02-4de6-b050-d01a1d03e574.jsonl"
+}
