@@ -1,13 +1,9 @@
-WITH date_range AS (
-    SELECT
-        MIN(CAST(EFFECTIVE_FROM AS DATE)) AS min_date,
-        MAX(CAST(EFFECTIVE_FROM AS DATE)) AS max_date
-    FROM {{ ref('sat_visit_details') }}
-),
-
-date_series AS (
-    SELECT EXPLODE(SEQUENCE(min_date, max_date, INTERVAL 1 DAY)) AS date_day
-    FROM date_range
+WITH date_series AS (
+    SELECT EXPLODE(SEQUENCE(
+        CAST('{{ var("dim_date_start", "2024-01-01") }}' AS DATE),
+        CAST('{{ var("dim_date_end", "2026-12-31") }}' AS DATE),
+        INTERVAL 1 DAY
+    )) AS date_day
 )
 
 SELECT

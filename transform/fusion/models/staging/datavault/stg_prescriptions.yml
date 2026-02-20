@@ -11,7 +11,7 @@ models:
       - name: MEDICATION_HK
         description: 薬品ハッシュキー
       - name: LINK_PRESCRIPTION_HK
-        description: Link用複合ハッシュキー（VISIT_ID + MEDICATION_ID の MD5）
+        description: Link用複合ハッシュキー（VISIT_ID + MEDICATION_ID + PRESCRIPTION_ID の MD5）
         data_tests: [not_null]
       - name: PRESCRIPTION_HASHDIFF
         description: 処方箋属性の変更検出用ハッシュ

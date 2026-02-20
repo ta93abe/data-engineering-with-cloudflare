@@ -18,6 +18,8 @@ models:
         description: 関係の開始日
       - name: END_DATE
         description: 関係の終了日（NULL = 現在有効）
+      - name: EFFECTIVE_FROM
+        description: 有効開始日時（ソースデータの業務日時）
       - name: LOAD_DATETIME
         description: ロード日時
       - name: RECORD_SOURCE

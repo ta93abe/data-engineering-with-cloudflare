@@ -3,6 +3,7 @@ WITH visit_details_latest AS (
         VISIT_HK,
         DIAGNOSIS_CODE,
         TREATMENT_COST,
+        EFFECTIVE_FROM,
         LOAD_DATETIME,
         ROW_NUMBER() OVER (
             PARTITION BY VISIT_HK
@@ -18,7 +19,7 @@ patient_visits AS (
         lv.DOCTOR_HK,
         svd.DIAGNOSIS_CODE,
         svd.TREATMENT_COST,
-        svd.LOAD_DATETIME
+        svd.EFFECTIVE_FROM
     FROM {{ ref('link_visit') }} lv
     INNER JOIN visit_details_latest svd
         ON lv.VISIT_HK = svd.VISIT_HK
@@ -42,8 +43,8 @@ visit_summary AS (
         COUNT(DISTINCT DIAGNOSIS_CODE) AS DISTINCT_DIAGNOSES,
         SUM(CAST(TREATMENT_COST AS DECIMAL(10, 2))) AS TOTAL_TREATMENT_COST,
         AVG(CAST(TREATMENT_COST AS DECIMAL(10, 2))) AS AVG_TREATMENT_COST,
-        MIN(LOAD_DATETIME) AS FIRST_VISIT_DATE,
-        MAX(LOAD_DATETIME) AS LAST_VISIT_DATE
+        MIN(EFFECTIVE_FROM) AS FIRST_VISIT_DATE,
+        MAX(EFFECTIVE_FROM) AS LAST_VISIT_DATE
     FROM patient_visits
     GROUP BY PATIENT_HK
 ),

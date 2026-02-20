@@ -32,9 +32,9 @@
 Seeds (raw CSV)
   └─ Staging (automate-dv stage macro: ハッシュキー生成)
        └─ Raw Vault
-       │    ├─ Hubs (5): patient, doctor, department, medication, insurance_company
+       │    ├─ Hubs (6): patient, doctor, department, medication, insurance_company, visit
        │    ├─ Links (3): visit, prescription, patient_insurance
-       │    └─ Satellites (7): *_details + eff_sat_patient_insurance
+       │    └─ Satellites (9): *_details (7) + sat_patient_insurance_details + eff_sat_patient_insurance
        └─ Business Vault
        │    ├─ PIT: pit_patient
        │    ├─ Bridge: bridge_patient_medication

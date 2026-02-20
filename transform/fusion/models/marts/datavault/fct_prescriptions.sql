@@ -69,9 +69,9 @@ INNER JOIN prescription_sat ps
     AND ps.rn = 1
 INNER JOIN bridge b
     ON pl.LINK_PRESCRIPTION_HK = b.LINK_PRESCRIPTION_HK
-LEFT JOIN medication_sat ms
+INNER JOIN medication_sat ms
     ON pl.MEDICATION_HK = ms.MEDICATION_HK
     AND ms.rn = 1
-LEFT JOIN visit_sat vs
+INNER JOIN visit_sat vs
     ON pl.VISIT_HK = vs.VISIT_HK
     AND vs.rn = 1

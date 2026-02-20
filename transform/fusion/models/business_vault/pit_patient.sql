@@ -1,10 +1,10 @@
 WITH as_of_dates AS (
-    SELECT DISTINCT LOAD_DATETIME AS AS_OF_DATE
+    SELECT LOAD_DATETIME AS AS_OF_DATE
     FROM {{ ref('hub_patient') }}
 
     UNION
 
-    SELECT DISTINCT LOAD_DATETIME AS AS_OF_DATE
+    SELECT LOAD_DATETIME AS AS_OF_DATE
     FROM {{ ref('sat_patient_details') }}
 ),
 
