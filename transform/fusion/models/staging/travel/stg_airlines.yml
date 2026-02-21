@@ -1,0 +1,9 @@
+models:
+  - name: stg_airlines
+    description: Airline data with basic cleaning applied, one row per airline.
+    columns:
+      - name: airline_id
+        description: The unique key for each airline.
+        data_tests:
+          - not_null
+          - unique

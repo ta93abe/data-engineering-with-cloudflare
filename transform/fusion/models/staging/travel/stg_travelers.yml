@@ -1,0 +1,11 @@
+models:
+  - name: stg_travelers
+    description: Traveler data with basic cleaning applied, one row per traveler.
+    columns:
+      - name: traveler_id
+        description: The unique key for each traveler.
+        data_tests:
+          - not_null
+          - unique
+      - name: email
+        description: "Email address of the traveler. PII: should be hashed or masked before production use."
