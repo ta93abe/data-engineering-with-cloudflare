@@ -1,0 +1,9 @@
+models:
+  - name: stg_hotel_bookings
+    description: Hotel booking data with basic cleaning applied, one row per booking.
+    columns:
+      - name: hotel_booking_id
+        description: The unique key for each hotel booking.
+        data_tests:
+          - not_null
+          - unique

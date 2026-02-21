@@ -1,0 +1,9 @@
+models:
+  - name: stg_flight_bookings
+    description: Flight booking data with basic cleaning applied, one row per booking.
+    columns:
+      - name: flight_booking_id
+        description: The unique key for each flight booking.
+        data_tests:
+          - not_null
+          - unique

@@ -1,0 +1,13 @@
+models:
+  - name: bridge_unified
+    description: >
+      Puppini Bridge (Unified Star Schema) table that consolidates all table PKs
+      into a single UNION ALL structure. Each row carries only the keys from its
+      source table, with all other keys set to NULL. This guarantees that every
+      JOIN through the bridge is many-to-one, structurally eliminating Fan Traps
+      and Chasm Traps.
+    columns:
+      - name: stage
+        description: The source table name that contributed this row.
+        data_tests:
+          - not_null

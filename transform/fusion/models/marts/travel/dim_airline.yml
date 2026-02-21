@@ -1,0 +1,9 @@
+models:
+  - name: dim_airline
+    description: Airline dimension, one row per airline.
+    columns:
+      - name: airline_id
+        description: Primary key for each airline.
+        data_tests:
+          - not_null
+          - unique

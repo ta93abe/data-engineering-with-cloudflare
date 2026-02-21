@@ -1,0 +1,9 @@
+models:
+  - name: fct_hotel_bookings
+    description: Hotel booking fact table, one row per hotel booking.
+    columns:
+      - name: hotel_booking_id
+        description: Primary key for each hotel booking.
+        data_tests:
+          - not_null
+          - unique

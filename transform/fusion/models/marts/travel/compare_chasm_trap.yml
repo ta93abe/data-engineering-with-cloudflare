@@ -1,0 +1,14 @@
+models:
+  - name: compare_chasm_trap
+    description: >
+      Compares per-traveler flight + hotel totals using three methods:
+      (1) ground_truth - independent aggregation then join (correct),
+      (2) traditional - naive LEFT JOIN causing cross-product (wrong for multi-fact travelers),
+      (3) bridge - Puppini Bridge approach (correct).
+      Rows with has_chasm_trap=true show where traditional JOIN inflates amounts.
+    columns:
+      - name: traveler_id
+        description: Primary key for each traveler.
+        data_tests:
+          - not_null
+          - unique

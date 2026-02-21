@@ -1,0 +1,16 @@
+hotel_id,hotel_name,destination_id,star_rating
+H001,Tokyo Grand Hotel,D001,5
+H002,Shinjuku Inn,D001,3
+H003,Manhattan Plaza,D002,4
+H004,Brooklyn Suites,D002,3
+H005,Le Marais Hotel,D003,4
+H006,Champs Elysees Palace,D003,5
+H007,Westminster Hotel,D004,4
+H008,Bangkok Riverside,D005,4
+H009,Sukhumvit Stay,D005,3
+H010,Roman Holiday Inn,D006,3
+H011,Colosseum Grand,D006,5
+H012,Sydney Harbour Hotel,D007,4
+H013,Barcelona Beach Resort,D008,4
+H014,Gangnam Tower Hotel,D009,4
+H015,Dubai Marina Luxury,D010,5
