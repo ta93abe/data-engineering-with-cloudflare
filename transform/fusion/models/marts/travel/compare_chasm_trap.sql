@@ -95,8 +95,10 @@ select
     bridge_result.bridge_flight,
     bridge_result.bridge_hotel,
     bridge_result.bridge_total,
-    traditional.traditional_total != ground_truth.ground_truth_total as has_chasm_trap,
-    bridge_result.bridge_total = ground_truth.ground_truth_total as bridge_is_correct
+    coalesce(traditional.traditional_total, -1)
+        != ground_truth.ground_truth_total as has_chasm_trap,
+    bridge_result.bridge_total
+        is not distinct from ground_truth.ground_truth_total as bridge_is_correct
 from ground_truth
 left join traditional
     on ground_truth.traveler_id = traditional.traveler_id

@@ -7,3 +7,5 @@ models:
         data_tests:
           - not_null
           - unique
+      - name: email
+        description: "Email address of the traveler. PII: should be hashed or masked before production use."

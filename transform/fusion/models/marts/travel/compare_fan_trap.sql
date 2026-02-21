@@ -1,6 +1,6 @@
 -- Fan Trap comparison: per-hotel booking total + average rate
--- traditional_total will be WRONG (inflated) for hotels with multiple rate history records
--- bridge_total and ground_truth will match
+-- traditional_booking_total will be WRONG (inflated) for hotels with multiple rate history records
+-- bridge_booking_total and ground_truth_booking_total will match
 
 with
 
@@ -90,10 +90,10 @@ select
     traditional.traditional_avg_rate,
     bridge_result.bridge_booking_total,
     bridge_result.bridge_avg_rate,
-    traditional.traditional_booking_total
+    coalesce(traditional.traditional_booking_total, -1)
         != ground_truth.ground_truth_booking_total as has_fan_trap,
     bridge_result.bridge_booking_total
-        = ground_truth.ground_truth_booking_total as bridge_is_correct
+        is not distinct from ground_truth.ground_truth_booking_total as bridge_is_correct
 from ground_truth
 left join traditional
     on ground_truth.hotel_id = traditional.hotel_id
