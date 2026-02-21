@@ -1,0 +1,26 @@
+version: 2
+
+models:
+  - name: sat_doctor_details
+    description: >
+      医師の記述属性（氏名、専門科等）の履歴。HASHDIFF で変更を検出し、
+      変更があれば新行が Insert される。
+    columns:
+      - name: DOCTOR_HK
+        description: 医師ハッシュキー（FK → hub_doctor、複合PKの一部）
+        data_tests: [not_null]
+      - name: HASHDIFF
+        description: 属性変更検出用ハッシュ
+        data_tests: [not_null]
+      - name: FIRST_NAME
+        description: 名
+      - name: LAST_NAME
+        description: 姓
+      - name: SPECIALTY
+        description: 専門科
+      - name: LICENSE_NUMBER
+        description: 医師免許番号
+      - name: LOAD_DATETIME
+        description: ロード日時
+      - name: RECORD_SOURCE
+        description: データソース識別子

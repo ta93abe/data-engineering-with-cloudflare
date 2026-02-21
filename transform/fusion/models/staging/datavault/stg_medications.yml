@@ -1,0 +1,19 @@
+version: 2
+
+models:
+  - name: stg_medications
+    description: >
+      薬品データのステージング。automate-dv stage マクロで MEDICATION_HK と
+      MEDICATION_HASHDIFF を生成する。
+    columns:
+      - name: MEDICATION_HK
+        description: 薬品ハッシュキー（MEDICATION_ID の MD5）
+        data_tests: [not_null]
+      - name: MEDICATION_HASHDIFF
+        description: 薬品属性の変更検出用ハッシュ
+      - name: MEDICATION_ID
+        description: 薬品ビジネスキー（MED-001 形式）
+      - name: LOAD_DATETIME
+        description: データロード日時
+      - name: RECORD_SOURCE
+        description: データソース識別子

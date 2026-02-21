@@ -1,0 +1,19 @@
+version: 2
+
+models:
+  - name: stg_doctors
+    description: >
+      医師データのステージング。automate-dv stage マクロで DOCTOR_HK（ハッシュキー）と
+      DOCTOR_HASHDIFF（変更検出用ハッシュ）を生成する。
+    columns:
+      - name: DOCTOR_HK
+        description: 医師ハッシュキー（DOCTOR_ID の MD5）
+        data_tests: [not_null]
+      - name: DOCTOR_HASHDIFF
+        description: 医師属性の変更検出用ハッシュ
+      - name: DOCTOR_ID
+        description: 医師ビジネスキー（DOC-001 形式）
+      - name: LOAD_DATETIME
+        description: データロード日時
+      - name: RECORD_SOURCE
+        description: データソース識別子

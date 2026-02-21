@@ -1,0 +1,16 @@
+version: 2
+
+models:
+  - name: hub_medication
+    description: 薬品ビジネスキーのレジストリ。MEDICATION_ID のユニーク一覧を Insert-only で保持する。
+    columns:
+      - name: MEDICATION_HK
+        description: 薬品ハッシュキー（PK）
+        data_tests: [unique, not_null]
+      - name: MEDICATION_ID
+        description: 薬品ビジネスキー（MED-001 形式）
+        data_tests: [unique, not_null]
+      - name: LOAD_DATETIME
+        description: 初回ロード日時
+      - name: RECORD_SOURCE
+        description: データソース識別子

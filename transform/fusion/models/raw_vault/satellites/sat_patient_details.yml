@@ -1,0 +1,30 @@
+version: 2
+
+models:
+  - name: sat_patient_details
+    description: >
+      患者の記述属性（氏名、住所等）の履歴。HASHDIFF で変更を検出し、
+      変更があれば新行が Insert される。
+    columns:
+      - name: PATIENT_HK
+        description: 患者ハッシュキー（FK → hub_patient、複合PKの一部）
+        data_tests: [not_null]
+      - name: HASHDIFF
+        description: 属性変更検出用ハッシュ
+        data_tests: [not_null]
+      - name: FIRST_NAME
+        description: 名
+      - name: LAST_NAME
+        description: 姓
+      - name: DATE_OF_BIRTH
+        description: 生年月日
+      - name: GENDER
+        description: 性別（M/F）
+      - name: ADDRESS
+        description: 住所
+      - name: PHONE
+        description: 電話番号
+      - name: LOAD_DATETIME
+        description: ロード日時（複合PKの一部）
+      - name: RECORD_SOURCE
+        description: データソース識別子

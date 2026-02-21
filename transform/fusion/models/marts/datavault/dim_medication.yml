@@ -1,0 +1,25 @@
+version: 2
+
+models:
+  - name: dim_medication
+    description: >
+      薬品ディメンション。Hub + 最新の Satellite を結合したフラットなテーブル。
+    columns:
+      - name: MEDICATION_HK
+        description: 薬品ハッシュキー
+        data_tests: [unique, not_null]
+      - name: MEDICATION_ID
+        description: 薬品ビジネスキー（MED-001 形式）
+        data_tests: [unique, not_null]
+      - name: MEDICATION_NAME
+        description: 薬品名
+      - name: MEDICATION_TYPE
+        description: 種別（内服/外用/注射）
+      - name: MANUFACTURER
+        description: 製造元
+      - name: UNIT_PRICE
+        description: 単価
+      - name: HUB_LOAD_DATETIME
+        description: Hub レコードの初回ロード日時
+      - name: SAT_LOAD_DATETIME
+        description: 最新 Satellite レコードのロード日時

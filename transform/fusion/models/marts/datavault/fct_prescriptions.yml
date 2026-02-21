@@ -1,0 +1,32 @@
+version: 2
+
+models:
+  - name: fct_prescriptions
+    description: >
+      処方箋ファクトテーブル。Bridge テーブルを活用して患者情報を含め、
+      処方箋の詳細を分析しやすい形に整形する。粒度は 1処方 = 1行。
+      ESTIMATED_COST は処方日数×薬品単価で計算した推定コスト。
+    columns:
+      - name: LINK_PRESCRIPTION_HK
+        description: 処方箋Link ハッシュキー
+        data_tests: [unique, not_null]
+      - name: PATIENT_HK
+        description: 患者ハッシュキー（FK → dim_patient、Bridge経由で取得）
+        data_tests: [not_null]
+      - name: VISIT_HK
+        description: 診察ハッシュキー
+      - name: MEDICATION_HK
+        description: 薬品ハッシュキー（FK → dim_medication）
+        data_tests: [not_null]
+      - name: PRESCRIPTION_DATE
+        description: 処方日（FK → dim_date）
+      - name: DOSAGE
+        description: 用量
+      - name: FREQUENCY
+        description: 頻度（1日3回等）
+      - name: DURATION_DAYS
+        description: 処方日数
+      - name: UNIT_PRICE
+        description: 薬品単価
+      - name: ESTIMATED_COST
+        description: 推定コスト（処方日数 × 薬品単価）

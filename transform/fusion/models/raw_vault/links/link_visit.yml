@@ -1,0 +1,24 @@
+version: 2
+
+models:
+  - name: link_visit
+    description: >
+      患者×医師×診察のトランザクショナルLink（3キー）。
+      1回の診察における患者と医師の関係を記録する。
+    columns:
+      - name: LINK_VISIT_HK
+        description: Link ハッシュキー（PK、PATIENT_ID + DOCTOR_ID + VISIT_ID の複合ハッシュ）
+        data_tests: [unique, not_null]
+      - name: PATIENT_HK
+        description: 患者ハッシュキー（FK → hub_patient）
+        data_tests: [not_null]
+      - name: DOCTOR_HK
+        description: 医師ハッシュキー（FK → hub_doctor）
+        data_tests: [not_null]
+      - name: VISIT_HK
+        description: 診察ハッシュキー（FK → hub_visit）
+        data_tests: [not_null]
+      - name: LOAD_DATETIME
+        description: 初回ロード日時
+      - name: RECORD_SOURCE
+        description: データソース識別子

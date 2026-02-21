@@ -1,0 +1,23 @@
+version: 2
+
+models:
+  - name: sat_patient_insurance_details
+    description: >
+      患者保険契約の記述属性（保険証番号、有効期間）。Link に紐づく Satellite パターン。
+    columns:
+      - name: LINK_PATIENT_INSURANCE_HK
+        description: 患者保険Link ハッシュキー（FK → link_patient_insurance、複合PKの一部）
+        data_tests: [not_null]
+      - name: HASHDIFF
+        description: 属性変更検出用ハッシュ
+        data_tests: [not_null]
+      - name: POLICY_NUMBER
+        description: 保険証番号
+      - name: START_DATE
+        description: 適用開始日
+      - name: END_DATE
+        description: 適用終了日（NULL = 現在有効）
+      - name: LOAD_DATETIME
+        description: ロード日時
+      - name: RECORD_SOURCE
+        description: データソース識別子
