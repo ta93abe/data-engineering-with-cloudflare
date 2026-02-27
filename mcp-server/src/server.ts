@@ -1,7 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import type { Bindings } from "./types";
 import { describeTable, listTables, queryD1 } from "./tools/d1";
+import type { Bindings } from "./types";
 
 export function createMcpServer(env: Bindings): McpServer {
   const server = new McpServer({
@@ -32,7 +32,9 @@ export function createMcpServer(env: Bindings): McpServer {
       params: z.array(z.unknown()).optional().describe("Query parameters for prepared statement"),
     },
     async ({ sql, params }) => ({
-      content: [{ type: "text", text: JSON.stringify(await queryD1(env.DB, sql, params), null, 2) }],
+      content: [
+        { type: "text", text: JSON.stringify(await queryD1(env.DB, sql, params), null, 2) },
+      ],
     })
   );
 

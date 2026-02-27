@@ -1,13 +1,11 @@
-import { beforeEach, describe, expect, it } from "vitest";
 import { env } from "cloudflare:test";
+import { beforeEach, describe, expect, it } from "vitest";
 import { describeTable, listTables, queryD1 } from "../../tools/d1";
 
 describe("d1-list-tables", () => {
   beforeEach(async () => {
     await env.DB.exec("CREATE TABLE IF NOT EXISTS test_users (id INTEGER PRIMARY KEY, name TEXT)");
-    await env.DB.exec(
-      "CREATE TABLE IF NOT EXISTS test_events (id INTEGER PRIMARY KEY, type TEXT)"
-    );
+    await env.DB.exec("CREATE TABLE IF NOT EXISTS test_events (id INTEGER PRIMARY KEY, type TEXT)");
   });
 
   it("should return table names", async () => {
@@ -18,9 +16,7 @@ describe("d1-list-tables", () => {
 
   it("should exclude internal sqlite tables", async () => {
     const result = await listTables(env.DB);
-    const internalTables = result.filter(
-      (t) => t.startsWith("sqlite_") || t.startsWith("_cf_")
-    );
+    const internalTables = result.filter((t) => t.startsWith("sqlite_") || t.startsWith("_cf_"));
     expect(internalTables).toHaveLength(0);
   });
 });
