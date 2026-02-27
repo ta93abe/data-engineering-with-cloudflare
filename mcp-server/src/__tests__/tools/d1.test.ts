@@ -40,7 +40,9 @@ describe("d1-describe", () => {
   });
 
   it("should throw for non-existent table", async () => {
-    await expect(describeTable(env.DB, "nonexistent")).rejects.toThrow();
+    await expect(describeTable(env.DB, "nonexistent")).rejects.toThrow(
+      "Table not found: nonexistent"
+    );
   });
 
   it("should throw for invalid table name", async () => {

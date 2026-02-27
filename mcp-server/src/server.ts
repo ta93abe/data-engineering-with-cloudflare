@@ -9,19 +9,47 @@ export function createMcpServer(env: Bindings): McpServer {
     version: "1.0.0",
   });
 
-  server.tool("d1-list-tables", "List all tables in the D1 database", async () => ({
-    content: [{ type: "text", text: JSON.stringify(await listTables(env.DB), null, 2) }],
-  }));
+  server.tool("d1-list-tables", "List all tables in the D1 database", async () => {
+    try {
+      return {
+        content: [{ type: "text", text: JSON.stringify(await listTables(env.DB), null, 2) }],
+      };
+    } catch (error) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Error: ${error instanceof Error ? error.message : String(error)}`,
+          },
+        ],
+        isError: true,
+      };
+    }
+  });
 
   server.tool(
     "d1-describe",
     "Get schema information for a D1 table",
     { table: z.string().describe("Table name to describe") },
-    async ({ table }) => ({
-      content: [
-        { type: "text", text: JSON.stringify(await describeTable(env.DB, table), null, 2) },
-      ],
-    })
+    async ({ table }) => {
+      try {
+        return {
+          content: [
+            { type: "text", text: JSON.stringify(await describeTable(env.DB, table), null, 2) },
+          ],
+        };
+      } catch (error) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Error: ${error instanceof Error ? error.message : String(error)}`,
+            },
+          ],
+          isError: true,
+        };
+      }
+    }
   );
 
   server.tool(
@@ -31,11 +59,25 @@ export function createMcpServer(env: Bindings): McpServer {
       sql: z.string().describe("SQL query to execute"),
       params: z.array(z.unknown()).optional().describe("Query parameters for prepared statement"),
     },
-    async ({ sql, params }) => ({
-      content: [
-        { type: "text", text: JSON.stringify(await queryD1(env.DB, sql, params), null, 2) },
-      ],
-    })
+    async ({ sql, params }) => {
+      try {
+        return {
+          content: [
+            { type: "text", text: JSON.stringify(await queryD1(env.DB, sql, params), null, 2) },
+          ],
+        };
+      } catch (error) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Error: ${error instanceof Error ? error.message : String(error)}`,
+            },
+          ],
+          isError: true,
+        };
+      }
+    }
   );
 
   return server;

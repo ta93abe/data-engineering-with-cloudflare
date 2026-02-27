@@ -38,7 +38,9 @@ describe("Auth Middleware", () => {
         id: 1,
       }),
     });
-    // Should not be 401 (auth passed), may be 200 or other MCP response
+    // Auth passed — verify no auth error and no server error
     expect(response.status).not.toBe(401);
+    expect(response.status).not.toBe(404);
+    expect(response.status).toBeLessThan(500);
   });
 });
