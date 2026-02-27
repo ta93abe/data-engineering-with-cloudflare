@@ -1,0 +1,30 @@
+{
+  "cli_version": "0.4.8",
+  "checkpoint_id": "74794d6eea10",
+  "session_id": "b815636d-d803-4230-b824-e42cbdc53eaf",
+  "strategy": "manual-commit",
+  "created_at": "2026-02-27T14:39:08.77012Z",
+  "branch": "feat/mcp-cloudflare-d1",
+  "checkpoints_count": 1,
+  "files_touched": [
+    ".serena/project.yml"
+  ],
+  "agent": "Claude Code",
+  "turn_id": "55fb8cfc5c74",
+  "token_usage": {
+    "input_tokens": 1019,
+    "cache_creation_tokens": 240581,
+    "cache_read_tokens": 15761136,
+    "output_tokens": 53671,
+    "api_call_count": 131
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-02-27T14:39:08.472453Z",
+    "agent_lines": 11,
+    "human_added": 3917,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 3928,
+    "agent_percentage": 0.280040733197556
+  }
+}
