@@ -1,9 +1,12 @@
 import { createMcpHandler } from "agents/mcp";
 import { Hono } from "hono";
+import { bearerAuth } from "./middleware/auth";
 import { createMcpServer } from "./server";
 import type { Bindings } from "./types";
 
 const app = new Hono<{ Bindings: Bindings }>();
+
+app.use("*", bearerAuth);
 
 app.get("/health", (c) => c.text("OK"));
 
