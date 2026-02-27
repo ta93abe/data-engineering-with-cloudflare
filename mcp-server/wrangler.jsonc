@@ -1,0 +1,20 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "mcp-cloudflare",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-02-27",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "raw",
+      "database_id": "30fb49b7-8321-4792-8706-06c9205ce026"
+    }
+  ]
+  // シークレット:
+  //   wrangler secret put MCP_AUTH_TOKEN
+}
