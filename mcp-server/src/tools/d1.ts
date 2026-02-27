@@ -26,3 +26,30 @@ export async function describeTable(db: D1Database, table: string): Promise<Colu
   }
   return result.results;
 }
+
+export interface QueryResult {
+  results: Record<string, unknown>[];
+  meta: {
+    changes: number;
+    last_row_id: number;
+    duration: number;
+  };
+}
+
+export async function queryD1(
+  db: D1Database,
+  sql: string,
+  params?: unknown[]
+): Promise<QueryResult> {
+  const stmt = db.prepare(sql);
+  const bound = params && params.length > 0 ? stmt.bind(...params) : stmt;
+  const result = await bound.all();
+  return {
+    results: result.results as Record<string, unknown>[],
+    meta: {
+      changes: result.meta?.changes ?? 0,
+      last_row_id: result.meta?.last_row_id ?? 0,
+      duration: result.meta?.duration ?? 0,
+    },
+  };
+}
