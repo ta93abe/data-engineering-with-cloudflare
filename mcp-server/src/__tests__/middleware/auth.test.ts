@@ -1,0 +1,46 @@
+import { SELF } from "cloudflare:test";
+import { describe, expect, it } from "vitest";
+
+describe("Auth Middleware", () => {
+  it("should allow health check without auth", async () => {
+    const response = await SELF.fetch("http://localhost/health");
+    expect(response.status).toBe(200);
+  });
+
+  it("should reject /mcp without auth header", async () => {
+    const response = await SELF.fetch("http://localhost/mcp", { method: "POST" });
+    expect(response.status).toBe(401);
+  });
+
+  it("should reject /mcp with invalid token", async () => {
+    const response = await SELF.fetch("http://localhost/mcp", {
+      method: "POST",
+      headers: { Authorization: "Bearer wrong-token" },
+    });
+    expect(response.status).toBe(401);
+  });
+
+  it("should accept /mcp with valid token", async () => {
+    const response = await SELF.fetch("http://localhost/mcp", {
+      method: "POST",
+      headers: {
+        Authorization: "Bearer test-secret-token",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        method: "initialize",
+        params: {
+          protocolVersion: "2025-03-26",
+          capabilities: {},
+          clientInfo: { name: "test", version: "1.0.0" },
+        },
+        id: 1,
+      }),
+    });
+    // Auth passed — verify no auth error and no server error
+    expect(response.status).not.toBe(401);
+    expect(response.status).not.toBe(404);
+    expect(response.status).toBeLessThan(500);
+  });
+});
