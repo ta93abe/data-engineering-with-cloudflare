@@ -36,11 +36,20 @@ export interface QueryResult {
   };
 }
 
+const ALLOWED_VERBS = new Set(["SELECT", "INSERT", "UPDATE", "DELETE", "WITH", "EXPLAIN"]);
+
 export async function queryD1(
   db: D1Database,
   sql: string,
   params?: unknown[]
 ): Promise<QueryResult> {
+  const verb = sql.trimStart().split(/\s+/)[0]?.toUpperCase();
+  if (!verb || !ALLOWED_VERBS.has(verb)) {
+    throw new Error(
+      `Unsupported SQL operation: ${verb ?? "(empty)"}. Allowed: ${[...ALLOWED_VERBS].join(", ")}`
+    );
+  }
+
   const stmt = db.prepare(sql);
   const bound = params && params.length > 0 ? stmt.bind(...params) : stmt;
   const result = await bound.all();

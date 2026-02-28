@@ -76,4 +76,22 @@ describe("d1-query", () => {
     ]);
     expect(result.meta.changes).toBe(1);
   });
+
+  it("should reject DROP TABLE", async () => {
+    await expect(queryD1(env.DB, "DROP TABLE test_users")).rejects.toThrow(
+      "Unsupported SQL operation: DROP"
+    );
+  });
+
+  it("should reject ALTER TABLE", async () => {
+    await expect(queryD1(env.DB, "ALTER TABLE test_users ADD COLUMN age INTEGER")).rejects.toThrow(
+      "Unsupported SQL operation: ALTER"
+    );
+  });
+
+  it("should reject CREATE TABLE", async () => {
+    await expect(queryD1(env.DB, "CREATE TABLE evil (id INTEGER)")).rejects.toThrow(
+      "Unsupported SQL operation: CREATE"
+    );
+  });
 });
