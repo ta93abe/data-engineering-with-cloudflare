@@ -1,0 +1,6 @@
+/pr
+
+---
+
+https://github.com/shiguredo/s3-rs/
+これ使うのどう思う？
