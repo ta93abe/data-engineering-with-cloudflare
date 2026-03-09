@@ -1,0 +1,25 @@
+{
+  "name": "sandbox-dbt",
+  "type": "module",
+  "scripts": {
+    "prebuild": "rsync -av --exclude='target' --exclude='dbt_packages' --exclude='*.duckdb' --exclude='logs' --exclude='.venv' --exclude='__pycache__' ../transform/core/ ./dbt-project/",
+    "dev": "pnpm prebuild && wrangler dev",
+    "deploy": "pnpm prebuild && wrangler deploy --minify",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome lint .",
+    "lint:fix": "biome lint --write .",
+    "format": "biome format --write .",
+    "check": "biome check .",
+    "check:fix": "biome check --write ."
+  },
+  "dependencies": {
+    "@cloudflare/sandbox": "^0.7.13",
+    "hono": "^4.11.7"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.3.13",
+    "@cloudflare/workers-types": "^4.20250124.0",
+    "typescript": "^5.7.0",
+    "wrangler": "^4.4.0"
+  }
+}

@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.wrangler/
+wrangler-env.d.ts
+
+# Build artifact: synced from transform/core via prebuild script
+dbt-project/
