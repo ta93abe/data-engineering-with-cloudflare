@@ -1,0 +1,30 @@
+github actions, cloudflare container, cloudflare sandbox, dbt Platform それぞれでdbt実行をするpros/consを教えて。他の選択肢も含めて。
+
+---
+
+Cloudflare Sandbox の二重丸以外を二重丸にするためのソリューションは？
+
+---
+
+ゆくゆくはGAするのでベータ版だからは無視して
+
+---
+
+いったんドキュメントにしておいて
+ローカルで動作確認、デプロイはどうやってやるの？
+
+---
+
+ローカルで動作確認、デプロイはどうやってやるの？
+
+---
+
+pip ではなく、uv 使える？
+
+---
+
+podman対応しているの？
+
+---
+
+orbstackは？
