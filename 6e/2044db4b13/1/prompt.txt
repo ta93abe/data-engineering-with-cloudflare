@@ -1,0 +1,18 @@
+npm create cloudflare@latest -- --template=cloudflare/templates/containers-template
+これどこのレポジトリ？
+
+---
+
+どんなテンプレート？
+
+---
+
+dbt 実行できそう？
+
+---
+
+ステート管理はR2でいいのでは？
+
+---
+
+Cloudflare Sandboxは？
