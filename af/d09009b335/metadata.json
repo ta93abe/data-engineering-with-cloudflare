@@ -12,14 +12,14 @@
       "metadata": "/af/d09009b335/0/metadata.json",
       "transcript": "/af/d09009b335/0/full.jsonl",
       "content_hash": "/af/d09009b335/0/content_hash.txt",
-      "prompt": ""
+      "prompt": "/af/d09009b335/0/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 5,
-    "cache_creation_tokens": 10380,
-    "cache_read_tokens": 537550,
-    "output_tokens": 4258,
-    "api_call_count": 5
+    "input_tokens": 17,
+    "cache_creation_tokens": 3009,
+    "cache_read_tokens": 1039876,
+    "output_tokens": 1865,
+    "api_call_count": 9
   }
 }
