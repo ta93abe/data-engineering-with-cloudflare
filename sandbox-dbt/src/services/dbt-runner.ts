@@ -1,10 +1,8 @@
 import { getSandbox } from "@cloudflare/sandbox";
-import type { DbtCommand, DbtCommandResult, DbtRunResult, Env } from "../types";
+import type { DbtCommand, DbtCommandResult, DbtRunResult, Env, RunRequest } from "../types";
 
-const DBT_DIR = "/workspace/dbt";
-
-// Allowed dbt commands (whitelist for safety)
-const ALLOWED_COMMANDS: ReadonlySet<string> = new Set(["seed", "run", "test"]);
+const WORKSPACE = "/workspace";
+const ALLOWED_COMMANDS: ReadonlySet<string> = new Set(["seed", "run", "test", "build"]);
 
 function generateRunId(): string {
   const now = new Date();
@@ -14,49 +12,131 @@ function generateRunId(): string {
   return `${date}-${time}-${rand}`;
 }
 
-function buildDbtCommand(command: DbtCommand): string {
-  // Validate command against whitelist to prevent injection
+function cloneCommand(repo: string, ref: string, token: string): string {
+  const url = `https://x-access-token:${token}@github.com/${repo}.git`;
+  return `git clone --depth 1 --branch ${ref} ${url} ${WORKSPACE}/repo`;
+}
+
+function dbtCommand(dbtDir: string, command: DbtCommand): string {
   if (!ALLOWED_COMMANDS.has(command)) {
     throw new Error(`Invalid dbt command: ${command}`);
   }
+  const fullPath = `${WORKSPACE}/repo/${dbtDir}`;
   return [
-    `cd ${DBT_DIR}`,
-    `set -a && source ${DBT_DIR}/.env && set +a`,
+    `cd ${fullPath}`,
+    `set -a && source ${fullPath}/.env && set +a`,
     `uv run dbt ${command} --profiles-dir . --target ci`,
   ].join(" && ");
 }
 
-export async function runDbt(
+async function cloneRepo(
+  sandbox: ReturnType<typeof getSandbox>,
   env: Env,
-  commands: DbtCommand[] = ["seed", "run", "test"]
-): Promise<{ result: DbtRunResult; artifacts: Record<string, string> }> {
-  const runId = generateRunId();
-  const startedAt = new Date().toISOString();
+  ref: string
+): Promise<{ success: boolean; commitSha: string; output: string }> {
+  const result = await sandbox.exec(cloneCommand(env.GITHUB_REPO, ref, env.GITHUB_TOKEN));
+  if (!result.success) {
+    return { success: false, commitSha: "", output: `${result.stdout}\n${result.stderr}` };
+  }
 
-  const sandbox = getSandbox(env.SANDBOX, `dbt-run-${runId}`);
+  const shaResult = await sandbox.exec(`cd ${WORKSPACE}/repo && git rev-parse HEAD`);
+  const commitSha = shaResult.stdout.trim();
 
-  // Write R2 credentials as .env file for dbt's env_var() Jinja
+  return { success: true, commitSha, output: result.stdout };
+}
+
+async function setupEnv(
+  sandbox: ReturnType<typeof getSandbox>,
+  env: Env,
+  dbtDir: string
+): Promise<void> {
   const envContent = [
     `R2_ENDPOINT=${env.R2_ENDPOINT}`,
     `R2_ACCESS_KEY_ID=${env.R2_ACCESS_KEY_ID}`,
     `R2_SECRET_ACCESS_KEY=${env.R2_SECRET_ACCESS_KEY}`,
   ].join("\n");
 
-  await sandbox.writeFile(`${DBT_DIR}/.env`, envContent);
+  await sandbox.writeFile(`${WORKSPACE}/repo/${dbtDir}/.env`, envContent);
+}
 
-  // Run each dbt command sequentially
+async function installDeps(
+  sandbox: ReturnType<typeof getSandbox>,
+  dbtDir: string
+): Promise<{ success: boolean; output: string; durationMs: number }> {
+  const fullPath = `${WORKSPACE}/repo/${dbtDir}`;
+  const start = Date.now();
+  const result = await sandbox.exec(
+    `cd ${fullPath} && uv sync --frozen --no-dev && uv run dbt deps --profiles-dir . --target ci`
+  );
+  return {
+    success: result.success,
+    output: result.stdout + (result.stderr ? `\n--- stderr ---\n${result.stderr}` : ""),
+    durationMs: Date.now() - start,
+  };
+}
+
+export async function runDbt(
+  env: Env,
+  request: RunRequest = {}
+): Promise<{ result: DbtRunResult; artifacts: Record<string, string> }> {
+  const ref = request.ref ?? "main";
+  const commands = request.commands ?? ["seed", "run", "test"];
+  const dbtDir = request.dbtDir ?? "transform/core";
+
+  const runId = generateRunId();
+  const startedAt = new Date().toISOString();
+  const sandbox = getSandbox(env.SANDBOX, `dbt-run-${runId}`);
+
+  // 1. Clone repo
+  const clone = await cloneRepo(sandbox, env, ref);
+  if (!clone.success) {
+    await sandbox.destroy();
+    return {
+      result: {
+        runId,
+        ref,
+        commitSha: "",
+        startedAt,
+        completedAt: new Date().toISOString(),
+        success: false,
+        commands: [],
+        error: `git clone failed: ${clone.output}`,
+      },
+      artifacts: {},
+    };
+  }
+
+  // 2. Write .env and install dependencies
+  await setupEnv(sandbox, env, dbtDir);
+  const deps = await installDeps(sandbox, dbtDir);
+  if (!deps.success) {
+    await sandbox.destroy();
+    return {
+      result: {
+        runId,
+        ref,
+        commitSha: clone.commitSha,
+        startedAt,
+        completedAt: new Date().toISOString(),
+        success: false,
+        commands: [],
+        error: `dependency install failed: ${deps.output}`,
+      },
+      artifacts: {},
+    };
+  }
+
+  // 3. Run dbt commands
   const commandResults: DbtCommandResult[] = [];
   let allSuccess = true;
 
-  for (const command of commands) {
-    const fullCmd = buildDbtCommand(command);
+  for (const cmd of commands) {
+    const fullCmd = dbtCommand(dbtDir, cmd);
     const start = Date.now();
-
-    // sandbox.exec runs inside an isolated container - not the host shell
     const sandboxResult = await sandbox.exec(fullCmd);
 
     const cmdResult: DbtCommandResult = {
-      command,
+      command: cmd,
       success: sandboxResult.success,
       output:
         sandboxResult.stdout +
@@ -72,12 +152,13 @@ export async function runDbt(
     }
   }
 
-  // Collect artifacts from the sandbox
+  // 4. Collect artifacts
   const artifacts: Record<string, string> = {};
+  const dbtPath = `${WORKSPACE}/repo/${dbtDir}`;
   const artifactPaths = [
-    { key: "manifest.json", path: `${DBT_DIR}/target/manifest.json` },
-    { key: "run_results.json", path: `${DBT_DIR}/target/run_results.json` },
-    { key: "dbt.log", path: `${DBT_DIR}/logs/dbt.log` },
+    { key: "manifest.json", path: `${dbtPath}/target/manifest.json` },
+    { key: "run_results.json", path: `${dbtPath}/target/run_results.json` },
+    { key: "dbt.log", path: `${dbtPath}/logs/dbt.log` },
   ];
 
   for (const { key, path } of artifactPaths) {
@@ -89,11 +170,12 @@ export async function runDbt(
     }
   }
 
-  // Clean up the sandbox
   await sandbox.destroy();
 
   const result: DbtRunResult = {
     runId,
+    ref,
+    commitSha: clone.commitSha,
     startedAt,
     completedAt: new Date().toISOString(),
     success: allSuccess,

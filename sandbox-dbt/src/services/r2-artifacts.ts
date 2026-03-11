@@ -38,6 +38,8 @@ export async function listRuns(r2: R2Bucket, limit = 20): Promise<DbtRunSummary[
     const result = (await object.json()) as DbtRunResult;
     summaries.push({
       runId: result.runId,
+      ref: result.ref,
+      commitSha: result.commitSha,
       startedAt: result.startedAt,
       completedAt: result.completedAt,
       success: result.success,
