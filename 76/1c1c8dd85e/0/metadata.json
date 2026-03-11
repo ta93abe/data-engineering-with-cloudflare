@@ -1,0 +1,44 @@
+{
+  "cli_version": "0.5.0",
+  "checkpoint_id": "761c1c8dd85e",
+  "session_id": "71de6dcc-6839-4ba9-a404-b2ca3e2bc2ac",
+  "strategy": "manual-commit",
+  "created_at": "2026-03-11T14:11:36.836521Z",
+  "branch": "feat/d1-to-r2-iceberg",
+  "checkpoints_count": 0,
+  "files_touched": [
+    "infrastructure/d1/migrations/0005_export_sync_state.sql",
+    "d1-to-iceberg/package.json",
+    "d1-to-iceberg/tsconfig.json",
+    "d1-to-iceberg/biome.json",
+    "d1-to-iceberg/wrangler.jsonc",
+    "d1-to-iceberg/src/types.ts",
+    "d1-to-iceberg/src/export.ts",
+    "d1-to-iceberg/src/index.ts",
+    "d1-to-iceberg/.gitignore"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-6",
+  "turn_id": "6aee514bda10",
+  "checkpoint_transcript_start": 1129,
+  "transcript_lines_at_start": 1129,
+  "token_usage": {
+    "input_tokens": 36,
+    "cache_creation_tokens": 14423,
+    "cache_read_tokens": 5000528,
+    "output_tokens": 7419,
+    "api_call_count": 34
+  },
+  "session_metrics": {
+    "turn_count": 42
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-03-11T14:11:36.044865Z",
+    "agent_lines": 281,
+    "human_added": 983,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 1264,
+    "agent_percentage": 22.231012658227847
+  }
+}
