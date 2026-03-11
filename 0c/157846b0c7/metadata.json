@@ -1,0 +1,36 @@
+{
+  "cli_version": "0.5.0",
+  "checkpoint_id": "0c157846b0c7",
+  "strategy": "manual-commit",
+  "branch": "feat/agents-sdk",
+  "checkpoints_count": 22,
+  "files_touched": [
+    ".serena/project.yml",
+    "agents/.gitignore",
+    "agents/biome.json",
+    "agents/package.json",
+    "agents/slack-manifest.json",
+    "agents/src/agent.ts",
+    "agents/src/index.ts",
+    "agents/src/slack.ts",
+    "agents/src/tools.ts",
+    "agents/src/types.ts",
+    "agents/tsconfig.json",
+    "agents/wrangler.jsonc"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0c/157846b0c7/0/metadata.json",
+      "transcript": "/0c/157846b0c7/0/full.jsonl",
+      "content_hash": "/0c/157846b0c7/0/content_hash.txt",
+      "prompt": "/0c/157846b0c7/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 229,
+    "cache_creation_tokens": 186444,
+    "cache_read_tokens": 17610866,
+    "output_tokens": 42913,
+    "api_call_count": 160
+  }
+}

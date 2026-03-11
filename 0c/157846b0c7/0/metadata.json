@@ -1,0 +1,47 @@
+{
+  "cli_version": "0.5.0",
+  "checkpoint_id": "0c157846b0c7",
+  "session_id": "71de6dcc-6839-4ba9-a404-b2ca3e2bc2ac",
+  "strategy": "manual-commit",
+  "created_at": "2026-03-11T13:44:32.435001Z",
+  "branch": "feat/agents-sdk",
+  "checkpoints_count": 22,
+  "files_touched": [
+    ".serena/project.yml",
+    "agents/.gitignore",
+    "agents/biome.json",
+    "agents/package.json",
+    "agents/slack-manifest.json",
+    "agents/src/agent.ts",
+    "agents/src/index.ts",
+    "agents/src/slack.ts",
+    "agents/src/tools.ts",
+    "agents/src/types.ts",
+    "agents/tsconfig.json",
+    "agents/wrangler.jsonc"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-6",
+  "turn_id": "041f71aa8bc5",
+  "checkpoint_transcript_start": 34,
+  "transcript_lines_at_start": 34,
+  "token_usage": {
+    "input_tokens": 229,
+    "cache_creation_tokens": 186444,
+    "cache_read_tokens": 17610866,
+    "output_tokens": 42913,
+    "api_call_count": 160
+  },
+  "session_metrics": {
+    "turn_count": 27
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-03-11T13:44:32.027291Z",
+    "agent_lines": 0,
+    "human_added": 49692,
+    "human_modified": 226,
+    "human_removed": 0,
+    "total_committed": 49883,
+    "agent_percentage": 0
+  }
+}
