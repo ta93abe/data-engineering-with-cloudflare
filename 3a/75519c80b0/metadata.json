@@ -1,0 +1,29 @@
+{
+  "cli_version": "0.5.0",
+  "checkpoint_id": "3a75519c80b0",
+  "strategy": "manual-commit",
+  "branch": "feat/d1-to-r2-iceberg",
+  "checkpoints_count": 10,
+  "files_touched": [
+    "d1-to-iceberg/schemas/oura_daily_activity.json",
+    "d1-to-iceberg/schemas/oura_daily_readiness.json",
+    "d1-to-iceberg/schemas/oura_daily_sleep.json",
+    "d1-to-iceberg/schemas/oura_heart_rate.json",
+    "d1-to-iceberg/wrangler.jsonc"
+  ],
+  "sessions": [
+    {
+      "metadata": "/3a/75519c80b0/0/metadata.json",
+      "transcript": "/3a/75519c80b0/0/full.jsonl",
+      "content_hash": "/3a/75519c80b0/0/content_hash.txt",
+      "prompt": "/3a/75519c80b0/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 89,
+    "cache_creation_tokens": 320643,
+    "cache_read_tokens": 8149171,
+    "output_tokens": 15145,
+    "api_call_count": 66
+  }
+}

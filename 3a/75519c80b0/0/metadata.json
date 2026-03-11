@@ -1,0 +1,40 @@
+{
+  "cli_version": "0.5.0",
+  "checkpoint_id": "3a75519c80b0",
+  "session_id": "71de6dcc-6839-4ba9-a404-b2ca3e2bc2ac",
+  "strategy": "manual-commit",
+  "created_at": "2026-03-11T23:52:45.141223Z",
+  "branch": "feat/d1-to-r2-iceberg",
+  "checkpoints_count": 10,
+  "files_touched": [
+    "d1-to-iceberg/schemas/oura_daily_activity.json",
+    "d1-to-iceberg/schemas/oura_daily_readiness.json",
+    "d1-to-iceberg/schemas/oura_daily_sleep.json",
+    "d1-to-iceberg/schemas/oura_heart_rate.json",
+    "d1-to-iceberg/wrangler.jsonc"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-6",
+  "turn_id": "f6e63284af85",
+  "checkpoint_transcript_start": 1552,
+  "transcript_lines_at_start": 1552,
+  "token_usage": {
+    "input_tokens": 89,
+    "cache_creation_tokens": 320643,
+    "cache_read_tokens": 8149171,
+    "output_tokens": 15145,
+    "api_call_count": 66
+  },
+  "session_metrics": {
+    "turn_count": 61
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-03-11T23:52:44.126095Z",
+    "agent_lines": 78,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 78,
+    "agent_percentage": 100
+  }
+}
