@@ -1,0 +1,21 @@
+gitignoreして
+
+---
+
+cloudflare sandbox でコードをPull してdbt build するとかはできる？
+
+---
+
+sandbox をselfhosted runner として使うイメージ
+
+---
+
+sandbox をselfhosted runner 的に使うイメージ
+
+---
+
+Containers ではなく、Sandbox使って
+
+---
+
+実装だけやって。

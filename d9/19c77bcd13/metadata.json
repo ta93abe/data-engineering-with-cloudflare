@@ -1,0 +1,33 @@
+{
+  "cli_version": "0.5.0",
+  "checkpoint_id": "d919c77bcd13",
+  "strategy": "manual-commit",
+  "branch": "feat/sandbox-dbt-worker",
+  "checkpoints_count": 5,
+  "files_touched": [
+    ".serena/project.yml",
+    "sandbox-dbt/.gitignore",
+    "sandbox-dbt/Dockerfile",
+    "sandbox-dbt/package.json",
+    "sandbox-dbt/src/index.ts",
+    "sandbox-dbt/src/services/dbt-runner.ts",
+    "sandbox-dbt/src/services/r2-artifacts.ts",
+    "sandbox-dbt/src/types.ts",
+    "sandbox-dbt/wrangler.jsonc"
+  ],
+  "sessions": [
+    {
+      "metadata": "/d9/19c77bcd13/0/metadata.json",
+      "transcript": "/d9/19c77bcd13/0/full.jsonl",
+      "content_hash": "/d9/19c77bcd13/0/content_hash.txt",
+      "prompt": "/d9/19c77bcd13/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 50,
+    "cache_creation_tokens": 189669,
+    "cache_read_tokens": 1860698,
+    "output_tokens": 14938,
+    "api_call_count": 31
+  }
+}
