@@ -44,8 +44,10 @@ async function exportTable(
 
   if (rows.length === 0) return 0;
 
-  await pipeline.send(rows);
-  return rows.length;
+  const loadedAt = new Date().toISOString();
+  const enriched = rows.map((row) => ({ ...row, loaded_at: loadedAt }));
+  await pipeline.send(enriched);
+  return enriched.length;
 }
 
 async function exportHeartRate(
@@ -83,8 +85,10 @@ async function exportHeartRate(
     const rows = result.results;
     if (rows.length === 0) break;
 
-    await pipeline.send(rows);
-    totalSent += rows.length;
+    const loadedAt = new Date().toISOString();
+    const enriched = rows.map((row) => ({ ...row, loaded_at: loadedAt }));
+    await pipeline.send(enriched);
+    totalSent += enriched.length;
 
     const lastRow = rows[rows.length - 1] as { day: string; timestamp: string };
     cursorDay = lastRow.day;

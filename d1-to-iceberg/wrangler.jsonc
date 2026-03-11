@@ -23,11 +23,11 @@
     }
   ],
 
-  // Pipelines — 4本の Pipeline binding
+  // Pipelines — 4本の Pipeline binding (stream ID で指定)
   "pipelines": [
-    { "pipeline": "oura-daily-sleep", "binding": "PIPELINE_SLEEP" },
-    { "pipeline": "oura-daily-activity", "binding": "PIPELINE_ACTIVITY" },
-    { "pipeline": "oura-daily-readiness", "binding": "PIPELINE_READINESS" },
-    { "pipeline": "oura-heart-rate", "binding": "PIPELINE_HEART_RATE" }
+    { "pipeline": "a13c8b46f66e44f6b0654ca22370e281", "binding": "PIPELINE_SLEEP" },
+    { "pipeline": "0018ba575cd64826a4914d0aa7e63c21", "binding": "PIPELINE_ACTIVITY" },
+    { "pipeline": "76bce5d160dc4df79729503f6cf554aa", "binding": "PIPELINE_READINESS" },
+    { "pipeline": "5aa0b2d7e57a40c0afea9dfe92586f1b", "binding": "PIPELINE_HEART_RATE" }
   ]
 }
