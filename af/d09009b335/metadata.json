@@ -5,6 +5,7 @@
   "branch": "main",
   "checkpoints_count": 0,
   "files_touched": [
+    "docs/superpowers/plans/2026-03-11-d1-to-r2-iceberg.md",
     "docs/superpowers/specs/2026-03-11-d1-to-r2-iceberg-design.md"
   ],
   "sessions": [
@@ -17,9 +18,9 @@
   ],
   "token_usage": {
     "input_tokens": 17,
-    "cache_creation_tokens": 3009,
-    "cache_read_tokens": 1039876,
-    "output_tokens": 1865,
-    "api_call_count": 9
+    "cache_creation_tokens": 23064,
+    "cache_read_tokens": 1799939,
+    "output_tokens": 10618,
+    "api_call_count": 14
   }
 }

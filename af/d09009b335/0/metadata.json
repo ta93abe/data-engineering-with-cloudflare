@@ -3,34 +3,35 @@
   "checkpoint_id": "afd09009b335",
   "session_id": "71de6dcc-6839-4ba9-a404-b2ca3e2bc2ac",
   "strategy": "manual-commit",
-  "created_at": "2026-03-11T14:02:52.52882Z",
+  "created_at": "2026-03-11T14:07:11.164678Z",
   "branch": "main",
   "checkpoints_count": 0,
   "files_touched": [
+    "docs/superpowers/plans/2026-03-11-d1-to-r2-iceberg.md",
     "docs/superpowers/specs/2026-03-11-d1-to-r2-iceberg-design.md"
   ],
   "agent": "Claude Code",
   "model": "claude-opus-4-6",
-  "turn_id": "d0808cde5f5f",
-  "checkpoint_transcript_start": 993,
-  "transcript_lines_at_start": 993,
+  "turn_id": "162382de4551",
+  "checkpoint_transcript_start": 1035,
+  "transcript_lines_at_start": 1035,
   "token_usage": {
     "input_tokens": 17,
-    "cache_creation_tokens": 3009,
-    "cache_read_tokens": 1039876,
-    "output_tokens": 1865,
-    "api_call_count": 9
+    "cache_creation_tokens": 23064,
+    "cache_read_tokens": 1799939,
+    "output_tokens": 10618,
+    "api_call_count": 14
   },
   "session_metrics": {
-    "turn_count": 40
+    "turn_count": 41
   },
   "initial_attribution": {
-    "calculated_at": "2026-03-11T14:02:51.922885Z",
-    "agent_lines": 2,
-    "human_added": 0,
-    "human_modified": 0,
+    "calculated_at": "2026-03-11T14:07:10.452146Z",
+    "agent_lines": 648,
+    "human_added": 35,
+    "human_modified": 19,
     "human_removed": 0,
-    "total_committed": 2,
-    "agent_percentage": 100
+    "total_committed": 702,
+    "agent_percentage": 92.3076923076923
   }
 }
