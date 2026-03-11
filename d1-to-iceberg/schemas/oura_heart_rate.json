@@ -1,0 +1,11 @@
+{
+  "fields": [
+    { "name": "id", "type": "int32", "required": true },
+    { "name": "bpm", "type": "int32", "required": true },
+    { "name": "source", "type": "string", "required": false },
+    { "name": "timestamp", "type": "string", "required": true },
+    { "name": "day", "type": "string", "required": true },
+    { "name": "synced_at", "type": "string", "required": false },
+    { "name": "loaded_at", "type": "string", "required": false }
+  ]
+}

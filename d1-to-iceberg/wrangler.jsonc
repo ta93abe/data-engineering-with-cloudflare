@@ -25,9 +25,9 @@
 
   // Pipelines — 4本の Pipeline binding (stream ID で指定)
   "pipelines": [
-    { "pipeline": "a13c8b46f66e44f6b0654ca22370e281", "binding": "PIPELINE_SLEEP" },
-    { "pipeline": "0018ba575cd64826a4914d0aa7e63c21", "binding": "PIPELINE_ACTIVITY" },
-    { "pipeline": "76bce5d160dc4df79729503f6cf554aa", "binding": "PIPELINE_READINESS" },
-    { "pipeline": "5aa0b2d7e57a40c0afea9dfe92586f1b", "binding": "PIPELINE_HEART_RATE" }
+    { "pipeline": "c0bbd45802dd47f78a52ca0c418d5a6f", "binding": "PIPELINE_SLEEP" },
+    { "pipeline": "8996b0f6a1c44681976a38e539ee7d87", "binding": "PIPELINE_ACTIVITY" },
+    { "pipeline": "fd0b3f2cc2f14c5483ec3ce4118e46e9", "binding": "PIPELINE_READINESS" },
+    { "pipeline": "6d0b6bfb5e22481480ecfa8afe141f8f", "binding": "PIPELINE_HEART_RATE" }
   ]
 }

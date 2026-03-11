@@ -1,0 +1,20 @@
+{
+  "fields": [
+    { "name": "id", "type": "string", "required": true },
+    { "name": "day", "type": "string", "required": true },
+    { "name": "score", "type": "int32", "required": false },
+    { "name": "temperature_deviation", "type": "float64", "required": false },
+    { "name": "temperature_trend_deviation", "type": "float64", "required": false },
+    { "name": "timestamp", "type": "string", "required": false },
+    { "name": "activity_balance", "type": "int32", "required": false },
+    { "name": "body_temperature", "type": "int32", "required": false },
+    { "name": "hrv_balance", "type": "int32", "required": false },
+    { "name": "previous_day_activity", "type": "int32", "required": false },
+    { "name": "previous_night", "type": "int32", "required": false },
+    { "name": "recovery_index", "type": "int32", "required": false },
+    { "name": "resting_heart_rate", "type": "int32", "required": false },
+    { "name": "sleep_balance", "type": "int32", "required": false },
+    { "name": "synced_at", "type": "string", "required": false },
+    { "name": "loaded_at", "type": "string", "required": false }
+  ]
+}

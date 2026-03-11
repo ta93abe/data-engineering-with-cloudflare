@@ -1,0 +1,26 @@
+{
+  "fields": [
+    { "name": "id", "type": "string", "required": true },
+    { "name": "day", "type": "string", "required": true },
+    { "name": "score", "type": "int32", "required": false },
+    { "name": "active_calories", "type": "int32", "required": false },
+    { "name": "total_calories", "type": "int32", "required": false },
+    { "name": "steps", "type": "int32", "required": false },
+    { "name": "equivalent_walking_distance", "type": "float64", "required": false },
+    { "name": "high_activity_time", "type": "int32", "required": false },
+    { "name": "medium_activity_time", "type": "int32", "required": false },
+    { "name": "low_activity_time", "type": "int32", "required": false },
+    { "name": "sedentary_time", "type": "int32", "required": false },
+    { "name": "resting_time", "type": "int32", "required": false },
+    { "name": "met_average", "type": "float64", "required": false },
+    { "name": "meet_daily_targets", "type": "int32", "required": false },
+    { "name": "move_every_hour", "type": "int32", "required": false },
+    { "name": "recovery_time", "type": "int32", "required": false },
+    { "name": "stay_active", "type": "int32", "required": false },
+    { "name": "training_frequency", "type": "int32", "required": false },
+    { "name": "training_volume", "type": "int32", "required": false },
+    { "name": "timestamp", "type": "string", "required": false },
+    { "name": "synced_at", "type": "string", "required": false },
+    { "name": "loaded_at", "type": "string", "required": false }
+  ]
+}
