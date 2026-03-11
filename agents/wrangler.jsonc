@@ -1,0 +1,47 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "data-agent",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-03-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  },
+
+  // Durable Objects — Agent は DO 上で動作する
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "DataAgent",
+        "class_name": "DataAgent"
+      }
+    ]
+  },
+
+  // SQLite マイグレーション — ステート永続化に必要
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["DataAgent"]
+    }
+  ],
+
+  // Workers AI
+  "ai": {
+    "binding": "AI"
+  },
+
+  // D1 — 既存の raw データベースに接続
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "raw",
+      "database_id": "30fb49b7-8321-4792-8706-06c9205ce026"
+    }
+  ]
+
+  // シークレット:
+  //   wrangler secret put SLACK_BOT_TOKEN
+  //   wrangler secret put SLACK_SIGNING_SECRET
+}
