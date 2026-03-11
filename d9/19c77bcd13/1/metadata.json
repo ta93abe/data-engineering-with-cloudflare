@@ -1,0 +1,39 @@
+{
+  "cli_version": "0.5.0",
+  "checkpoint_id": "d919c77bcd13",
+  "session_id": "71de6dcc-6839-4ba9-a404-b2ca3e2bc2ac",
+  "strategy": "manual-commit",
+  "created_at": "2026-03-11T12:46:17.440839Z",
+  "branch": "feat/sandbox-dbt-worker",
+  "checkpoints_count": 0,
+  "files_touched": [
+    ".serena/project.yml",
+    "sandbox-dbt/Dockerfile",
+    "sandbox-dbt/src/index.ts",
+    "sandbox-dbt/src/types.ts",
+    "sandbox-dbt/wrangler.jsonc",
+    "sandbox-dbt/.gitignore",
+    "sandbox-dbt/package.json",
+    "sandbox-dbt/src/services/dbt-runner.ts",
+    "sandbox-dbt/src/services/r2-artifacts.ts"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-6",
+  "turn_id": "27f3ee009f22",
+  "token_usage": {
+    "input_tokens": 6,
+    "cache_creation_tokens": 84717,
+    "cache_read_tokens": 206415,
+    "output_tokens": 2121,
+    "api_call_count": 5
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-03-11T12:46:17.40828Z",
+    "agent_lines": 163,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 163,
+    "agent_percentage": 100
+  }
+}
