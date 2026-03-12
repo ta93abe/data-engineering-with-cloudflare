@@ -15,8 +15,14 @@ export default {
 
     // 手動トリガー用 (デバッグ)
     if (url.pathname === "/export" && request.method === "POST") {
-      const result = await runExport(env);
-      return new Response(result);
+      try {
+        const result = await runExport(env);
+        return new Response(result);
+      } catch (e) {
+        const message = e instanceof Error ? e.message : "Unknown error";
+        console.error("Export failed:", message);
+        return new Response(`Export failed: ${message}`, { status: 500 });
+      }
     }
 
     return new Response("Not Found", { status: 404 });

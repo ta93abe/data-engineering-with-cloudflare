@@ -34,12 +34,10 @@ async function exportTable(
     throw new Error(`Table not allowed: ${table}`);
   }
 
-  const sql = lastExportDate
-    ? `SELECT * FROM ${table} WHERE day > ? ORDER BY day ASC`
-    : `SELECT * FROM ${table} ORDER BY day ASC`;
-  const result = lastExportDate
-    ? await db.prepare(sql).bind(lastExportDate).all()
-    : await db.prepare(sql).all();
+  const stmt = lastExportDate
+    ? db.prepare(`SELECT * FROM ${table} WHERE day > ? ORDER BY day ASC`).bind(lastExportDate)
+    : db.prepare(`SELECT * FROM ${table} ORDER BY day ASC`);
+  const result = await stmt.all();
   const rows = result.results;
 
   if (rows.length === 0) return 0;
@@ -60,28 +58,25 @@ async function exportHeartRate(
   let cursorTimestamp = "";
 
   while (true) {
-    let result: D1Result<Record<string, unknown>>;
-
+    let stmt: D1PreparedStatement;
     if (cursorDay === "" && cursorTimestamp === "") {
-      result = await db
-        .prepare(`SELECT * FROM oura_heart_rate ORDER BY day ASC, timestamp ASC LIMIT ${PAGE_SIZE}`)
-        .all();
+      stmt = db.prepare(
+        `SELECT * FROM oura_heart_rate ORDER BY day ASC, timestamp ASC LIMIT ${PAGE_SIZE}`
+      );
     } else if (cursorTimestamp === "") {
-      result = await db
+      stmt = db
         .prepare(
           `SELECT * FROM oura_heart_rate WHERE day > ? ORDER BY day ASC, timestamp ASC LIMIT ${PAGE_SIZE}`
         )
-        .bind(cursorDay)
-        .all();
+        .bind(cursorDay);
     } else {
-      result = await db
+      stmt = db
         .prepare(
           `SELECT * FROM oura_heart_rate WHERE (day > ?) OR (day = ? AND timestamp > ?) ORDER BY day ASC, timestamp ASC LIMIT ${PAGE_SIZE}`
         )
-        .bind(cursorDay, cursorDay, cursorTimestamp)
-        .all();
+        .bind(cursorDay, cursorDay, cursorTimestamp);
     }
-
+    const result = await stmt.all();
     const rows = result.results;
     if (rows.length === 0) break;
 
@@ -102,37 +97,26 @@ async function exportHeartRate(
 
 export async function runExport(env: Env): Promise<string> {
   const lastExportDate = await getLastExportDate(env.DB);
-  const logs: string[] = [];
 
-  const sleepCount = await exportTable(
-    env.DB,
-    env.PIPELINE_SLEEP,
-    "oura_daily_sleep",
-    lastExportDate
-  );
-  logs.push(`daily_sleep: ${sleepCount} rows`);
+  const [sleepCount, activityCount, readinessCount, heartRateCount] = await Promise.all([
+    exportTable(env.DB, env.PIPELINE_SLEEP, "oura_daily_sleep", lastExportDate),
+    exportTable(env.DB, env.PIPELINE_ACTIVITY, "oura_daily_activity", lastExportDate),
+    exportTable(env.DB, env.PIPELINE_READINESS, "oura_daily_readiness", lastExportDate),
+    exportHeartRate(env.DB, env.PIPELINE_HEART_RATE, lastExportDate),
+  ]);
 
-  const activityCount = await exportTable(
-    env.DB,
-    env.PIPELINE_ACTIVITY,
-    "oura_daily_activity",
-    lastExportDate
-  );
-  logs.push(`daily_activity: ${activityCount} rows`);
+  const logs = [
+    `daily_sleep: ${sleepCount} rows`,
+    `daily_activity: ${activityCount} rows`,
+    `daily_readiness: ${readinessCount} rows`,
+    `heart_rate: ${heartRateCount} rows`,
+  ];
 
-  const readinessCount = await exportTable(
-    env.DB,
-    env.PIPELINE_READINESS,
-    "oura_daily_readiness",
-    lastExportDate
-  );
-  logs.push(`daily_readiness: ${readinessCount} rows`);
-
-  const heartRateCount = await exportHeartRate(env.DB, env.PIPELINE_HEART_RATE, lastExportDate);
-  logs.push(`heart_rate: ${heartRateCount} rows`);
-
-  const today = new Date().toISOString().split("T")[0];
-  await updateLastExportDate(env.DB, today);
+  const totalExported = sleepCount + activityCount + readinessCount + heartRateCount;
+  if (totalExported > 0) {
+    const today = new Date().toISOString().split("T")[0];
+    await updateLastExportDate(env.DB, today);
+  }
 
   const summary = `Export complete: ${logs.join(", ")}`;
   console.log(summary);
