@@ -4,6 +4,22 @@ import type { DbtCommand, DbtCommandResult, DbtRunResult, Env, RunRequest } from
 const WORKSPACE = "/workspace";
 const ALLOWED_COMMANDS: ReadonlySet<string> = new Set(["seed", "run", "test", "build"]);
 
+// Validates ref to prevent shell injection — only allows safe git ref characters
+const SAFE_REF_PATTERN = /^[a-zA-Z0-9._\-/]+$/;
+
+function validateRef(ref: string): void {
+  if (!SAFE_REF_PATTERN.test(ref) || ref.length > 256) {
+    throw new Error(`Invalid git ref: ${ref}`);
+  }
+}
+
+// Validates dbtDir to prevent path traversal
+function validateDbtDir(dbtDir: string): void {
+  if (dbtDir.includes("..") || dbtDir.startsWith("/") || dbtDir.length > 256) {
+    throw new Error(`Invalid dbtDir: ${dbtDir}`);
+  }
+}
+
 function generateRunId(): string {
   const now = new Date();
   const date = now.toISOString().slice(0, 10).replace(/-/g, "");
@@ -40,6 +56,9 @@ async function cloneRepo(
   }
 
   const shaResult = await sandbox.exec(`cd ${WORKSPACE}/repo && git rev-parse HEAD`);
+  if (!shaResult.success) {
+    return { success: false, commitSha: "", output: `git rev-parse failed: ${shaResult.stderr}` };
+  }
   const commitSha = shaResult.stdout.trim();
 
   return { success: true, commitSha, output: result.stdout };
@@ -82,6 +101,9 @@ export async function runDbt(
   const ref = request.ref ?? "main";
   const commands = request.commands ?? ["seed", "run", "test"];
   const dbtDir = request.dbtDir ?? "transform/core";
+
+  validateRef(ref);
+  validateDbtDir(dbtDir);
 
   const runId = generateRunId();
   const startedAt = new Date().toISOString();

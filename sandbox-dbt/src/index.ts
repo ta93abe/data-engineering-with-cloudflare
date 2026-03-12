@@ -49,7 +49,8 @@ app.post("/run", async (c) => {
 });
 
 app.get("/runs", async (c) => {
-  const limit = Number(c.req.query("limit") ?? "20");
+  const parsed = Number(c.req.query("limit") ?? "20");
+  const limit = Number.isFinite(parsed) && parsed > 0 ? Math.min(parsed, 100) : 20;
   const runs = await listRuns(c.env.R2_ARTIFACTS, limit);
   return c.json({ runs });
 });
@@ -68,10 +69,16 @@ app.get("/runs/:runId", async (c) => {
 const scheduled: ExportedHandlerScheduledHandler<Env> = async (_event, env, _ctx) => {
   console.log(`Scheduled dbt run triggered at ${new Date().toISOString()}`);
 
-  const { result, artifacts } = await runDbt(env);
-  await saveRunResult(env.R2_ARTIFACTS, result, artifacts);
+  try {
+    const { result, artifacts } = await runDbt(env);
+    await saveRunResult(env.R2_ARTIFACTS, result, artifacts);
 
-  console.log(`Scheduled run ${result.runId}: success=${result.success}, sha=${result.commitSha}`);
+    console.log(
+      `Scheduled run ${result.runId}: success=${result.success}, sha=${result.commitSha}`
+    );
+  } catch (error) {
+    console.error("Scheduled dbt run failed:", error);
+  }
 };
 
 export default {
