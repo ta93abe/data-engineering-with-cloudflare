@@ -1,0 +1,50 @@
+{
+  "cli_version": "0.5.0",
+  "checkpoint_id": "1a842e0bd574",
+  "session_id": "daa60294-a67c-45aa-83cf-e2e9cd4e13c2",
+  "strategy": "manual-commit",
+  "created_at": "2026-03-12T14:17:22.372194Z",
+  "branch": "feat/oura-r2-parquet",
+  "checkpoints_count": 0,
+  "files_touched": [
+    "d1-to-iceberg/src/types.ts",
+    "docs/superpowers/plans/2026-03-11-d1-to-r2-iceberg.md",
+    "infrastructure/d1/migrations/0005_export_sync_state.sql",
+    "d1-to-iceberg/schemas/oura_daily_activity.json",
+    "d1-to-iceberg/src/export.ts",
+    "d1-to-iceberg/tsconfig.json",
+    "d1-to-iceberg/pnpm-lock.yaml",
+    "d1-to-iceberg/schemas/oura_heart_rate.json",
+    "d1-to-iceberg/package.json",
+    "d1-to-iceberg/schemas/oura_daily_readiness.json",
+    "d1-to-iceberg/schemas/oura_daily_sleep.json",
+    "d1-to-iceberg/src/index.ts",
+    "d1-to-iceberg/wrangler.jsonc",
+    "d1-to-iceberg/.gitignore",
+    "d1-to-iceberg/biome.json"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-6",
+  "turn_id": "087dd5269c9f",
+  "checkpoint_transcript_start": 1551,
+  "transcript_lines_at_start": 1551,
+  "token_usage": {
+    "input_tokens": 10,
+    "cache_creation_tokens": 79183,
+    "cache_read_tokens": 676374,
+    "output_tokens": 1211,
+    "api_call_count": 10
+  },
+  "session_metrics": {
+    "turn_count": 40
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-03-12T14:17:21.115308Z",
+    "agent_lines": 1334,
+    "human_added": 1482,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 2816,
+    "agent_percentage": 47.372159090909086
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "cli_version": "0.5.0",
+  "checkpoint_id": "1a842e0bd574",
+  "strategy": "manual-commit",
+  "branch": "feat/oura-r2-parquet",
+  "checkpoints_count": 0,
+  "files_touched": [
+    "d1-to-iceberg/.gitignore",
+    "d1-to-iceberg/biome.json",
+    "d1-to-iceberg/package.json",
+    "d1-to-iceberg/pnpm-lock.yaml",
+    "d1-to-iceberg/schemas/oura_daily_activity.json",
+    "d1-to-iceberg/schemas/oura_daily_readiness.json",
+    "d1-to-iceberg/schemas/oura_daily_sleep.json",
+    "d1-to-iceberg/schemas/oura_heart_rate.json",
+    "d1-to-iceberg/src/export.ts",
+    "d1-to-iceberg/src/index.ts",
+    "d1-to-iceberg/src/types.ts",
+    "d1-to-iceberg/tsconfig.json",
+    "d1-to-iceberg/wrangler.jsonc",
+    "docs/superpowers/plans/2026-03-11-d1-to-r2-iceberg.md",
+    "infrastructure/d1/migrations/0005_export_sync_state.sql"
+  ],
+  "sessions": [
+    {
+      "metadata": "/1a/842e0bd574/0/metadata.json",
+      "transcript": "/1a/842e0bd574/0/full.jsonl",
+      "content_hash": "/1a/842e0bd574/0/content_hash.txt",
+      "prompt": ""
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 10,
+    "cache_creation_tokens": 79183,
+    "cache_read_tokens": 676374,
+    "output_tokens": 1211,
+    "api_call_count": 10
+  }
+}
