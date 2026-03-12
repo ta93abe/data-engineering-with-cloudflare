@@ -1,5 +1,6 @@
 {
   "name": "d1-to-iceberg",
+  "private": true,
   "type": "module",
   "scripts": {
     "dev": "wrangler dev",

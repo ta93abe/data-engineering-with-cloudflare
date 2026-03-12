@@ -21,6 +21,6 @@
     { "name": "training_volume", "type": "int32", "required": false },
     { "name": "timestamp", "type": "string", "required": false },
     { "name": "synced_at", "type": "string", "required": false },
-    { "name": "loaded_at", "type": "string", "required": false }
+    { "name": "loaded_at", "type": "string", "required": true }
   ]
 }

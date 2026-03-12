@@ -6,6 +6,6 @@
     { "name": "timestamp", "type": "string", "required": true },
     { "name": "day", "type": "string", "required": true },
     { "name": "synced_at", "type": "string", "required": false },
-    { "name": "loaded_at", "type": "string", "required": false }
+    { "name": "loaded_at", "type": "string", "required": true }
   ]
 }

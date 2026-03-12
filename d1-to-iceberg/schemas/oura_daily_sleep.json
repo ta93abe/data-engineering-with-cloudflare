@@ -12,6 +12,6 @@
     { "name": "timing", "type": "int32", "required": false },
     { "name": "total_sleep", "type": "int32", "required": false },
     { "name": "synced_at", "type": "string", "required": false },
-    { "name": "loaded_at", "type": "string", "required": false }
+    { "name": "loaded_at", "type": "string", "required": true }
   ]
 }
