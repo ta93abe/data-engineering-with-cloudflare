@@ -1,0 +1,23 @@
+{
+  "cli_version": "0.5.0",
+  "checkpoint_id": "11647c1c7914",
+  "strategy": "manual-commit",
+  "branch": "feat/d1-to-r2-iceberg",
+  "checkpoints_count": 1,
+  "files_touched": null,
+  "sessions": [
+    {
+      "metadata": "/11/647c1c7914/0/metadata.json",
+      "transcript": "/11/647c1c7914/0/full.jsonl",
+      "content_hash": "/11/647c1c7914/0/content_hash.txt",
+      "prompt": "/11/647c1c7914/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 2141,
+    "cache_creation_tokens": 918342,
+    "cache_read_tokens": 28199662,
+    "output_tokens": 118691,
+    "api_call_count": 252
+  }
+}

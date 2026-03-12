@@ -1,0 +1,23 @@
+{
+  "cli_version": "0.5.0",
+  "checkpoint_id": "11647c1c7914",
+  "session_id": "daa60294-a67c-45aa-83cf-e2e9cd4e13c2",
+  "strategy": "manual-commit",
+  "created_at": "2026-03-12T13:49:05.89515Z",
+  "branch": "feat/d1-to-r2-iceberg",
+  "checkpoints_count": 1,
+  "files_touched": [],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-6",
+  "turn_id": "84575b276f2b",
+  "token_usage": {
+    "input_tokens": 2141,
+    "cache_creation_tokens": 918342,
+    "cache_read_tokens": 28199662,
+    "output_tokens": 118691,
+    "api_call_count": 252
+  },
+  "session_metrics": {
+    "turn_count": 39
+  }
+}
