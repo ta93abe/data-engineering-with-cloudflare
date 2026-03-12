@@ -1,0 +1,25 @@
+{
+  "cli_version": "0.5.0",
+  "checkpoint_id": "94c0fbf4ad33",
+  "session_id": "daa60294-a67c-45aa-83cf-e2e9cd4e13c2",
+  "strategy": "manual-commit",
+  "created_at": "2026-03-12T12:26:13.218452Z",
+  "branch": "feat/oura-r2-parquet",
+  "checkpoints_count": 1,
+  "files_touched": [],
+  "agent": "Claude Code",
+  "model": "claude-haiku-4-5-20251001",
+  "turn_id": "cbb82d322383",
+  "checkpoint_transcript_start": 90,
+  "transcript_lines_at_start": 90,
+  "token_usage": {
+    "input_tokens": 1914,
+    "cache_creation_tokens": 548133,
+    "cache_read_tokens": 11216702,
+    "output_tokens": 58690,
+    "api_call_count": 111
+  },
+  "session_metrics": {
+    "turn_count": 35
+  }
+}

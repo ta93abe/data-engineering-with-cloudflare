@@ -1,0 +1,140 @@
+これからこのエージェントがいろんなことをできるようになっていくためにはどうしていけばいい？
+
+---
+
+vercel の chat sdk とか使えばいいの？
+
+---
+
+chat sdk というものがあるから調べてみて
+
+---
+
+https://chat-sdk.dev/
+これね
+
+---
+
+cloudflare で Redis 使えない？
+
+---
+
+durable objects って何？
+
+---
+
+oura ring のテーブルジョインしてくれるようになっている？
+
+---
+
+データモデリングしたほうがいいのか
+
+---
+
+R2におけばDuckDBアダプターでモデリングできる？
+
+---
+
+方法B: dbt の結果を R2 に Parquet で出力し、エージェントが DuckDB WASM で直接読むがいいや
+
+---
+
+dbt duckdb の動き方は？
+
+---
+
+cloudflare 上でも動く？
+
+---
+
+cloudflare sandboxでｄｂｔ動かすよ
+
+---
+
+r2 に git clone してくるイメージ？
+
+---
+
+sandbox のなかでGit clone できない？
+
+---
+
+dbt プロジェクトだけクローンできない？
+
+---
+
+https://help.obsidian.md/headless
+obsidian-headless を Cloudflare上で動かせる？
+
+---
+
+a,c
+
+---
+
+obsidian sync は契約している。VaultはGit管理していない
+
+---
+
+cloudflare の secret store は使えない?
+
+---
+
+r2 に保存したい。
+
+---
+
+定期的に保存できる？
+
+---
+
+sandbox が必要?
+
+---
+
+そうしよう。LinearのIssueにして。
+
+---
+
+398やりたい。
+
+---
+
+a
+R2に直でParquetがおけるならD1の保存はいらない。
+
+---
+
+B
+
+---
+
+A
+
+---
+
+A
+
+---
+
+paid ブランではある。
+
+---
+
+過去データも初回は保存したい。
+
+---
+
+C
+
+---
+
+実行は一ヶ月分ずつ取ってきてね
+
+---
+
+OK
+
+---
+
+OK
