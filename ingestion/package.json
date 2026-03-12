@@ -15,7 +15,8 @@
     "check:fix": "biome check --write ."
   },
   "dependencies": {
-    "hono": "^4.11.7"
+    "hono": "^4.11.7",
+    "parquet-wasm": "^0.7.1"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.3.13",
