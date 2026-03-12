@@ -1,4 +1,4 @@
-import { tableToIPC, tableFromArrays, Float64, Int32, Utf8, Field, Schema } from "apache-arrow";
+import { tableFromArrays, tableToIPC } from "apache-arrow";
 import { initSync, Table as WasmTable, writeParquet } from "parquet-wasm/esm";
 
 // ============================================
@@ -102,7 +102,7 @@ function extractColumn<T, K extends keyof T>(rows: T[], key: K): T[K][] {
 // Encode functions
 // ============================================
 
-function arrowToParquet(schema: Schema, columns: Record<string, unknown[]>): Uint8Array {
+function arrowToParquet(columns: Record<string, unknown[]>): Uint8Array {
   const arrowTable = tableFromArrays(columns);
   const ipcBytes = tableToIPC(arrowTable, "stream");
   const wasmTable = WasmTable.fromIPCStream(ipcBytes);
@@ -111,22 +111,7 @@ function arrowToParquet(schema: Schema, columns: Record<string, unknown[]>): Uin
 
 export async function encodeDailySleep(rows: DailySleepRow[]): Promise<Uint8Array> {
   ensureWasmInit();
-
-  const schema = new Schema([
-    new Field("day", new Utf8(), false),
-    new Field("score", new Int32(), true),
-    new Field("deep_sleep", new Int32(), true),
-    new Field("efficiency", new Int32(), true),
-    new Field("latency", new Int32(), true),
-    new Field("rem_sleep", new Int32(), true),
-    new Field("restfulness", new Int32(), true),
-    new Field("timing", new Int32(), true),
-    new Field("total_sleep", new Int32(), true),
-    new Field("timestamp", new Utf8(), false),
-    new Field("synced_at", new Utf8(), false),
-  ]);
-
-  return arrowToParquet(schema, {
+  return arrowToParquet({
     day: extractColumn(rows, "day"),
     score: extractColumn(rows, "score"),
     deep_sleep: extractColumn(rows, "deep_sleep"),
@@ -143,31 +128,7 @@ export async function encodeDailySleep(rows: DailySleepRow[]): Promise<Uint8Arra
 
 export async function encodeDailyActivity(rows: DailyActivityRow[]): Promise<Uint8Array> {
   ensureWasmInit();
-
-  const schema = new Schema([
-    new Field("day", new Utf8(), false),
-    new Field("score", new Int32(), true),
-    new Field("active_calories", new Int32(), true),
-    new Field("total_calories", new Int32(), true),
-    new Field("steps", new Int32(), true),
-    new Field("equivalent_walking_distance", new Float64(), true),
-    new Field("high_activity_time", new Int32(), true),
-    new Field("medium_activity_time", new Int32(), true),
-    new Field("low_activity_time", new Int32(), true),
-    new Field("sedentary_time", new Int32(), true),
-    new Field("resting_time", new Int32(), true),
-    new Field("met_average", new Float64(), true),
-    new Field("meet_daily_targets", new Int32(), true),
-    new Field("move_every_hour", new Int32(), true),
-    new Field("recovery_time", new Int32(), true),
-    new Field("stay_active", new Int32(), true),
-    new Field("training_frequency", new Int32(), true),
-    new Field("training_volume", new Int32(), true),
-    new Field("timestamp", new Utf8(), false),
-    new Field("synced_at", new Utf8(), false),
-  ]);
-
-  return arrowToParquet(schema, {
+  return arrowToParquet({
     day: extractColumn(rows, "day"),
     score: extractColumn(rows, "score"),
     active_calories: extractColumn(rows, "active_calories"),
@@ -193,25 +154,7 @@ export async function encodeDailyActivity(rows: DailyActivityRow[]): Promise<Uin
 
 export async function encodeDailyReadiness(rows: DailyReadinessRow[]): Promise<Uint8Array> {
   ensureWasmInit();
-
-  const schema = new Schema([
-    new Field("day", new Utf8(), false),
-    new Field("score", new Int32(), true),
-    new Field("temperature_deviation", new Float64(), true),
-    new Field("temperature_trend_deviation", new Float64(), true),
-    new Field("activity_balance", new Int32(), true),
-    new Field("body_temperature", new Int32(), true),
-    new Field("hrv_balance", new Int32(), true),
-    new Field("previous_day_activity", new Int32(), true),
-    new Field("previous_night", new Int32(), true),
-    new Field("recovery_index", new Int32(), true),
-    new Field("resting_heart_rate", new Int32(), true),
-    new Field("sleep_balance", new Int32(), true),
-    new Field("timestamp", new Utf8(), false),
-    new Field("synced_at", new Utf8(), false),
-  ]);
-
-  return arrowToParquet(schema, {
+  return arrowToParquet({
     day: extractColumn(rows, "day"),
     score: extractColumn(rows, "score"),
     temperature_deviation: extractColumn(rows, "temperature_deviation"),
@@ -231,16 +174,7 @@ export async function encodeDailyReadiness(rows: DailyReadinessRow[]): Promise<U
 
 export async function encodeHeartRate(rows: HeartRateRow[]): Promise<Uint8Array> {
   ensureWasmInit();
-
-  const schema = new Schema([
-    new Field("bpm", new Int32(), false),
-    new Field("source", new Utf8(), false),
-    new Field("timestamp", new Utf8(), false),
-    new Field("day", new Utf8(), false),
-    new Field("synced_at", new Utf8(), false),
-  ]);
-
-  return arrowToParquet(schema, {
+  return arrowToParquet({
     bpm: extractColumn(rows, "bpm"),
     source: extractColumn(rows, "source"),
     timestamp: extractColumn(rows, "timestamp"),

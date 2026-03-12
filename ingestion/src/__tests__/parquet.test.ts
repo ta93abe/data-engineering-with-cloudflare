@@ -1,12 +1,12 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { describe, it, expect, beforeAll } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 import {
-  initParquetWasm,
-  encodeDailySleep,
   encodeDailyActivity,
   encodeDailyReadiness,
+  encodeDailySleep,
   encodeHeartRate,
+  initParquetWasm,
 } from "../services/parquet";
 
 beforeAll(() => {

@@ -1,5 +1,18 @@
 import { Hono } from "hono";
+// @ts-expect-error — Wrangler bundles .wasm as WebAssembly.Module
+import PARQUET_WASM from "../../node_modules/parquet-wasm/esm/parquet_wasm_bg.wasm";
 import type { Env, SyncResult } from "../types";
+import {
+  type DailyActivityRow,
+  type DailyReadinessRow,
+  type DailySleepRow,
+  encodeDailyActivity,
+  encodeDailyReadiness,
+  encodeDailySleep,
+  encodeHeartRate,
+  type HeartRateRow,
+  initParquetWasm,
+} from "./parquet";
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -203,48 +216,63 @@ async function fetchAllPages<T>(
 }
 
 // ============================================
-// Sync Functions
+// Chunking & Grouping Utilities
 // ============================================
 
-function getDateRange(lastSyncAt: string | null): { startDate: string; endDate: string } {
-  const endDate = new Date().toISOString().split("T")[0];
+function splitIntoMonthlyChunks(
+  startDate: string,
+  endDate: string
+): Array<{ start: string; end: string }> {
+  const chunks: Array<{ start: string; end: string }> = [];
+  let current = new Date(`${startDate}T00:00:00Z`);
+  const end = new Date(`${endDate}T00:00:00Z`);
 
-  if (!lastSyncAt) {
-    // First sync: past 30 days
-    const start = new Date();
-    start.setDate(start.getDate() - 30);
-    return { startDate: start.toISOString().split("T")[0], endDate };
+  while (current <= end) {
+    const chunkEnd = new Date(current);
+    chunkEnd.setUTCMonth(chunkEnd.getUTCMonth() + 1);
+    chunkEnd.setUTCDate(0); // last day of current month
+    const effectiveEnd = chunkEnd > end ? end : chunkEnd;
+    chunks.push({
+      start: current.toISOString().split("T")[0],
+      end: effectiveEnd.toISOString().split("T")[0],
+    });
+    current = new Date(effectiveEnd);
+    current.setUTCDate(current.getUTCDate() + 1);
   }
-
-  // Incremental: from last sync - 1 day
-  const start = new Date(lastSyncAt);
-  start.setDate(start.getDate() - 1);
-  return { startDate: start.toISOString().split("T")[0], endDate };
+  return chunks;
 }
 
-function getHeartRateDateRange(lastSyncAt: string | null): {
-  startDate: string;
-  endDate: string;
-} {
-  const endDate = new Date().toISOString().split("T")[0];
-
-  if (!lastSyncAt) {
-    const start = new Date();
-    start.setDate(start.getDate() - 7);
-    return { startDate: start.toISOString().split("T")[0], endDate };
+function groupByDay<T>(items: T[], getDayFn: (item: T) => string): Map<string, T[]> {
+  const map = new Map<string, T[]>();
+  for (const item of items) {
+    const day = getDayFn(item);
+    const arr = map.get(day) ?? [];
+    arr.push(item);
+    map.set(day, arr);
   }
-
-  const start = new Date(lastSyncAt);
-  start.setDate(start.getDate() - 1);
-  // Limit to 7 days max
-  const maxStart = new Date();
-  maxStart.setDate(maxStart.getDate() - 7);
-  const effectiveStart = start > maxStart ? start : maxStart;
-  return { startDate: effectiveStart.toISOString().split("T")[0], endDate };
+  return map;
 }
+
+async function writeParquetToR2(
+  r2: R2Bucket,
+  tableName: string,
+  day: string,
+  data: Uint8Array
+): Promise<void> {
+  const key = `oura/${tableName}/${day}.parquet`;
+  await r2.put(key, data);
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+// ============================================
+// Sync Functions (R2 Parquet)
+// ============================================
 
 async function syncDailySleep(
-  db: D1Database,
+  r2: R2Bucket,
   token: string,
   startDate: string,
   endDate: string
@@ -254,46 +282,34 @@ async function syncDailySleep(
     end_date: endDate,
   });
 
-  for (const item of data) {
-    await db
-      .prepare(
-        `INSERT INTO oura_daily_sleep (id, day, score, timestamp,
-          deep_sleep, efficiency, latency, rem_sleep, restfulness, timing, total_sleep,
-          synced_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
-         ON CONFLICT(id) DO UPDATE SET
-           score = excluded.score,
-           timestamp = excluded.timestamp,
-           deep_sleep = excluded.deep_sleep,
-           efficiency = excluded.efficiency,
-           latency = excluded.latency,
-           rem_sleep = excluded.rem_sleep,
-           restfulness = excluded.restfulness,
-           timing = excluded.timing,
-           total_sleep = excluded.total_sleep,
-           synced_at = excluded.synced_at`
-      )
-      .bind(
-        item.id,
-        item.day,
-        item.score ?? null,
-        item.timestamp,
-        item.contributors?.deep_sleep ?? null,
-        item.contributors?.efficiency ?? null,
-        item.contributors?.latency ?? null,
-        item.contributors?.rem_sleep ?? null,
-        item.contributors?.restfulness ?? null,
-        item.contributors?.timing ?? null,
-        item.contributors?.total_sleep ?? null
-      )
-      .run();
+  if (data.length === 0) return 0;
+
+  const synced_at = new Date().toISOString();
+  const grouped = groupByDay(data, (item) => item.day);
+
+  for (const [day, items] of grouped) {
+    const rows: DailySleepRow[] = items.map((item) => ({
+      day: item.day,
+      score: item.score ?? null,
+      deep_sleep: item.contributors?.deep_sleep ?? null,
+      efficiency: item.contributors?.efficiency ?? null,
+      latency: item.contributors?.latency ?? null,
+      rem_sleep: item.contributors?.rem_sleep ?? null,
+      restfulness: item.contributors?.restfulness ?? null,
+      timing: item.contributors?.timing ?? null,
+      total_sleep: item.contributors?.total_sleep ?? null,
+      timestamp: item.timestamp,
+      synced_at,
+    }));
+    const parquet = await encodeDailySleep(rows);
+    await writeParquetToR2(r2, "daily_sleep", day, parquet);
   }
 
   return data.length;
 }
 
 async function syncDailyActivity(
-  db: D1Database,
+  r2: R2Bucket,
   token: string,
   startDate: string,
   endDate: string
@@ -303,66 +319,43 @@ async function syncDailyActivity(
     end_date: endDate,
   });
 
-  for (const item of data) {
-    await db
-      .prepare(
-        `INSERT INTO oura_daily_activity (id, day, score, active_calories, total_calories, steps,
-          equivalent_walking_distance, high_activity_time, medium_activity_time, low_activity_time,
-          sedentary_time, resting_time, met_average,
-          meet_daily_targets, move_every_hour, recovery_time, stay_active, training_frequency, training_volume,
-          timestamp, synced_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
-         ON CONFLICT(id) DO UPDATE SET
-           score = excluded.score,
-           active_calories = excluded.active_calories,
-           total_calories = excluded.total_calories,
-           steps = excluded.steps,
-           equivalent_walking_distance = excluded.equivalent_walking_distance,
-           high_activity_time = excluded.high_activity_time,
-           medium_activity_time = excluded.medium_activity_time,
-           low_activity_time = excluded.low_activity_time,
-           sedentary_time = excluded.sedentary_time,
-           resting_time = excluded.resting_time,
-           met_average = excluded.met_average,
-           meet_daily_targets = excluded.meet_daily_targets,
-           move_every_hour = excluded.move_every_hour,
-           recovery_time = excluded.recovery_time,
-           stay_active = excluded.stay_active,
-           training_frequency = excluded.training_frequency,
-           training_volume = excluded.training_volume,
-           timestamp = excluded.timestamp,
-           synced_at = excluded.synced_at`
-      )
-      .bind(
-        item.id,
-        item.day,
-        item.score ?? null,
-        item.active_calories,
-        item.total_calories,
-        item.steps,
-        item.equivalent_walking_distance,
-        item.high_activity_time,
-        item.medium_activity_time,
-        item.low_activity_time,
-        item.sedentary_time,
-        item.resting_time,
-        item.average_met_minutes ?? null,
-        item.contributors?.meet_daily_targets ?? null,
-        item.contributors?.move_every_hour ?? null,
-        item.contributors?.recovery_time ?? null,
-        item.contributors?.stay_active ?? null,
-        item.contributors?.training_frequency ?? null,
-        item.contributors?.training_volume ?? null,
-        item.timestamp
-      )
-      .run();
+  if (data.length === 0) return 0;
+
+  const synced_at = new Date().toISOString();
+  const grouped = groupByDay(data, (item) => item.day);
+
+  for (const [day, items] of grouped) {
+    const rows: DailyActivityRow[] = items.map((item) => ({
+      day: item.day,
+      score: item.score ?? null,
+      active_calories: item.active_calories,
+      total_calories: item.total_calories,
+      steps: item.steps,
+      equivalent_walking_distance: item.equivalent_walking_distance,
+      high_activity_time: item.high_activity_time,
+      medium_activity_time: item.medium_activity_time,
+      low_activity_time: item.low_activity_time,
+      sedentary_time: item.sedentary_time,
+      resting_time: item.resting_time,
+      met_average: item.average_met_minutes ?? null,
+      meet_daily_targets: item.contributors?.meet_daily_targets ?? null,
+      move_every_hour: item.contributors?.move_every_hour ?? null,
+      recovery_time: item.contributors?.recovery_time ?? null,
+      stay_active: item.contributors?.stay_active ?? null,
+      training_frequency: item.contributors?.training_frequency ?? null,
+      training_volume: item.contributors?.training_volume ?? null,
+      timestamp: item.timestamp,
+      synced_at,
+    }));
+    const parquet = await encodeDailyActivity(rows);
+    await writeParquetToR2(r2, "daily_activity", day, parquet);
   }
 
   return data.length;
 }
 
 async function syncDailyReadiness(
-  db: D1Database,
+  r2: R2Bucket,
   token: string,
   startDate: string,
   endDate: string
@@ -373,81 +366,63 @@ async function syncDailyReadiness(
     { start_date: startDate, end_date: endDate }
   );
 
-  for (const item of data) {
-    await db
-      .prepare(
-        `INSERT INTO oura_daily_readiness (id, day, score, temperature_deviation, temperature_trend_deviation,
-          timestamp, activity_balance, body_temperature, hrv_balance, previous_day_activity,
-          previous_night, recovery_index, resting_heart_rate, sleep_balance, synced_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
-         ON CONFLICT(id) DO UPDATE SET
-           score = excluded.score,
-           temperature_deviation = excluded.temperature_deviation,
-           temperature_trend_deviation = excluded.temperature_trend_deviation,
-           timestamp = excluded.timestamp,
-           activity_balance = excluded.activity_balance,
-           body_temperature = excluded.body_temperature,
-           hrv_balance = excluded.hrv_balance,
-           previous_day_activity = excluded.previous_day_activity,
-           previous_night = excluded.previous_night,
-           recovery_index = excluded.recovery_index,
-           resting_heart_rate = excluded.resting_heart_rate,
-           sleep_balance = excluded.sleep_balance,
-           synced_at = excluded.synced_at`
-      )
-      .bind(
-        item.id,
-        item.day,
-        item.score ?? null,
-        item.temperature_deviation ?? null,
-        item.temperature_trend_deviation ?? null,
-        item.timestamp,
-        item.contributors?.activity_balance ?? null,
-        item.contributors?.body_temperature ?? null,
-        item.contributors?.hrv_balance ?? null,
-        item.contributors?.previous_day_activity ?? null,
-        item.contributors?.previous_night ?? null,
-        item.contributors?.recovery_index ?? null,
-        item.contributors?.resting_heart_rate ?? null,
-        item.contributors?.sleep_balance ?? null
-      )
-      .run();
+  if (data.length === 0) return 0;
+
+  const synced_at = new Date().toISOString();
+  const grouped = groupByDay(data, (item) => item.day);
+
+  for (const [day, items] of grouped) {
+    const rows: DailyReadinessRow[] = items.map((item) => ({
+      day: item.day,
+      score: item.score ?? null,
+      temperature_deviation: item.temperature_deviation ?? null,
+      temperature_trend_deviation: item.temperature_trend_deviation ?? null,
+      activity_balance: item.contributors?.activity_balance ?? null,
+      body_temperature: item.contributors?.body_temperature ?? null,
+      hrv_balance: item.contributors?.hrv_balance ?? null,
+      previous_day_activity: item.contributors?.previous_day_activity ?? null,
+      previous_night: item.contributors?.previous_night ?? null,
+      recovery_index: item.contributors?.recovery_index ?? null,
+      resting_heart_rate: item.contributors?.resting_heart_rate ?? null,
+      sleep_balance: item.contributors?.sleep_balance ?? null,
+      timestamp: item.timestamp,
+      synced_at,
+    }));
+    const parquet = await encodeDailyReadiness(rows);
+    await writeParquetToR2(r2, "daily_readiness", day, parquet);
   }
 
   return data.length;
 }
 
 async function syncHeartRate(
-  db: D1Database,
+  r2: R2Bucket,
   token: string,
   startDate: string,
   endDate: string
 ): Promise<number> {
+  // Heart rate API uses datetime params and has a 30-day limit
   const data = await fetchAllPages<OuraHeartRate>("/v2/usercollection/heartrate", token, {
     start_datetime: `${startDate}T00:00:00+00:00`,
     end_datetime: `${endDate}T23:59:59+00:00`,
   });
 
-  // DELETE + INSERT for heart rate (no stable ID), batched for atomicity
-  const deleteStmt = db
-    .prepare("DELETE FROM oura_heart_rate WHERE day >= ? AND day <= ?")
-    .bind(startDate, endDate);
+  if (data.length === 0) return 0;
 
-  if (data.length === 0) {
-    await deleteStmt.run();
-    return 0;
+  const synced_at = new Date().toISOString();
+  const grouped = groupByDay(data, (item) => item.timestamp.split("T")[0]);
+
+  for (const [day, items] of grouped) {
+    const rows: HeartRateRow[] = items.map((item) => ({
+      bpm: item.bpm,
+      source: item.source,
+      timestamp: item.timestamp,
+      day,
+      synced_at,
+    }));
+    const parquet = await encodeHeartRate(rows);
+    await writeParquetToR2(r2, "heart_rate", day, parquet);
   }
-
-  const insertStmt = db.prepare(
-    `INSERT INTO oura_heart_rate (bpm, source, timestamp, day, synced_at)
-     VALUES (?, ?, ?, ?, datetime('now'))`
-  );
-  const inserts = data.map((item) => {
-    const day = item.timestamp.split("T")[0];
-    return insertStmt.bind(item.bpm, item.source, item.timestamp, day);
-  });
-
-  await db.batch([deleteStmt, ...inserts]);
 
   return data.length;
 }
@@ -456,49 +431,100 @@ async function syncHeartRate(
 // Main Sync
 // ============================================
 
-export async function runSync(
-  env: Env,
-  overrideStartDate?: string,
-  overrideEndDate?: string
-): Promise<SyncResult> {
+export async function runSync(env: Env): Promise<SyncResult> {
   const db = env.DB;
-  const token = await getValidToken(db, env);
+  const r2 = env.DATA_LAKE;
 
+  // Initialize parquet-wasm
+  initParquetWasm(PARQUET_WASM);
+
+  // Get valid OAuth token (refreshes if expired)
+  let token = await getValidToken(db, env);
+
+  // Determine date range
   const syncState = await db
     .prepare("SELECT last_sync_at FROM sync_state WHERE id = 'oura'")
     .first<{ last_sync_at: string | null }>();
 
   const lastSyncAt = syncState?.last_sync_at ?? null;
-  const { startDate: defaultStart, endDate: defaultEnd } = getDateRange(lastSyncAt);
-  const startDate = overrideStartDate ?? defaultStart;
-  const endDate = overrideEndDate ?? defaultEnd;
+  const today = new Date().toISOString().split("T")[0];
 
-  // Heart rate API has a 30-day limit; include only when range fits
-  const daysDiff =
-    (new Date(endDate).getTime() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24);
-  const hrRange = overrideStartDate ? { startDate, endDate } : getHeartRateDateRange(lastSyncAt);
-
-  const sleepCount = await syncDailySleep(db, token, startDate, endDate);
-  const activityCount = await syncDailyActivity(db, token, startDate, endDate);
-  const readinessCount = await syncDailyReadiness(db, token, startDate, endDate);
-  const heartRateCount =
-    daysDiff > 30 ? 0 : await syncHeartRate(db, token, hrRange.startDate, hrRange.endDate);
-
-  // Only update sync_state when not doing a historical backfill
-  if (!overrideStartDate) {
-    await db
-      .prepare(
-        "UPDATE sync_state SET last_sync_at = datetime('now'), updated_at = datetime('now') WHERE id = 'oura'"
-      )
-      .run();
+  let startDate: string;
+  if (!lastSyncAt) {
+    // First sync: use backfill start date
+    startDate = env.OURA_BACKFILL_START_DATE || "2024-01-01";
+    console.log(`Oura backfill from ${startDate} to ${today}`);
+  } else {
+    // Incremental: from last sync - 1 day (overlap for idempotent overwrites)
+    const start = new Date(lastSyncAt);
+    start.setDate(start.getDate() - 1);
+    startDate = start.toISOString().split("T")[0];
   }
 
-  const total = sleepCount + activityCount + readinessCount + heartRateCount;
+  // Split into monthly chunks
+  const chunks = splitIntoMonthlyChunks(startDate, today);
+  console.log(`Oura sync: ${chunks.length} monthly chunk(s) from ${startDate} to ${today}`);
+
+  let totalSleep = 0;
+  let totalActivity = 0;
+  let totalReadiness = 0;
+  let totalHeartRate = 0;
+  let lastSuccessfulEnd = startDate;
+
+  for (const chunk of chunks) {
+    try {
+      // Refresh token if needed before each chunk
+      token = await getValidToken(db, env);
+
+      const sleepCount = await syncDailySleep(r2, token, chunk.start, chunk.end);
+      const activityCount = await syncDailyActivity(r2, token, chunk.start, chunk.end);
+      const readinessCount = await syncDailyReadiness(r2, token, chunk.start, chunk.end);
+
+      // Heart rate: limit to 30 days per chunk
+      const chunkDays =
+        (new Date(chunk.end).getTime() - new Date(chunk.start).getTime()) / (1000 * 60 * 60 * 24);
+      const heartRateCount =
+        chunkDays > 30 ? 0 : await syncHeartRate(r2, token, chunk.start, chunk.end);
+
+      totalSleep += sleepCount;
+      totalActivity += activityCount;
+      totalReadiness += readinessCount;
+      totalHeartRate += heartRateCount;
+      lastSuccessfulEnd = chunk.end;
+
+      console.log(
+        `Oura chunk ${chunk.start}~${chunk.end}: ${sleepCount} sleep, ${activityCount} activity, ${readinessCount} readiness, ${heartRateCount} HR`
+      );
+
+      // Rate limit: 1s delay between chunks
+      if (chunks.indexOf(chunk) < chunks.length - 1) {
+        await sleep(1000);
+      }
+    } catch (e) {
+      const message = e instanceof Error ? e.message : "Unknown error";
+      console.error(`Oura chunk ${chunk.start}~${chunk.end} failed: ${message}`);
+      if (message.includes("rate limit")) {
+        // Skip remaining chunks on rate limit
+        break;
+      }
+      // Other errors: skip this chunk and continue
+    }
+  }
+
+  // Update sync_state with last successful chunk end
+  await db
+    .prepare(
+      "UPDATE sync_state SET last_sync_at = ?, updated_at = datetime('now') WHERE id = 'oura'"
+    )
+    .bind(lastSuccessfulEnd)
+    .run();
+
+  const total = totalSleep + totalActivity + totalReadiness + totalHeartRate;
 
   return {
     service: "oura",
     success: true,
-    message: `Synced ${sleepCount} sleep, ${activityCount} activity, ${readinessCount} readiness, ${heartRateCount} heart rate records`,
+    message: `Synced ${totalSleep} sleep, ${totalActivity} activity, ${totalReadiness} readiness, ${totalHeartRate} heart rate records to R2 Parquet`,
     count: total,
   };
 }
@@ -593,9 +619,7 @@ app.get("/callback", async (c) => {
 // Manual sync
 app.post("/sync", async (c) => {
   try {
-    const startDate = c.req.query("start_date");
-    const endDate = c.req.query("end_date");
-    const result = await runSync(c.env, startDate, endDate);
+    const result = await runSync(c.env);
     return c.json(result);
   } catch (e) {
     const message = e instanceof Error ? e.message : "Unknown error";
@@ -604,74 +628,21 @@ app.post("/sync", async (c) => {
   }
 });
 
-// Stats
+// Stats — list R2 objects count
 app.get("/stats", async (c) => {
-  const stats = await c.env.DB.prepare(
-    `SELECT
-       (SELECT COUNT(*) FROM oura_daily_sleep) as sleep_records,
-       (SELECT COUNT(*) FROM oura_daily_activity) as activity_records,
-       (SELECT COUNT(*) FROM oura_daily_readiness) as readiness_records,
-       (SELECT COUNT(*) FROM oura_heart_rate) as heart_rate_records,
-       (SELECT last_sync_at FROM sync_state WHERE id = 'oura') as last_sync`
-  ).first();
-  return c.json(stats);
-});
+  const tables = ["daily_sleep", "daily_activity", "daily_readiness", "heart_rate"];
+  const stats: Record<string, number> = {};
 
-// Parse and clamp limit query parameter
-function parseLimit(raw: string | undefined, defaultVal: number, max = 1000): number {
-  const parsed = Number.parseInt(raw ?? String(defaultVal), 10);
-  if (Number.isNaN(parsed) || parsed < 1) return defaultVal;
-  return Math.min(parsed, max);
-}
+  for (const table of tables) {
+    const list = await c.env.DATA_LAKE.list({ prefix: `oura/${table}/` });
+    stats[`${table}_files`] = list.objects.length;
+  }
 
-// Daily summary
-app.get("/daily-summary", async (c) => {
-  const limit = parseLimit(c.req.query("limit"), 30);
-  const results = await c.env.DB.prepare(
-    "SELECT * FROM v_oura_daily_summary ORDER BY day DESC LIMIT ?"
-  )
-    .bind(limit)
-    .all();
-  return c.json(results.results);
-});
+  const syncState = await c.env.DB.prepare(
+    "SELECT last_sync_at FROM sync_state WHERE id = 'oura'"
+  ).first<{ last_sync_at: string | null }>();
 
-// Individual data endpoints
-app.get("/sleep", async (c) => {
-  const limit = parseLimit(c.req.query("limit"), 30);
-  const results = await c.env.DB.prepare("SELECT * FROM oura_daily_sleep ORDER BY day DESC LIMIT ?")
-    .bind(limit)
-    .all();
-  return c.json(results.results);
-});
-
-app.get("/activity", async (c) => {
-  const limit = parseLimit(c.req.query("limit"), 30);
-  const results = await c.env.DB.prepare(
-    "SELECT * FROM oura_daily_activity ORDER BY day DESC LIMIT ?"
-  )
-    .bind(limit)
-    .all();
-  return c.json(results.results);
-});
-
-app.get("/readiness", async (c) => {
-  const limit = parseLimit(c.req.query("limit"), 30);
-  const results = await c.env.DB.prepare(
-    "SELECT * FROM oura_daily_readiness ORDER BY day DESC LIMIT ?"
-  )
-    .bind(limit)
-    .all();
-  return c.json(results.results);
-});
-
-app.get("/heart-rate", async (c) => {
-  const limit = parseLimit(c.req.query("limit"), 288);
-  const results = await c.env.DB.prepare(
-    "SELECT * FROM oura_heart_rate ORDER BY timestamp DESC LIMIT ?"
-  )
-    .bind(limit)
-    .all();
-  return c.json(results.results);
+  return c.json({ ...stats, last_sync: syncState?.last_sync_at ?? null });
 });
 
 export default app;
