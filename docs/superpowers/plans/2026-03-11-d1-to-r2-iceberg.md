@@ -614,7 +614,7 @@ Export complete: daily_sleep: N rows, daily_activity: N rows, daily_readiness: N
 - [ ] **Step 2: sync_state が更新されたことを確認**
 
 ```bash
-cd /Users/ta93abe/Developer/github.com/ta93abe/data-engineering-with-cloudflare/ingestion
+cd ingestion
 npx wrangler d1 execute raw --remote --command "SELECT * FROM sync_state WHERE id = 'oura-export'"
 ```
 

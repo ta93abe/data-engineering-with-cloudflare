@@ -1,0 +1,33 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "d1-to-iceberg",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-03-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  },
+
+  // Cron: 毎日 UTC 01:00 (JST 10:00)
+  "triggers": {
+    "crons": ["0 1 * * *"]
+  },
+
+  // D1 — 既存の raw データベースに接続
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "raw",
+      "database_id": "30fb49b7-8321-4792-8706-06c9205ce026"
+    }
+  ],
+
+  // Pipelines — 4本の Pipeline binding (stream ID で指定)
+  "pipelines": [
+    { "pipeline": "c0bbd45802dd47f78a52ca0c418d5a6f", "binding": "PIPELINE_SLEEP" },
+    { "pipeline": "8996b0f6a1c44681976a38e539ee7d87", "binding": "PIPELINE_ACTIVITY" },
+    { "pipeline": "fd0b3f2cc2f14c5483ec3ce4118e46e9", "binding": "PIPELINE_READINESS" },
+    { "pipeline": "6d0b6bfb5e22481480ecfa8afe141f8f", "binding": "PIPELINE_HEART_RATE" }
+  ]
+}

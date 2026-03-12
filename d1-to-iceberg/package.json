@@ -1,31 +1,21 @@
 {
-  "name": "ingestion",
+  "name": "d1-to-iceberg",
+  "private": true,
   "type": "module",
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy --minify",
-    "test": "vitest",
-    "test:run": "vitest run",
-    "test:parquet": "vitest run --config vitest.config.node.ts",
     "typecheck": "tsc --noEmit",
-    "cf-typegen": "wrangler types --env-interface CloudflareBindings",
     "lint": "biome lint .",
     "lint:fix": "biome lint --write .",
     "format": "biome format --write .",
     "check": "biome check .",
     "check:fix": "biome check --write ."
   },
-  "dependencies": {
-    "apache-arrow": "^21.1.0",
-    "hono": "^4.11.7",
-    "parquet-wasm": "^0.7.1"
-  },
   "devDependencies": {
     "@biomejs/biome": "^2.3.13",
-    "@cloudflare/vitest-pool-workers": "^0.8.0",
     "@cloudflare/workers-types": "^4.20250124.0",
     "typescript": "^5.7.0",
-    "vitest": "^3.0.0",
     "wrangler": "^4.4.0"
   }
 }
