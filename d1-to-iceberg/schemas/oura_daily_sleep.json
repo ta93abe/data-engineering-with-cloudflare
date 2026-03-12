@@ -1,0 +1,17 @@
+{
+  "fields": [
+    { "name": "id", "type": "string", "required": true },
+    { "name": "day", "type": "string", "required": true },
+    { "name": "score", "type": "int32", "required": false },
+    { "name": "timestamp", "type": "string", "required": false },
+    { "name": "deep_sleep", "type": "int32", "required": false },
+    { "name": "efficiency", "type": "int32", "required": false },
+    { "name": "latency", "type": "int32", "required": false },
+    { "name": "rem_sleep", "type": "int32", "required": false },
+    { "name": "restfulness", "type": "int32", "required": false },
+    { "name": "timing", "type": "int32", "required": false },
+    { "name": "total_sleep", "type": "int32", "required": false },
+    { "name": "synced_at", "type": "string", "required": false },
+    { "name": "loaded_at", "type": "string", "required": true }
+  ]
+}
