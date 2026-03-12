@@ -1,0 +1,31 @@
+{
+  "cli_version": "0.5.0",
+  "checkpoint_id": "9467911719e8",
+  "strategy": "manual-commit",
+  "branch": "feat/oura-r2-parquet",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "ingestion/src/__tests__/env.d.ts",
+    "ingestion/src/__tests__/index.test.ts",
+    "ingestion/src/__tests__/oura.test.ts",
+    "ingestion/src/__tests__/parquet.test.ts",
+    "ingestion/src/services/oura.ts",
+    "ingestion/src/services/parquet.ts",
+    "ingestion/vitest.config.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/94/67911719e8/0/metadata.json",
+      "transcript": "/94/67911719e8/0/full.jsonl",
+      "content_hash": "/94/67911719e8/0/content_hash.txt",
+      "prompt": "/94/67911719e8/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 2093,
+    "cache_creation_tokens": 879251,
+    "cache_read_tokens": 22687970,
+    "output_tokens": 106067,
+    "api_call_count": 210
+  }
+}

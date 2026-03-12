@@ -1,0 +1,40 @@
+{
+  "cli_version": "0.5.0",
+  "checkpoint_id": "9467911719e8",
+  "session_id": "daa60294-a67c-45aa-83cf-e2e9cd4e13c2",
+  "strategy": "manual-commit",
+  "created_at": "2026-03-12T13:18:08.941971Z",
+  "branch": "feat/oura-r2-parquet",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "ingestion/src/__tests__/env.d.ts",
+    "ingestion/src/__tests__/index.test.ts",
+    "ingestion/src/__tests__/oura.test.ts",
+    "ingestion/src/__tests__/parquet.test.ts",
+    "ingestion/src/services/oura.ts",
+    "ingestion/src/services/parquet.ts",
+    "ingestion/vitest.config.ts"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-6",
+  "turn_id": "26e36a855d26",
+  "token_usage": {
+    "input_tokens": 2093,
+    "cache_creation_tokens": 879251,
+    "cache_read_tokens": 22687970,
+    "output_tokens": 106067,
+    "api_call_count": 210
+  },
+  "session_metrics": {
+    "turn_count": 36
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-03-12T13:18:07.892846Z",
+    "agent_lines": 319,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 319,
+    "agent_percentage": 100
+  }
+}
