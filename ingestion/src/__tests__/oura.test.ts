@@ -234,8 +234,12 @@ describe("oura oauth2", () => {
 });
 
 describe("oura sync", () => {
-  it("syncs sleep data", async () => {
+  it("syncs sleep data to R2 Parquet", async () => {
     await insertTestToken();
+    // Set last_sync_at to recent date so only 1 monthly chunk is created
+    await env.DB.prepare(
+      "UPDATE sync_state SET last_sync_at = '2026-03-10' WHERE id = 'oura'"
+    ).run();
 
     fetchMock
       .get("https://api.ouraring.com")
@@ -244,9 +248,9 @@ describe("oura sync", () => {
         data: [
           {
             id: "sleep-001",
-            day: "2026-02-07",
+            day: "2026-03-11",
             score: 85,
-            timestamp: "2026-02-07T07:00:00+00:00",
+            timestamp: "2026-03-11T07:00:00+00:00",
             contributors: {
               deep_sleep: 80,
               efficiency: 90,
@@ -283,17 +287,17 @@ describe("oura sync", () => {
     expect(json.success).toBe(true);
     expect(json.count).toBe(1);
 
-    // Verify data in DB
-    const sleep = await env.DB.prepare(
-      "SELECT * FROM oura_daily_sleep WHERE day = '2026-02-07'"
-    ).first();
-    expect(sleep).not.toBeNull();
-    expect(sleep?.score).toBe(85);
-    expect(sleep?.deep_sleep).toBe(80);
+    // Verify Parquet file written to R2
+    const obj = await env.DATA_LAKE.head("oura/daily_sleep/2026-03-11.parquet");
+    expect(obj).not.toBeNull();
+    expect(obj!.size).toBeGreaterThan(0);
   });
 
-  it("syncs activity and readiness data", async () => {
+  it("syncs activity and readiness data to R2 Parquet", async () => {
     await insertTestToken();
+    await env.DB.prepare(
+      "UPDATE sync_state SET last_sync_at = '2026-03-10' WHERE id = 'oura'"
+    ).run();
 
     fetchMock
       .get("https://api.ouraring.com")
@@ -307,7 +311,7 @@ describe("oura sync", () => {
         data: [
           {
             id: "activity-001",
-            day: "2026-02-07",
+            day: "2026-03-11",
             score: 90,
             active_calories: 500,
             total_calories: 2200,
@@ -327,7 +331,7 @@ describe("oura sync", () => {
               training_frequency: 75,
               training_volume: 82,
             },
-            timestamp: "2026-02-07T23:59:59+00:00",
+            timestamp: "2026-03-11T23:59:59+00:00",
           },
         ],
         next_token: null,
@@ -340,11 +344,11 @@ describe("oura sync", () => {
         data: [
           {
             id: "readiness-001",
-            day: "2026-02-07",
+            day: "2026-03-11",
             score: 88,
             temperature_deviation: 0.1,
             temperature_trend_deviation: -0.05,
-            timestamp: "2026-02-07T07:00:00+00:00",
+            timestamp: "2026-03-11T07:00:00+00:00",
             contributors: {
               activity_balance: 85,
               body_temperature: 90,
@@ -372,23 +376,22 @@ describe("oura sync", () => {
     expect(json.success).toBe(true);
     expect(json.count).toBe(2);
 
-    // Verify activity
-    const activity = await env.DB.prepare(
-      "SELECT * FROM oura_daily_activity WHERE day = '2026-02-07'"
-    ).first();
-    expect(activity?.steps).toBe(10000);
-    expect(activity?.met_average).toBe(1.5);
+    // Verify activity Parquet file on R2
+    const activityObj = await env.DATA_LAKE.head("oura/daily_activity/2026-03-11.parquet");
+    expect(activityObj).not.toBeNull();
+    expect(activityObj!.size).toBeGreaterThan(0);
 
-    // Verify readiness
-    const readiness = await env.DB.prepare(
-      "SELECT * FROM oura_daily_readiness WHERE day = '2026-02-07'"
-    ).first();
-    expect(readiness?.score).toBe(88);
-    expect(readiness?.temperature_deviation).toBe(0.1);
+    // Verify readiness Parquet file on R2
+    const readinessObj = await env.DATA_LAKE.head("oura/daily_readiness/2026-03-11.parquet");
+    expect(readinessObj).not.toBeNull();
+    expect(readinessObj!.size).toBeGreaterThan(0);
   });
 
-  it("syncs heart rate data with DELETE+INSERT", async () => {
+  it("syncs heart rate data to R2 Parquet", async () => {
     await insertTestToken();
+    await env.DB.prepare(
+      "UPDATE sync_state SET last_sync_at = '2026-03-10' WHERE id = 'oura'"
+    ).run();
 
     fetchMock
       .get("https://api.ouraring.com")
@@ -410,8 +413,8 @@ describe("oura sync", () => {
       .intercept({ path: /\/v2\/usercollection\/heartrate/ })
       .reply(200, {
         data: [
-          { bpm: 65, source: "awake", timestamp: "2026-02-07T10:00:00+00:00" },
-          { bpm: 58, source: "rest", timestamp: "2026-02-07T03:00:00+00:00" },
+          { bpm: 65, source: "awake", timestamp: "2026-03-11T10:00:00+00:00" },
+          { bpm: 58, source: "rest", timestamp: "2026-03-11T03:00:00+00:00" },
         ],
         next_token: null,
       });
@@ -422,12 +425,17 @@ describe("oura sync", () => {
     const json = (await res.json()) as { success: boolean; count: number };
     expect(json.count).toBe(2);
 
-    const hrCount = await env.DB.prepare("SELECT COUNT(*) as cnt FROM oura_heart_rate").first();
-    expect(hrCount?.cnt).toBe(2);
+    // Verify heart rate Parquet file on R2
+    const hrObj = await env.DATA_LAKE.head("oura/heart_rate/2026-03-11.parquet");
+    expect(hrObj).not.toBeNull();
+    expect(hrObj!.size).toBeGreaterThan(0);
   });
 
   it("handles pagination with next_token", async () => {
     await insertTestToken();
+    await env.DB.prepare(
+      "UPDATE sync_state SET last_sync_at = '2026-03-10' WHERE id = 'oura'"
+    ).run();
 
     // Page 1
     fetchMock
@@ -437,9 +445,9 @@ describe("oura sync", () => {
         data: [
           {
             id: "sleep-page1",
-            day: "2026-02-06",
+            day: "2026-03-10",
             score: 80,
-            timestamp: "2026-02-06T07:00:00+00:00",
+            timestamp: "2026-03-10T07:00:00+00:00",
             contributors: {
               deep_sleep: 70,
               efficiency: 80,
@@ -462,9 +470,9 @@ describe("oura sync", () => {
         data: [
           {
             id: "sleep-page2",
-            day: "2026-02-05",
+            day: "2026-03-11",
             score: 75,
-            timestamp: "2026-02-05T07:00:00+00:00",
+            timestamp: "2026-03-11T07:00:00+00:00",
             contributors: {
               deep_sleep: 65,
               efficiency: 75,
@@ -503,6 +511,9 @@ describe("oura sync", () => {
 
   it("handles missing contributors gracefully", async () => {
     await insertTestToken();
+    await env.DB.prepare(
+      "UPDATE sync_state SET last_sync_at = '2026-03-10' WHERE id = 'oura'"
+    ).run();
 
     fetchMock
       .get("https://api.ouraring.com")
@@ -511,9 +522,9 @@ describe("oura sync", () => {
         data: [
           {
             id: "sleep-no-contrib",
-            day: "2026-02-04",
+            day: "2026-03-11",
             score: null,
-            timestamp: "2026-02-04T07:00:00+00:00",
+            timestamp: "2026-03-11T07:00:00+00:00",
           },
         ],
         next_token: null,
@@ -526,7 +537,7 @@ describe("oura sync", () => {
         data: [
           {
             id: "activity-no-contrib",
-            day: "2026-02-04",
+            day: "2026-03-11",
             score: null,
             active_calories: 200,
             total_calories: 1800,
@@ -538,7 +549,7 @@ describe("oura sync", () => {
             sedentary_time: 30000,
             resting_time: 28800,
             average_met_minutes: 1.2,
-            timestamp: "2026-02-04T23:59:59+00:00",
+            timestamp: "2026-03-11T23:59:59+00:00",
           },
         ],
         next_token: null,
@@ -551,11 +562,11 @@ describe("oura sync", () => {
         data: [
           {
             id: "readiness-no-contrib",
-            day: "2026-02-04",
+            day: "2026-03-11",
             score: null,
             temperature_deviation: null,
             temperature_trend_deviation: null,
-            timestamp: "2026-02-04T07:00:00+00:00",
+            timestamp: "2026-03-11T07:00:00+00:00",
           },
         ],
         next_token: null,
@@ -573,24 +584,15 @@ describe("oura sync", () => {
     expect(json.success).toBe(true);
     expect(json.count).toBe(3);
 
-    // Verify nulls stored correctly
-    const sleep = await env.DB.prepare(
-      "SELECT * FROM oura_daily_sleep WHERE id = 'sleep-no-contrib'"
-    ).first();
-    expect(sleep?.score).toBeNull();
-    expect(sleep?.deep_sleep).toBeNull();
+    // Verify Parquet files written even with null contributors
+    const sleepObj = await env.DATA_LAKE.head("oura/daily_sleep/2026-03-11.parquet");
+    expect(sleepObj).not.toBeNull();
 
-    const activity = await env.DB.prepare(
-      "SELECT * FROM oura_daily_activity WHERE id = 'activity-no-contrib'"
-    ).first();
-    expect(activity?.score).toBeNull();
-    expect(activity?.meet_daily_targets).toBeNull();
+    const activityObj = await env.DATA_LAKE.head("oura/daily_activity/2026-03-11.parquet");
+    expect(activityObj).not.toBeNull();
 
-    const readiness = await env.DB.prepare(
-      "SELECT * FROM oura_daily_readiness WHERE id = 'readiness-no-contrib'"
-    ).first();
-    expect(readiness?.score).toBeNull();
-    expect(readiness?.activity_balance).toBeNull();
+    const readinessObj = await env.DATA_LAKE.head("oura/daily_readiness/2026-03-11.parquet");
+    expect(readinessObj).not.toBeNull();
   });
 
   it("returns 401 when not authenticated", async () => {
@@ -612,50 +614,10 @@ describe("oura query routes", () => {
     expect(res.status).toBe(200);
 
     const json = await res.json();
-    expect(json).toHaveProperty("sleep_records");
-    expect(json).toHaveProperty("activity_records");
-    expect(json).toHaveProperty("readiness_records");
-    expect(json).toHaveProperty("heart_rate_records");
+    expect(json).toHaveProperty("daily_sleep_files");
+    expect(json).toHaveProperty("daily_activity_files");
+    expect(json).toHaveProperty("daily_readiness_files");
+    expect(json).toHaveProperty("heart_rate_files");
     expect(json).toHaveProperty("last_sync");
-  });
-
-  it("returns daily summary on GET /oura/daily-summary", async () => {
-    const res = await SELF.fetch("https://example.com/oura/daily-summary");
-    expect(res.status).toBe(200);
-
-    const json = await res.json();
-    expect(Array.isArray(json)).toBe(true);
-  });
-
-  it("returns sleep data on GET /oura/sleep", async () => {
-    const res = await SELF.fetch("https://example.com/oura/sleep");
-    expect(res.status).toBe(200);
-
-    const json = await res.json();
-    expect(Array.isArray(json)).toBe(true);
-  });
-
-  it("returns activity data on GET /oura/activity", async () => {
-    const res = await SELF.fetch("https://example.com/oura/activity");
-    expect(res.status).toBe(200);
-
-    const json = await res.json();
-    expect(Array.isArray(json)).toBe(true);
-  });
-
-  it("returns readiness data on GET /oura/readiness", async () => {
-    const res = await SELF.fetch("https://example.com/oura/readiness");
-    expect(res.status).toBe(200);
-
-    const json = await res.json();
-    expect(Array.isArray(json)).toBe(true);
-  });
-
-  it("returns heart rate data on GET /oura/heart-rate", async () => {
-    const res = await SELF.fetch("https://example.com/oura/heart-rate");
-    expect(res.status).toBe(200);
-
-    const json = await res.json();
-    expect(Array.isArray(json)).toBe(true);
   });
 });

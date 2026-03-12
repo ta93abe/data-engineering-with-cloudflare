@@ -14,8 +14,15 @@
   "vars": {
     "GITHUB_USERNAME": "ta93abe",
     "OURA_REDIRECT_URI": "https://ingestion.ta93abe.workers.dev/oura/callback",
+    "OURA_BACKFILL_START_DATE": "2024-01-01",
     "WITHINGS_REDIRECT_URI": "https://ingestion.ta93abe.workers.dev/withings/callback"
   },
+  "r2_buckets": [
+    {
+      "binding": "DATA_LAKE",
+      "bucket_name": "data-lake"
+    }
+  ],
   "d1_databases": [
     {
       "binding": "DB",

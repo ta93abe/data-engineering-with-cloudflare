@@ -326,7 +326,7 @@ describe("oura routes via index", () => {
     expect(res.status).toBe(200);
 
     const json = await res.json();
-    expect(json).toHaveProperty("sleep_records");
+    expect(json).toHaveProperty("daily_sleep_files");
   });
 
   it("redirects on GET /oura/auth", async () => {
