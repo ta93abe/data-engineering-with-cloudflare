@@ -1,0 +1,34 @@
+{
+  "cli_version": "0.5.0",
+  "checkpoint_id": "a2044f275467",
+  "session_id": "71de6dcc-6839-4ba9-a404-b2ca3e2bc2ac",
+  "strategy": "manual-commit",
+  "created_at": "2026-03-12T04:47:51.561641Z",
+  "branch": "feat/agents-sdk",
+  "checkpoints_count": 2,
+  "files_touched": [
+    ".serena/project.yml"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-6",
+  "turn_id": "f6e63284af85",
+  "token_usage": {
+    "input_tokens": 552,
+    "cache_creation_tokens": 797413,
+    "cache_read_tokens": 44467284,
+    "output_tokens": 107743,
+    "api_call_count": 397
+  },
+  "session_metrics": {
+    "turn_count": 62
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-03-12T04:47:50.553083Z",
+    "agent_lines": 9,
+    "human_added": 2891,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 2900,
+    "agent_percentage": 0.3103448275862069
+  }
+}
