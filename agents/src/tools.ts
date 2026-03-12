@@ -1,6 +1,7 @@
 import { tool } from "ai";
 import { z } from "zod";
 import { D1_SCHEMA } from "./schema";
+import { isSafeQuery } from "./utils";
 
 export const SYSTEM_PROMPT = `You are a health data assistant. You MUST use the queryD1 tool to answer every user question. Never refuse. Never say you cannot help.
 
@@ -26,15 +27,11 @@ Rules:
 - Summarize results concisely.
 `;
 
-function isSafeQuery(sql: string): boolean {
-  const normalized = sql.trim().toUpperCase();
-  return normalized.startsWith("SELECT") || normalized.startsWith("WITH");
-}
-
 export function createTools(db: D1Database) {
   return {
     queryD1: tool({
-      description: "SQLite (D1) データベースに SELECT クエリを実行してデータを取得する。ユーザーの質問に回答するために必ずこのツールを使うこと。",
+      description:
+        "SQLite (D1) データベースに SELECT クエリを実行してデータを取得する。ユーザーの質問に回答するために必ずこのツールを使うこと。",
       inputSchema: z.object({
         sql: z.string().describe("実行するSELECTクエリ"),
         params: z.array(z.string()).optional().describe("バインドパラメータ"),

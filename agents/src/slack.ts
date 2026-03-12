@@ -2,6 +2,7 @@ import { generateText } from "ai";
 import { createWorkersAI } from "workers-ai-provider";
 import { D1_SCHEMA } from "./schema";
 import type { Env } from "./types";
+import { isSafeQuery } from "./utils";
 
 const MODEL_ID = "@cf/meta/llama-3.3-70b-instruct-fp8-fast" as const;
 
@@ -66,7 +67,7 @@ async function verifySlackSignature(
 }
 
 async function postSlackMessage(token: string, channel: string, text: string, threadTs?: string) {
-  await fetch("https://slack.com/api/chat.postMessage", {
+  const response = await fetch("https://slack.com/api/chat.postMessage", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,
@@ -78,16 +79,23 @@ async function postSlackMessage(token: string, channel: string, text: string, th
       ...(threadTs ? { thread_ts: threadTs } : {}),
     }),
   });
-}
 
-function isSafeQuery(sql: string): boolean {
-  const normalized = sql.trim().toUpperCase();
-  return normalized.startsWith("SELECT") || normalized.startsWith("WITH");
+  if (!response.ok) {
+    console.error("Slack API HTTP error:", response.status, response.statusText);
+  } else {
+    const result = (await response.json()) as { ok: boolean; error?: string };
+    if (!result.ok) {
+      console.error("Slack API error:", result.error);
+    }
+  }
 }
 
 function extractSql(raw: string): string {
   // Strip markdown code blocks if present
-  let sql = raw.replace(/```sql\n?/gi, "").replace(/```\n?/g, "").trim();
+  let sql = raw
+    .replace(/```sql\n?/gi, "")
+    .replace(/```\n?/g, "")
+    .trim();
   // Take only first statement
   const semicolonIdx = sql.indexOf(";");
   if (semicolonIdx > 0) {
@@ -156,11 +164,13 @@ export async function handleSlackEvent(request: Request, env: Env): Promise<Resp
       const queryResult = await env.DB.prepare(sql).all();
       const rows = queryResult.results.slice(0, 50);
 
-      // Step 3: Summarize results
+      // Step 3: Summarize results (truncate to avoid exceeding model context limits)
+      const rowsPreview =
+        rows.length > 10 ? [...rows.slice(0, 10), `... and ${rows.length - 10} more rows`] : rows;
       const { text: answer } = await generateText({
         model: workersai(MODEL_ID),
         system: SUMMARIZE_PROMPT,
-        prompt: `ユーザーの質問: ${userText}\n\n実行したSQL: ${sql}\n\nクエリ結果 (${queryResult.results.length}件):\n${JSON.stringify(rows, null, 2)}`,
+        prompt: `ユーザーの質問: ${userText}\n\n実行したSQL: ${sql}\n\nクエリ結果 (${queryResult.results.length}件):\n${JSON.stringify(rowsPreview, null, 2)}`,
       });
 
       const message = `${answer}\n\n\`\`\`${sql}\`\`\``;
