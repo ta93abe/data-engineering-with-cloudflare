@@ -469,7 +469,7 @@ export async function runSync(env: Env): Promise<SyncResult> {
   let totalActivity = 0;
   let totalReadiness = 0;
   let totalHeartRate = 0;
-  let lastSuccessfulEnd = startDate;
+  let lastSuccessfulEnd: string | null = null;
 
   for (const chunk of chunks) {
     try {
@@ -480,9 +480,10 @@ export async function runSync(env: Env): Promise<SyncResult> {
       const activityCount = await syncDailyActivity(r2, token, chunk.start, chunk.end);
       const readinessCount = await syncDailyReadiness(r2, token, chunk.start, chunk.end);
 
-      // Heart rate: limit to 30 days per chunk
+      // Heart rate API has 30-day limit; use inclusive day count
       const chunkDays =
-        (new Date(chunk.end).getTime() - new Date(chunk.start).getTime()) / (1000 * 60 * 60 * 24);
+        (new Date(chunk.end).getTime() - new Date(chunk.start).getTime()) / (1000 * 60 * 60 * 24) +
+        1;
       const heartRateCount =
         chunkDays > 30 ? 0 : await syncHeartRate(r2, token, chunk.start, chunk.end);
 
@@ -511,13 +512,15 @@ export async function runSync(env: Env): Promise<SyncResult> {
     }
   }
 
-  // Update sync_state with last successful chunk end
-  await db
-    .prepare(
-      "UPDATE sync_state SET last_sync_at = ?, updated_at = datetime('now') WHERE id = 'oura'"
-    )
-    .bind(lastSuccessfulEnd)
-    .run();
+  // Only update sync_state if at least one chunk succeeded
+  if (lastSuccessfulEnd) {
+    await db
+      .prepare(
+        "UPDATE sync_state SET last_sync_at = ?, updated_at = datetime('now') WHERE id = 'oura'"
+      )
+      .bind(lastSuccessfulEnd)
+      .run();
+  }
 
   const total = totalSleep + totalActivity + totalReadiness + totalHeartRate;
 
@@ -628,14 +631,20 @@ app.post("/sync", async (c) => {
   }
 });
 
-// Stats — list R2 objects count
+// Stats — list R2 objects count (handles pagination)
 app.get("/stats", async (c) => {
   const tables = ["daily_sleep", "daily_activity", "daily_readiness", "heart_rate"];
   const stats: Record<string, number> = {};
 
   for (const table of tables) {
-    const list = await c.env.DATA_LAKE.list({ prefix: `oura/${table}/` });
-    stats[`${table}_files`] = list.objects.length;
+    let count = 0;
+    let cursor: string | undefined;
+    do {
+      const list = await c.env.DATA_LAKE.list({ prefix: `oura/${table}/`, cursor });
+      count += list.objects.length;
+      cursor = list.truncated ? list.cursor : undefined;
+    } while (cursor);
+    stats[`${table}_files`] = count;
   }
 
   const syncState = await c.env.DB.prepare(
