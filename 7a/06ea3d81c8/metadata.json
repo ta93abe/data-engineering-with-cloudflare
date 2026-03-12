@@ -1,0 +1,23 @@
+{
+  "cli_version": "0.5.0",
+  "checkpoint_id": "7a06ea3d81c8",
+  "strategy": "manual-commit",
+  "branch": "feat/oura-r2-parquet",
+  "checkpoints_count": 1,
+  "files_touched": null,
+  "sessions": [
+    {
+      "metadata": "/7a/06ea3d81c8/0/metadata.json",
+      "transcript": "/7a/06ea3d81c8/0/full.jsonl",
+      "content_hash": "/7a/06ea3d81c8/0/content_hash.txt",
+      "prompt": "/7a/06ea3d81c8/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 2117,
+    "cache_creation_tokens": 893072,
+    "cache_read_tokens": 25062152,
+    "output_tokens": 112669,
+    "api_call_count": 230
+  }
+}
