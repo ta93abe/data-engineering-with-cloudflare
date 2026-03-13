@@ -1,0 +1,51 @@
+{
+  "cli_version": "0.5.0",
+  "checkpoint_id": "6848b002067b",
+  "session_id": "851da706-d87f-4a57-aa58-2d20610f4497",
+  "strategy": "manual-commit",
+  "created_at": "2026-03-13T13:00:24.519506Z",
+  "branch": "feat/all-services-r2-parquet",
+  "checkpoints_count": 9,
+  "files_touched": [
+    "ingestion/package.json",
+    "ingestion/pnpm-lock.yaml",
+    "ingestion/src/__tests__/index.test.ts",
+    "ingestion/src/__tests__/mock-parquet-encoder.mjs",
+    "ingestion/src/__tests__/parquet.test.ts",
+    "ingestion/src/index.ts",
+    "ingestion/src/services/github.ts",
+    "ingestion/src/services/linear.ts",
+    "ingestion/src/services/oura.ts",
+    "ingestion/src/services/parquet.ts",
+    "ingestion/src/services/withings.ts",
+    "ingestion/src/types.ts",
+    "ingestion/vitest.config.ts",
+    "ingestion/wrangler.jsonc",
+    "parquet-encoder/Cargo.lock",
+    "parquet-encoder/Cargo.toml",
+    "parquet-encoder/src/lib.rs",
+    "parquet-encoder/wrangler.jsonc"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-6",
+  "turn_id": "ad8ed417e7ab",
+  "token_usage": {
+    "input_tokens": 305,
+    "cache_creation_tokens": 723846,
+    "cache_read_tokens": 29196295,
+    "output_tokens": 99787,
+    "api_call_count": 248
+  },
+  "session_metrics": {
+    "turn_count": 17
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-03-13T13:00:22.852638Z",
+    "agent_lines": 2794,
+    "human_added": 7,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 2801,
+    "agent_percentage": 99.75008925383791
+  }
+}
