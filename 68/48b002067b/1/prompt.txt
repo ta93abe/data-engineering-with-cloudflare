@@ -1,0 +1,18 @@
+dlt を Sandbox で動かせるか調査して
+
+---
+
+新しいSandbox作るのは？
+
+---
+
+R2
+
+---
+
+dbt から直接読むには external source 設定が必要
+これってどういうこと？
+
+---
+
+Slacｋは作りたい GitHubは移行したい
