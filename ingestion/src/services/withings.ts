@@ -1,5 +1,13 @@
 import { Hono } from "hono";
 import type { Env, SyncResult } from "../types";
+import {
+  encodeWithingsActivity,
+  encodeWithingsMeasure,
+  encodeWithingsSleep,
+  type WithingsActivityRow,
+  type WithingsMeasureRow,
+  type WithingsSleepRow,
+} from "./parquet";
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -187,7 +195,7 @@ async function postWithings<T>(
 }
 
 // ============================================
-// Sync Functions
+// Helpers
 // ============================================
 
 function getDateRange(lastSyncAt: string | null): { startDate: string; endDate: string } {
@@ -213,76 +221,20 @@ function toActualValue(value: number, unit: number): number {
   return value * 10 ** unit;
 }
 
-async function syncMeasures(
-  db: D1Database,
-  token: string,
-  startDate: string,
-  endDate: string
-): Promise<number> {
-  let offset = 0;
-  let totalCount = 0;
-
-  while (true) {
-    const body = await postWithings<MeasureBody>(WITHINGS_MEASURE_URL, token, {
-      action: "getmeas",
-      category: "1",
-      startdate: String(toUnix(startDate)),
-      enddate: String(toUnix(endDate) + 86400), // include end date
-      offset: String(offset),
-    });
-
-    for (const grp of body.measuregrps) {
-      const values: Record<string, number | null> = {};
-      for (const m of grp.measures) {
-        const field = MEASURE_TYPES[m.type];
-        if (field) {
-          values[field] = toActualValue(m.value, m.unit);
-        }
-      }
-
-      const date = new Date(grp.date * 1000).toISOString().split("T")[0];
-
-      await db
-        .prepare(
-          `INSERT INTO withings_measures (grpid, date, timestamp, weight, fat_ratio, fat_mass, fat_free_mass, muscle_mass, bone_mass, hydration, heart_pulse, synced_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
-           ON CONFLICT(grpid) DO UPDATE SET
-             date = excluded.date,
-             timestamp = excluded.timestamp,
-             weight = excluded.weight,
-             fat_ratio = excluded.fat_ratio,
-             fat_mass = excluded.fat_mass,
-             fat_free_mass = excluded.fat_free_mass,
-             muscle_mass = excluded.muscle_mass,
-             bone_mass = excluded.bone_mass,
-             hydration = excluded.hydration,
-             heart_pulse = excluded.heart_pulse,
-             synced_at = excluded.synced_at`
-        )
-        .bind(
-          grp.grpid,
-          date,
-          grp.date,
-          values.weight ?? null,
-          values.fat_ratio ?? null,
-          values.fat_mass ?? null,
-          values.fat_free_mass ?? null,
-          values.muscle_mass ?? null,
-          values.bone_mass ?? null,
-          values.hydration ?? null,
-          values.heart_pulse ?? null
-        )
-        .run();
-    }
-
-    totalCount += body.measuregrps.length;
-
-    if (!body.more) break;
-    offset = body.offset;
+function groupByDay<T>(items: T[], getDayFn: (item: T) => string): Map<string, T[]> {
+  const map = new Map<string, T[]>();
+  for (const item of items) {
+    const day = getDayFn(item);
+    const arr = map.get(day) ?? [];
+    arr.push(item);
+    map.set(day, arr);
   }
-
-  return totalCount;
+  return map;
 }
+
+// ============================================
+// Sync Functions (R2 Parquet)
+// ============================================
 
 const SLEEP_DATA_FIELDS = [
   "totalsleepduration",
@@ -303,89 +255,6 @@ const SLEEP_DATA_FIELDS = [
   "snoringepisodecount",
 ].join(",");
 
-async function syncSleep(
-  db: D1Database,
-  token: string,
-  startDate: string,
-  endDate: string
-): Promise<number> {
-  let offset = 0;
-  let totalCount = 0;
-
-  while (true) {
-    const body = await postWithings<SleepBody>(WITHINGS_SLEEP_URL, token, {
-      action: "getsummary",
-      startdateymd: startDate,
-      enddateymd: endDate,
-      data_fields: SLEEP_DATA_FIELDS,
-      offset: String(offset),
-    });
-
-    for (const item of body.series) {
-      const id = `${item.startdate}_${item.enddate}`;
-
-      await db
-        .prepare(
-          `INSERT INTO withings_sleep (id, date, startdate, enddate,
-            total_sleep_duration, deep_sleep_duration, light_sleep_duration, rem_sleep_duration,
-            wakeup_duration, sleep_score, sleep_efficiency, sleep_latency,
-            hr_average, hr_min, hr_max, rr_average, rr_min, rr_max,
-            snoring, snoring_episode_count, synced_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
-           ON CONFLICT(id) DO UPDATE SET
-             date = excluded.date,
-             total_sleep_duration = excluded.total_sleep_duration,
-             deep_sleep_duration = excluded.deep_sleep_duration,
-             light_sleep_duration = excluded.light_sleep_duration,
-             rem_sleep_duration = excluded.rem_sleep_duration,
-             wakeup_duration = excluded.wakeup_duration,
-             sleep_score = excluded.sleep_score,
-             sleep_efficiency = excluded.sleep_efficiency,
-             sleep_latency = excluded.sleep_latency,
-             hr_average = excluded.hr_average,
-             hr_min = excluded.hr_min,
-             hr_max = excluded.hr_max,
-             rr_average = excluded.rr_average,
-             rr_min = excluded.rr_min,
-             rr_max = excluded.rr_max,
-             snoring = excluded.snoring,
-             snoring_episode_count = excluded.snoring_episode_count,
-             synced_at = excluded.synced_at`
-        )
-        .bind(
-          id,
-          item.date,
-          item.startdate,
-          item.enddate,
-          item.data.totalsleepduration ?? null,
-          item.data.deepsleepduration ?? null,
-          item.data.lightsleepduration ?? null,
-          item.data.remsleepduration ?? null,
-          item.data.wakeupduration ?? null,
-          item.data.sleep_score ?? null,
-          item.data.sleep_efficiency ?? null,
-          item.data.sleep_latency ?? null,
-          item.data.hr_average ?? null,
-          item.data.hr_min ?? null,
-          item.data.hr_max ?? null,
-          item.data.rr_average ?? null,
-          item.data.rr_min ?? null,
-          item.data.rr_max ?? null,
-          item.data.snoring ?? null,
-          item.data.snoringepisodecount ?? null
-        )
-        .run();
-    }
-
-    totalCount += body.series.length;
-
-    if (!body.more) break;
-    offset = body.offset;
-  }
-
-  return totalCount;
-}
-
 const ACTIVITY_DATA_FIELDS = [
   "steps",
   "distance",
@@ -401,14 +270,136 @@ const ACTIVITY_DATA_FIELDS = [
   "hr_max",
 ].join(",");
 
-async function syncActivity(
-  db: D1Database,
+async function syncMeasures(
+  r2: R2Bucket,
+  encoder: Fetcher,
   token: string,
   startDate: string,
-  endDate: string
+  endDate: string,
+  synced_at: string
 ): Promise<number> {
   let offset = 0;
-  let totalCount = 0;
+  const allRows: WithingsMeasureRow[] = [];
+
+  while (true) {
+    const body = await postWithings<MeasureBody>(WITHINGS_MEASURE_URL, token, {
+      action: "getmeas",
+      category: "1",
+      startdate: String(toUnix(startDate)),
+      enddate: String(toUnix(endDate) + 86400),
+      offset: String(offset),
+    });
+
+    for (const grp of body.measuregrps) {
+      const values: Record<string, number | null> = {};
+      for (const m of grp.measures) {
+        const field = MEASURE_TYPES[m.type];
+        if (field) {
+          values[field] = toActualValue(m.value, m.unit);
+        }
+      }
+
+      const date = new Date(grp.date * 1000).toISOString().split("T")[0];
+
+      allRows.push({
+        grpid: grp.grpid,
+        date,
+        timestamp: grp.date,
+        weight: values.weight ?? null,
+        fat_ratio: values.fat_ratio ?? null,
+        fat_mass: values.fat_mass ?? null,
+        fat_free_mass: values.fat_free_mass ?? null,
+        muscle_mass: values.muscle_mass ?? null,
+        bone_mass: values.bone_mass ?? null,
+        hydration: values.hydration ?? null,
+        heart_pulse: values.heart_pulse ?? null,
+        synced_at,
+      });
+    }
+
+    if (!body.more) break;
+    offset = body.offset;
+  }
+
+  // Group by day and write daily Parquet files
+  const grouped = groupByDay(allRows, (r) => r.date);
+  for (const [day, rows] of grouped) {
+    const parquet = await encodeWithingsMeasure(encoder, rows);
+    await r2.put(`withings/measures/${day}.parquet`, parquet);
+  }
+
+  return allRows.length;
+}
+
+async function syncSleep(
+  r2: R2Bucket,
+  encoder: Fetcher,
+  token: string,
+  startDate: string,
+  endDate: string,
+  synced_at: string
+): Promise<number> {
+  let offset = 0;
+  const allRows: WithingsSleepRow[] = [];
+
+  while (true) {
+    const body = await postWithings<SleepBody>(WITHINGS_SLEEP_URL, token, {
+      action: "getsummary",
+      startdateymd: startDate,
+      enddateymd: endDate,
+      data_fields: SLEEP_DATA_FIELDS,
+      offset: String(offset),
+    });
+
+    for (const item of body.series) {
+      allRows.push({
+        date: item.date,
+        startdate: item.startdate,
+        enddate: item.enddate,
+        total_sleep_duration: item.data.totalsleepduration ?? null,
+        deep_sleep_duration: item.data.deepsleepduration ?? null,
+        light_sleep_duration: item.data.lightsleepduration ?? null,
+        rem_sleep_duration: item.data.remsleepduration ?? null,
+        wakeup_duration: item.data.wakeupduration ?? null,
+        sleep_score: item.data.sleep_score ?? null,
+        sleep_efficiency: item.data.sleep_efficiency ?? null,
+        sleep_latency: item.data.sleep_latency ?? null,
+        hr_average: item.data.hr_average ?? null,
+        hr_min: item.data.hr_min ?? null,
+        hr_max: item.data.hr_max ?? null,
+        rr_average: item.data.rr_average ?? null,
+        rr_min: item.data.rr_min ?? null,
+        rr_max: item.data.rr_max ?? null,
+        snoring: item.data.snoring ?? null,
+        snoring_episode_count: item.data.snoringepisodecount ?? null,
+        synced_at,
+      });
+    }
+
+    if (!body.more) break;
+    offset = body.offset;
+  }
+
+  // Group by day and write daily Parquet files
+  const grouped = groupByDay(allRows, (r) => r.date);
+  for (const [day, rows] of grouped) {
+    const parquet = await encodeWithingsSleep(encoder, rows);
+    await r2.put(`withings/sleep/${day}.parquet`, parquet);
+  }
+
+  return allRows.length;
+}
+
+async function syncActivity(
+  r2: R2Bucket,
+  encoder: Fetcher,
+  token: string,
+  startDate: string,
+  endDate: string,
+  synced_at: string
+): Promise<number> {
+  let offset = 0;
+  const allRows: WithingsActivityRow[] = [];
 
   while (true) {
     const body = await postWithings<ActivityBody>(WITHINGS_ACTIVITY_URL, token, {
@@ -420,50 +411,36 @@ async function syncActivity(
     });
 
     for (const item of body.activities) {
-      await db
-        .prepare(
-          `INSERT INTO withings_activity (date, steps, distance, elevation, soft, moderate, intense, active, calories, total_calories, hr_average, hr_min, hr_max, synced_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
-           ON CONFLICT(date) DO UPDATE SET
-             steps = excluded.steps,
-             distance = excluded.distance,
-             elevation = excluded.elevation,
-             soft = excluded.soft,
-             moderate = excluded.moderate,
-             intense = excluded.intense,
-             active = excluded.active,
-             calories = excluded.calories,
-             total_calories = excluded.total_calories,
-             hr_average = excluded.hr_average,
-             hr_min = excluded.hr_min,
-             hr_max = excluded.hr_max,
-             synced_at = excluded.synced_at`
-        )
-        .bind(
-          item.date,
-          item.steps ?? null,
-          item.distance ?? null,
-          item.elevation ?? null,
-          item.soft ?? null,
-          item.moderate ?? null,
-          item.intense ?? null,
-          item.active ?? null,
-          item.calories ?? null,
-          item.totalcalories ?? null,
-          item.hr_average ?? null,
-          item.hr_min ?? null,
-          item.hr_max ?? null
-        )
-        .run();
+      allRows.push({
+        date: item.date,
+        steps: item.steps ?? null,
+        distance: item.distance ?? null,
+        elevation: item.elevation ?? null,
+        soft: item.soft ?? null,
+        moderate: item.moderate ?? null,
+        intense: item.intense ?? null,
+        active: item.active ?? null,
+        calories: item.calories ?? null,
+        total_calories: item.totalcalories ?? null,
+        hr_average: item.hr_average ?? null,
+        hr_min: item.hr_min ?? null,
+        hr_max: item.hr_max ?? null,
+        synced_at,
+      });
     }
-
-    totalCount += body.activities.length;
 
     if (!body.more) break;
     offset = body.offset;
   }
 
-  return totalCount;
+  // Group by day and write daily Parquet files
+  const grouped = groupByDay(allRows, (r) => r.date);
+  for (const [day, rows] of grouped) {
+    const parquet = await encodeWithingsActivity(encoder, rows);
+    await r2.put(`withings/activity/${day}.parquet`, parquet);
+  }
+
+  return allRows.length;
 }
 
 // ============================================
@@ -476,7 +453,11 @@ export async function runSync(
   overrideEndDate?: string
 ): Promise<SyncResult> {
   const db = env.DB;
+  const r2 = env.DATA_LAKE;
+  const encoder = env.PARQUET_ENCODER;
+
   const token = await getValidToken(db, env);
+  const synced_at = new Date().toISOString();
 
   const syncState = await db
     .prepare("SELECT last_sync_at FROM sync_state WHERE id = 'withings'")
@@ -487,9 +468,9 @@ export async function runSync(
   const startDate = overrideStartDate ?? defaultStart;
   const endDate = overrideEndDate ?? defaultEnd;
 
-  const measureCount = await syncMeasures(db, token, startDate, endDate);
-  const sleepCount = await syncSleep(db, token, startDate, endDate);
-  const activityCount = await syncActivity(db, token, startDate, endDate);
+  const measureCount = await syncMeasures(r2, encoder, token, startDate, endDate, synced_at);
+  const sleepCount = await syncSleep(r2, encoder, token, startDate, endDate, synced_at);
+  const activityCount = await syncActivity(r2, encoder, token, startDate, endDate, synced_at);
 
   if (!overrideStartDate) {
     await db
@@ -504,7 +485,7 @@ export async function runSync(
   return {
     service: "withings",
     success: true,
-    message: `Synced ${measureCount} measures, ${sleepCount} sleep, ${activityCount} activity records`,
+    message: `Synced ${measureCount} measures, ${sleepCount} sleep, ${activityCount} activity records to R2 Parquet`,
     count: total,
   };
 }
@@ -620,61 +601,28 @@ app.post("/sync", async (c) => {
   }
 });
 
-// Stats
+// Stats — list R2 objects
 app.get("/stats", async (c) => {
-  const stats = await c.env.DB.prepare(
-    `SELECT
-       (SELECT COUNT(*) FROM withings_measures) as measure_records,
-       (SELECT COUNT(*) FROM withings_sleep) as sleep_records,
-       (SELECT COUNT(*) FROM withings_activity) as activity_records,
-       (SELECT last_sync_at FROM sync_state WHERE id = 'withings') as last_sync`
-  ).first();
-  return c.json(stats);
-});
+  const r2 = c.env.DATA_LAKE;
+  const tables = ["measures", "sleep", "activity"];
+  const stats: Record<string, number> = {};
 
-function parseLimit(raw: string | undefined, defaultVal: number, max = 1000): number {
-  const parsed = Number.parseInt(raw ?? String(defaultVal), 10);
-  if (Number.isNaN(parsed) || parsed < 1) return defaultVal;
-  return Math.min(parsed, max);
-}
+  for (const table of tables) {
+    let count = 0;
+    let cursor: string | undefined;
+    do {
+      const list = await r2.list({ prefix: `withings/${table}/`, cursor });
+      count += list.objects.length;
+      cursor = list.truncated ? list.cursor : undefined;
+    } while (cursor);
+    stats[`${table}_files`] = count;
+  }
 
-// Data endpoints
-app.get("/measures", async (c) => {
-  const limit = parseLimit(c.req.query("limit"), 30);
-  const results = await c.env.DB.prepare(
-    "SELECT * FROM withings_measures ORDER BY date DESC LIMIT ?"
-  )
-    .bind(limit)
-    .all();
-  return c.json(results.results);
-});
+  const syncState = await c.env.DB.prepare(
+    "SELECT last_sync_at FROM sync_state WHERE id = 'withings'"
+  ).first<{ last_sync_at: string | null }>();
 
-app.get("/sleep", async (c) => {
-  const limit = parseLimit(c.req.query("limit"), 30);
-  const results = await c.env.DB.prepare("SELECT * FROM withings_sleep ORDER BY date DESC LIMIT ?")
-    .bind(limit)
-    .all();
-  return c.json(results.results);
-});
-
-app.get("/activity", async (c) => {
-  const limit = parseLimit(c.req.query("limit"), 30);
-  const results = await c.env.DB.prepare(
-    "SELECT * FROM withings_activity ORDER BY date DESC LIMIT ?"
-  )
-    .bind(limit)
-    .all();
-  return c.json(results.results);
-});
-
-app.get("/daily-summary", async (c) => {
-  const limit = parseLimit(c.req.query("limit"), 30);
-  const results = await c.env.DB.prepare(
-    "SELECT * FROM v_withings_daily_summary ORDER BY date DESC LIMIT ?"
-  )
-    .bind(limit)
-    .all();
-  return c.json(results.results);
+  return c.json({ ...stats, last_sync: syncState?.last_sync_at ?? null });
 });
 
 export default app;

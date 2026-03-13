@@ -6,6 +6,15 @@ export default defineWorkersConfig({
     poolOptions: {
       workers: {
         wrangler: { configPath: "./wrangler.jsonc" },
+        miniflare: {
+          workers: [
+            {
+              name: "parquet-encoder",
+              modules: true,
+              scriptPath: "./src/__tests__/mock-parquet-encoder.mjs",
+            },
+          ],
+        },
       },
     },
   },

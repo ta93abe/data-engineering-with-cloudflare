@@ -1,5 +1,13 @@
 import { Hono } from "hono";
 import type { Env, SyncResult } from "../types";
+import {
+  encodeGitHubCommit,
+  encodeGitHubRepo,
+  encodeGitHubUser,
+  type GitHubCommitRow,
+  type GitHubRepoRow,
+  type GitHubUserRow,
+} from "./parquet";
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -48,125 +56,101 @@ async function fetchGitHub<T>(path: string, token: string): Promise<T> {
   return res.json();
 }
 
-async function syncUser(db: D1Database, username: string, token: string): Promise<User> {
-  const user = await fetchGitHub<User>(`/users/${username}`, token);
-
-  await db
-    .prepare(
-      `INSERT INTO github_users (id, login, name, avatar_url, synced_at)
-       VALUES (?, ?, ?, ?, datetime('now'))
-       ON CONFLICT(id) DO UPDATE SET
-         login = excluded.login,
-         name = excluded.name,
-         avatar_url = excluded.avatar_url,
-         synced_at = excluded.synced_at`
-    )
-    .bind(user.id, user.login, user.name, user.avatar_url)
-    .run();
-
-  return user;
+function groupByDay(commits: GitHubCommitRow[]): Map<string, GitHubCommitRow[]> {
+  const map = new Map<string, GitHubCommitRow[]>();
+  for (const commit of commits) {
+    const arr = map.get(commit.day) ?? [];
+    arr.push(commit);
+    map.set(commit.day, arr);
+  }
+  return map;
 }
 
-async function syncRepos(
-  db: D1Database,
-  username: string,
-  userId: number,
-  token: string
-): Promise<Repo[]> {
+export async function runSync(env: Env): Promise<SyncResult> {
+  const {
+    GITHUB_TOKEN: token,
+    GITHUB_USERNAME: username,
+    DATA_LAKE: r2,
+    PARQUET_ENCODER: encoder,
+  } = env;
+
+  const synced_at = new Date().toISOString();
+
+  // 1. Fetch & write user
+  const user = await fetchGitHub<User>(`/users/${username}`, token);
+  const userRows: GitHubUserRow[] = [
+    {
+      id: user.id,
+      login: user.login,
+      name: user.name,
+      avatar_url: user.avatar_url,
+      synced_at,
+    },
+  ];
+  const userParquet = await encodeGitHubUser(encoder, userRows);
+  await r2.put("github/users.parquet", userParquet);
+
+  // 2. Fetch & write repos
   const repos = await fetchGitHub<Repo[]>(
     `/users/${username}/repos?per_page=100&sort=pushed`,
     token
   );
+  const repoRows: GitHubRepoRow[] = repos.map((repo) => ({
+    id: repo.id,
+    owner_id: user.id,
+    name: repo.name,
+    full_name: repo.full_name,
+    description: repo.description,
+    language: repo.language,
+    stars: repo.stargazers_count,
+    forks: repo.forks_count,
+    is_private: repo.private ? 1 : 0,
+    default_branch: repo.default_branch,
+    synced_at,
+  }));
+  const repoParquet = await encodeGitHubRepo(encoder, repoRows);
+  await r2.put("github/repos.parquet", repoParquet);
 
-  for (const repo of repos) {
-    await db
-      .prepare(
-        `INSERT INTO github_repos (id, owner_id, name, full_name, description, language, stars, forks, is_private, default_branch, synced_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
-         ON CONFLICT(id) DO UPDATE SET
-           name = excluded.name,
-           full_name = excluded.full_name,
-           description = excluded.description,
-           language = excluded.language,
-           stars = excluded.stars,
-           forks = excluded.forks,
-           is_private = excluded.is_private,
-           default_branch = excluded.default_branch,
-           synced_at = excluded.synced_at`
-      )
-      .bind(
-        repo.id,
-        userId,
-        repo.name,
-        repo.full_name,
-        repo.description,
-        repo.language,
-        repo.stargazers_count,
-        repo.forks_count,
-        repo.private ? 1 : 0,
-        repo.default_branch
-      )
-      .run();
-  }
-
-  return repos;
-}
-
-async function syncCommits(db: D1Database, repo: Repo, token: string): Promise<number> {
-  const commits = await fetchGitHub<Commit[]>(
-    `/repos/${repo.full_name}/commits?per_page=100`,
-    token
-  );
-
-  let synced = 0;
-  for (const commit of commits) {
-    const message = commit.commit.message.substring(0, 500);
-    try {
-      await db
-        .prepare(
-          `INSERT INTO github_commits (sha, repo_id, message, author_name, author_email, author_date, additions, deletions, files_changed, synced_at)
-           VALUES (?, ?, ?, ?, ?, ?, 0, 0, 0, datetime('now'))
-           ON CONFLICT(sha) DO NOTHING`
-        )
-        .bind(
-          commit.sha,
-          repo.id,
-          message,
-          commit.commit.author.name,
-          commit.commit.author.email,
-          commit.commit.author.date
-        )
-        .run();
-      synced++;
-    } catch {
-      // ignore duplicate
-    }
-  }
-
-  return synced;
-}
-
-export async function runSync(env: Env): Promise<SyncResult> {
-  const { DB: db, GITHUB_TOKEN: token, GITHUB_USERNAME: username } = env;
-
-  const user = await syncUser(db, username, token);
-  const repos = await syncRepos(db, username, user.id, token);
-
-  let totalCommits = 0;
+  // 3. Fetch commits from ALL public repos, then group by day
+  const allCommitRows: GitHubCommitRow[] = [];
   for (const repo of repos.filter((r) => !r.private)) {
     try {
-      const count = await syncCommits(db, repo, token);
-      totalCommits += count;
+      const commits = await fetchGitHub<Commit[]>(
+        `/repos/${repo.full_name}/commits?per_page=100`,
+        token
+      );
+      for (const commit of commits) {
+        const authorDate = commit.commit.author.date;
+        const day = authorDate.split("T")[0];
+        allCommitRows.push({
+          sha: commit.sha,
+          repo_id: repo.id,
+          repo_full_name: repo.full_name,
+          message: commit.commit.message.substring(0, 500),
+          author_name: commit.commit.author.name,
+          author_email: commit.commit.author.email,
+          author_date: authorDate,
+          day,
+          synced_at,
+        });
+      }
     } catch (e) {
-      console.error(`Failed to sync commits for ${repo.name}:`, e);
+      console.error(`Failed to fetch commits for ${repo.name}:`, e);
     }
+  }
+
+  // Write daily Parquet files (all repos combined per day)
+  const grouped = groupByDay(allCommitRows);
+  for (const [day, rows] of grouped) {
+    const parquet = await encodeGitHubCommit(encoder, rows);
+    await r2.put(`github/commits/${day}.parquet`, parquet);
   }
 
   return {
     service: "github",
     success: true,
-    message: `Synced ${repos.length} repos, ${totalCommits} commits`,
-    count: totalCommits,
+    message: `Synced ${repos.length} repos, ${allCommitRows.length} commits to R2 Parquet`,
+    count: allCommitRows.length,
   };
 }
 
@@ -177,23 +161,29 @@ app.post("/sync", async (c) => {
 });
 
 app.get("/stats", async (c) => {
-  const stats = await c.env.DB.prepare(
-    `SELECT
-       (SELECT COUNT(*) FROM github_repos) as repos,
-       (SELECT COUNT(*) FROM github_commits) as commits,
-       (SELECT MAX(synced_at) FROM github_commits) as last_sync`
-  ).first();
+  const r2 = c.env.DATA_LAKE;
+  const counts: Record<string, number> = { users: 0, repos: 0, commits: 0 };
+
+  for (const [name, prefix] of Object.entries({
+    users: "github/users",
+    repos: "github/repos",
+    commits: "github/commits/",
+  })) {
+    let cursor: string | undefined;
+    do {
+      const list = await r2.list({ prefix, cursor });
+      counts[name] += list.objects.length;
+      cursor = list.truncated ? list.cursor : undefined;
+    } while (cursor);
+  }
+
+  const stats = {
+    users_files: counts.users,
+    repos_files: counts.repos,
+    commits_files: counts.commits,
+  };
+
   return c.json(stats);
-});
-
-app.get("/daily", async (c) => {
-  const results = await c.env.DB.prepare("SELECT * FROM v_daily_commits LIMIT 30").all();
-  return c.json(results.results);
-});
-
-app.get("/repos", async (c) => {
-  const results = await c.env.DB.prepare("SELECT * FROM v_repo_stats LIMIT 50").all();
-  return c.json(results.results);
 });
 
 export default app;
