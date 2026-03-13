@@ -1,6 +1,7 @@
 export interface Env {
   DB: D1Database;
   DATA_LAKE: R2Bucket;
+  PARQUET_ENCODER: Fetcher;
   GITHUB_TOKEN: string;
   GITHUB_USERNAME: string;
   OURA_CLIENT_ID: string;

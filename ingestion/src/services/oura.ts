@@ -1,6 +1,4 @@
 import { Hono } from "hono";
-// @ts-expect-error — Wrangler bundles .wasm as WebAssembly.Module
-import PARQUET_WASM from "../../node_modules/parquet-wasm/esm/parquet_wasm_bg.wasm";
 import type { Env, SyncResult } from "../types";
 import {
   type DailyActivityRow,
@@ -11,7 +9,6 @@ import {
   encodeDailySleep,
   encodeHeartRate,
   type HeartRateRow,
-  initParquetWasm,
 } from "./parquet";
 
 const app = new Hono<{ Bindings: Env }>();
@@ -273,6 +270,7 @@ function sleep(ms: number): Promise<void> {
 
 async function syncDailySleep(
   r2: R2Bucket,
+  encoder: Fetcher,
   token: string,
   startDate: string,
   endDate: string
@@ -301,7 +299,7 @@ async function syncDailySleep(
       timestamp: item.timestamp,
       synced_at,
     }));
-    const parquet = await encodeDailySleep(rows);
+    const parquet = await encodeDailySleep(encoder, rows);
     await writeParquetToR2(r2, "daily_sleep", day, parquet);
   }
 
@@ -310,6 +308,7 @@ async function syncDailySleep(
 
 async function syncDailyActivity(
   r2: R2Bucket,
+  encoder: Fetcher,
   token: string,
   startDate: string,
   endDate: string
@@ -347,7 +346,7 @@ async function syncDailyActivity(
       timestamp: item.timestamp,
       synced_at,
     }));
-    const parquet = await encodeDailyActivity(rows);
+    const parquet = await encodeDailyActivity(encoder, rows);
     await writeParquetToR2(r2, "daily_activity", day, parquet);
   }
 
@@ -356,6 +355,7 @@ async function syncDailyActivity(
 
 async function syncDailyReadiness(
   r2: R2Bucket,
+  encoder: Fetcher,
   token: string,
   startDate: string,
   endDate: string
@@ -388,7 +388,7 @@ async function syncDailyReadiness(
       timestamp: item.timestamp,
       synced_at,
     }));
-    const parquet = await encodeDailyReadiness(rows);
+    const parquet = await encodeDailyReadiness(encoder, rows);
     await writeParquetToR2(r2, "daily_readiness", day, parquet);
   }
 
@@ -397,6 +397,7 @@ async function syncDailyReadiness(
 
 async function syncHeartRate(
   r2: R2Bucket,
+  encoder: Fetcher,
   token: string,
   startDate: string,
   endDate: string
@@ -420,7 +421,7 @@ async function syncHeartRate(
       day,
       synced_at,
     }));
-    const parquet = await encodeHeartRate(rows);
+    const parquet = await encodeHeartRate(encoder, rows);
     await writeParquetToR2(r2, "heart_rate", day, parquet);
   }
 
@@ -434,9 +435,7 @@ async function syncHeartRate(
 export async function runSync(env: Env): Promise<SyncResult> {
   const db = env.DB;
   const r2 = env.DATA_LAKE;
-
-  // Initialize parquet-wasm
-  initParquetWasm(PARQUET_WASM);
+  const encoder = env.PARQUET_ENCODER;
 
   // Get valid OAuth token (refreshes if expired)
   let token = await getValidToken(db, env);
@@ -476,16 +475,16 @@ export async function runSync(env: Env): Promise<SyncResult> {
       // Refresh token if needed before each chunk
       token = await getValidToken(db, env);
 
-      const sleepCount = await syncDailySleep(r2, token, chunk.start, chunk.end);
-      const activityCount = await syncDailyActivity(r2, token, chunk.start, chunk.end);
-      const readinessCount = await syncDailyReadiness(r2, token, chunk.start, chunk.end);
+      const sleepCount = await syncDailySleep(r2, encoder, token, chunk.start, chunk.end);
+      const activityCount = await syncDailyActivity(r2, encoder, token, chunk.start, chunk.end);
+      const readinessCount = await syncDailyReadiness(r2, encoder, token, chunk.start, chunk.end);
 
       // Heart rate API has 30-day limit; use inclusive day count
       const chunkDays =
         (new Date(chunk.end).getTime() - new Date(chunk.start).getTime()) / (1000 * 60 * 60 * 24) +
         1;
       const heartRateCount =
-        chunkDays > 30 ? 0 : await syncHeartRate(r2, token, chunk.start, chunk.end);
+        chunkDays > 30 ? 0 : await syncHeartRate(r2, encoder, token, chunk.start, chunk.end);
 
       totalSleep += sleepCount;
       totalActivity += activityCount;

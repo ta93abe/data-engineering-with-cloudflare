@@ -1,6 +1,3 @@
-import { tableFromArrays, tableToIPC } from "apache-arrow";
-import { initSync, Table as WasmTable, writeParquet } from "parquet-wasm/esm";
-
 // ============================================
 // Types — flattened row types for Parquet
 // ============================================
@@ -67,118 +64,264 @@ export interface HeartRateRow {
   synced_at: string;
 }
 
-// ============================================
-// WASM initialization
-// ============================================
+// --- GitHub ---
 
-let wasmInitialized = false;
-
-/**
- * Initialize parquet-wasm synchronously with a pre-loaded WASM module.
- * In Workers: call with the imported .wasm module.
- * In tests: call with the WASM bytes loaded via fs.readFileSync.
- */
-export function initParquetWasm(wasmModule: BufferSource | WebAssembly.Module): void {
-  if (wasmInitialized) return;
-  initSync({ module: wasmModule });
-  wasmInitialized = true;
+export interface GitHubUserRow {
+  id: number;
+  login: string;
+  name: string | null;
+  avatar_url: string;
+  synced_at: string;
 }
 
-function ensureWasmInit(): void {
-  if (!wasmInitialized) {
-    throw new Error("parquet-wasm not initialized. Call initParquetWasm() first.");
+export interface GitHubRepoRow {
+  id: number;
+  owner_id: number;
+  name: string;
+  full_name: string;
+  description: string | null;
+  language: string | null;
+  stars: number;
+  forks: number;
+  is_private: number;
+  default_branch: string;
+  synced_at: string;
+}
+
+export interface GitHubCommitRow {
+  sha: string;
+  repo_id: number;
+  repo_full_name: string;
+  message: string | null;
+  author_name: string | null;
+  author_email: string | null;
+  author_date: string;
+  day: string;
+  synced_at: string;
+}
+
+// --- Linear ---
+
+export interface LinearIssueRow {
+  id: string;
+  identifier: string;
+  title: string;
+  description_length: number;
+  priority: number | null;
+  estimate: number | null;
+  state_name: string | null;
+  state_type: string | null;
+  label_names: string;
+  project_name: string | null;
+  cycle_number: number | null;
+  assignee_name: string | null;
+  created_at: string;
+  updated_at: string;
+  started_at: string | null;
+  completed_at: string | null;
+  canceled_at: string | null;
+  due_date: string | null;
+  synced_at: string;
+}
+
+export interface LinearProjectRow {
+  id: string;
+  name: string;
+  state: string | null;
+  progress: number | null;
+  start_date: string | null;
+  target_date: string | null;
+  created_at: string;
+  updated_at: string;
+  completed_at: string | null;
+  synced_at: string;
+}
+
+export interface LinearLabelRow {
+  id: string;
+  name: string;
+  color: string | null;
+  synced_at: string;
+}
+
+// --- Withings ---
+
+export interface WithingsMeasureRow {
+  grpid: number;
+  date: string;
+  timestamp: number;
+  weight: number | null;
+  fat_ratio: number | null;
+  fat_mass: number | null;
+  fat_free_mass: number | null;
+  muscle_mass: number | null;
+  bone_mass: number | null;
+  hydration: number | null;
+  heart_pulse: number | null;
+  synced_at: string;
+}
+
+export interface WithingsSleepRow {
+  date: string;
+  startdate: number;
+  enddate: number;
+  total_sleep_duration: number | null;
+  deep_sleep_duration: number | null;
+  light_sleep_duration: number | null;
+  rem_sleep_duration: number | null;
+  wakeup_duration: number | null;
+  sleep_score: number | null;
+  sleep_efficiency: number | null;
+  sleep_latency: number | null;
+  hr_average: number | null;
+  hr_min: number | null;
+  hr_max: number | null;
+  rr_average: number | null;
+  rr_min: number | null;
+  rr_max: number | null;
+  snoring: number | null;
+  snoring_episode_count: number | null;
+  synced_at: string;
+}
+
+export interface WithingsActivityRow {
+  date: string;
+  steps: number | null;
+  distance: number | null;
+  elevation: number | null;
+  soft: number | null;
+  moderate: number | null;
+  intense: number | null;
+  active: number | null;
+  calories: number | null;
+  total_calories: number | null;
+  hr_average: number | null;
+  hr_min: number | null;
+  hr_max: number | null;
+  synced_at: string;
+}
+
+// ============================================
+// Service Binding encoder — calls Rust Worker
+// ============================================
+
+async function encodeViaServiceBinding(
+  encoder: Fetcher,
+  schema: string,
+  rows: Record<string, unknown>[]
+): Promise<Uint8Array> {
+  const res = await encoder.fetch("https://parquet-encoder/encode", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ schema, rows }),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`parquet-encoder error (${res.status}): ${text}`);
   }
+  return new Uint8Array(await res.arrayBuffer());
 }
 
 // ============================================
-// Column extraction helpers
+// Oura encoders
 // ============================================
 
-function extractColumn<T, K extends keyof T>(rows: T[], key: K): T[K][] {
-  return rows.map((r) => r[key]);
+export async function encodeDailySleep(
+  encoder: Fetcher,
+  rows: DailySleepRow[]
+): Promise<Uint8Array> {
+  return encodeViaServiceBinding(encoder, "oura_daily_sleep", rows);
+}
+
+export async function encodeDailyActivity(
+  encoder: Fetcher,
+  rows: DailyActivityRow[]
+): Promise<Uint8Array> {
+  return encodeViaServiceBinding(encoder, "oura_daily_activity", rows);
+}
+
+export async function encodeDailyReadiness(
+  encoder: Fetcher,
+  rows: DailyReadinessRow[]
+): Promise<Uint8Array> {
+  return encodeViaServiceBinding(encoder, "oura_daily_readiness", rows);
+}
+
+export async function encodeHeartRate(encoder: Fetcher, rows: HeartRateRow[]): Promise<Uint8Array> {
+  return encodeViaServiceBinding(encoder, "oura_heart_rate", rows);
 }
 
 // ============================================
-// Encode functions
+// GitHub encoders
 // ============================================
 
-function arrowToParquet(columns: Record<string, unknown[]>): Uint8Array {
-  const arrowTable = tableFromArrays(columns);
-  const ipcBytes = tableToIPC(arrowTable, "stream");
-  const wasmTable = WasmTable.fromIPCStream(ipcBytes);
-  return writeParquet(wasmTable);
+export async function encodeGitHubUser(
+  encoder: Fetcher,
+  rows: GitHubUserRow[]
+): Promise<Uint8Array> {
+  return encodeViaServiceBinding(encoder, "github_user", rows);
 }
 
-export async function encodeDailySleep(rows: DailySleepRow[]): Promise<Uint8Array> {
-  ensureWasmInit();
-  return arrowToParquet({
-    day: extractColumn(rows, "day"),
-    score: extractColumn(rows, "score"),
-    deep_sleep: extractColumn(rows, "deep_sleep"),
-    efficiency: extractColumn(rows, "efficiency"),
-    latency: extractColumn(rows, "latency"),
-    rem_sleep: extractColumn(rows, "rem_sleep"),
-    restfulness: extractColumn(rows, "restfulness"),
-    timing: extractColumn(rows, "timing"),
-    total_sleep: extractColumn(rows, "total_sleep"),
-    timestamp: extractColumn(rows, "timestamp"),
-    synced_at: extractColumn(rows, "synced_at"),
-  });
+export async function encodeGitHubRepo(
+  encoder: Fetcher,
+  rows: GitHubRepoRow[]
+): Promise<Uint8Array> {
+  return encodeViaServiceBinding(encoder, "github_repo", rows);
 }
 
-export async function encodeDailyActivity(rows: DailyActivityRow[]): Promise<Uint8Array> {
-  ensureWasmInit();
-  return arrowToParquet({
-    day: extractColumn(rows, "day"),
-    score: extractColumn(rows, "score"),
-    active_calories: extractColumn(rows, "active_calories"),
-    total_calories: extractColumn(rows, "total_calories"),
-    steps: extractColumn(rows, "steps"),
-    equivalent_walking_distance: extractColumn(rows, "equivalent_walking_distance"),
-    high_activity_time: extractColumn(rows, "high_activity_time"),
-    medium_activity_time: extractColumn(rows, "medium_activity_time"),
-    low_activity_time: extractColumn(rows, "low_activity_time"),
-    sedentary_time: extractColumn(rows, "sedentary_time"),
-    resting_time: extractColumn(rows, "resting_time"),
-    met_average: extractColumn(rows, "met_average"),
-    meet_daily_targets: extractColumn(rows, "meet_daily_targets"),
-    move_every_hour: extractColumn(rows, "move_every_hour"),
-    recovery_time: extractColumn(rows, "recovery_time"),
-    stay_active: extractColumn(rows, "stay_active"),
-    training_frequency: extractColumn(rows, "training_frequency"),
-    training_volume: extractColumn(rows, "training_volume"),
-    timestamp: extractColumn(rows, "timestamp"),
-    synced_at: extractColumn(rows, "synced_at"),
-  });
+export async function encodeGitHubCommit(
+  encoder: Fetcher,
+  rows: GitHubCommitRow[]
+): Promise<Uint8Array> {
+  return encodeViaServiceBinding(encoder, "github_commit", rows);
 }
 
-export async function encodeDailyReadiness(rows: DailyReadinessRow[]): Promise<Uint8Array> {
-  ensureWasmInit();
-  return arrowToParquet({
-    day: extractColumn(rows, "day"),
-    score: extractColumn(rows, "score"),
-    temperature_deviation: extractColumn(rows, "temperature_deviation"),
-    temperature_trend_deviation: extractColumn(rows, "temperature_trend_deviation"),
-    activity_balance: extractColumn(rows, "activity_balance"),
-    body_temperature: extractColumn(rows, "body_temperature"),
-    hrv_balance: extractColumn(rows, "hrv_balance"),
-    previous_day_activity: extractColumn(rows, "previous_day_activity"),
-    previous_night: extractColumn(rows, "previous_night"),
-    recovery_index: extractColumn(rows, "recovery_index"),
-    resting_heart_rate: extractColumn(rows, "resting_heart_rate"),
-    sleep_balance: extractColumn(rows, "sleep_balance"),
-    timestamp: extractColumn(rows, "timestamp"),
-    synced_at: extractColumn(rows, "synced_at"),
-  });
+// ============================================
+// Linear encoders
+// ============================================
+
+export async function encodeLinearIssue(
+  encoder: Fetcher,
+  rows: LinearIssueRow[]
+): Promise<Uint8Array> {
+  return encodeViaServiceBinding(encoder, "linear_issue", rows);
 }
 
-export async function encodeHeartRate(rows: HeartRateRow[]): Promise<Uint8Array> {
-  ensureWasmInit();
-  return arrowToParquet({
-    bpm: extractColumn(rows, "bpm"),
-    source: extractColumn(rows, "source"),
-    timestamp: extractColumn(rows, "timestamp"),
-    day: extractColumn(rows, "day"),
-    synced_at: extractColumn(rows, "synced_at"),
-  });
+export async function encodeLinearProject(
+  encoder: Fetcher,
+  rows: LinearProjectRow[]
+): Promise<Uint8Array> {
+  return encodeViaServiceBinding(encoder, "linear_project", rows);
+}
+
+export async function encodeLinearLabel(
+  encoder: Fetcher,
+  rows: LinearLabelRow[]
+): Promise<Uint8Array> {
+  return encodeViaServiceBinding(encoder, "linear_label", rows);
+}
+
+// ============================================
+// Withings encoders
+// ============================================
+
+export async function encodeWithingsMeasure(
+  encoder: Fetcher,
+  rows: WithingsMeasureRow[]
+): Promise<Uint8Array> {
+  return encodeViaServiceBinding(encoder, "withings_measure", rows);
+}
+
+export async function encodeWithingsSleep(
+  encoder: Fetcher,
+  rows: WithingsSleepRow[]
+): Promise<Uint8Array> {
+  return encodeViaServiceBinding(encoder, "withings_sleep", rows);
+}
+
+export async function encodeWithingsActivity(
+  encoder: Fetcher,
+  rows: WithingsActivityRow[]
+): Promise<Uint8Array> {
+  return encodeViaServiceBinding(encoder, "withings_activity", rows);
 }

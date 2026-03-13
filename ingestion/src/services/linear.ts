@@ -1,5 +1,13 @@
 import { Hono } from "hono";
 import type { Env, SyncResult } from "../types";
+import {
+  encodeLinearIssue,
+  encodeLinearLabel,
+  encodeLinearProject,
+  type LinearIssueRow,
+  type LinearLabelRow,
+  type LinearProjectRow,
+} from "./parquet";
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -138,152 +146,88 @@ const LABELS_QUERY = `
   }
 `;
 
-// --- Sync Functions ---
+// --- Main Sync ---
 
-async function syncIssues(db: D1Database, apiKey: string): Promise<number> {
+export async function runSync(env: Env): Promise<SyncResult> {
+  const { LINEAR_API_KEY: apiKey, DATA_LAKE: r2, PARQUET_ENCODER: encoder } = env;
+
+  const synced_at = new Date().toISOString();
+
+  // 1. Fetch & write issues → linear/issues.parquet (snapshot)
   const issues = await fetchAllPages<LinearIssue>(apiKey, ISSUES_QUERY, "issues");
-
-  const statements = issues.map((issue) => {
-    const labelNames = JSON.stringify(issue.labels.nodes.map((l) => l.name));
-    return db
-      .prepare(
-        `INSERT INTO linear_issues (id, identifier, title, description_length, priority, estimate,
-           state_name, state_type, label_names, project_name, cycle_number, assignee_name,
-           created_at, updated_at, started_at, completed_at, canceled_at, due_date, synced_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
-         ON CONFLICT(id) DO UPDATE SET
-           identifier = excluded.identifier,
-           title = excluded.title,
-           description_length = excluded.description_length,
-           priority = excluded.priority,
-           estimate = excluded.estimate,
-           state_name = excluded.state_name,
-           state_type = excluded.state_type,
-           label_names = excluded.label_names,
-           project_name = excluded.project_name,
-           cycle_number = excluded.cycle_number,
-           assignee_name = excluded.assignee_name,
-           updated_at = excluded.updated_at,
-           started_at = excluded.started_at,
-           completed_at = excluded.completed_at,
-           canceled_at = excluded.canceled_at,
-           due_date = excluded.due_date,
-           synced_at = excluded.synced_at`
-      )
-      .bind(
-        issue.id,
-        issue.identifier,
-        issue.title,
-        issue.description?.length ?? 0,
-        issue.priority,
-        issue.estimate,
-        issue.state?.name ?? null,
-        issue.state?.type ?? null,
-        labelNames,
-        issue.project?.name ?? null,
-        issue.cycle?.number ?? null,
-        issue.assignee?.name ?? null,
-        issue.createdAt,
-        issue.updatedAt,
-        issue.startedAt,
-        issue.completedAt,
-        issue.canceledAt,
-        issue.dueDate
-      );
-  });
-
-  if (statements.length > 0) {
-    await db.batch(statements);
+  const issueRows: LinearIssueRow[] = issues.map((issue) => ({
+    id: issue.id,
+    identifier: issue.identifier,
+    title: issue.title,
+    description_length: issue.description?.length ?? 0,
+    priority: issue.priority,
+    estimate: issue.estimate,
+    state_name: issue.state?.name ?? null,
+    state_type: issue.state?.type ?? null,
+    label_names: JSON.stringify(issue.labels.nodes.map((l) => l.name)),
+    project_name: issue.project?.name ?? null,
+    cycle_number: issue.cycle?.number ?? null,
+    assignee_name: issue.assignee?.name ?? null,
+    created_at: issue.createdAt,
+    updated_at: issue.updatedAt,
+    started_at: issue.startedAt,
+    completed_at: issue.completedAt,
+    canceled_at: issue.canceledAt,
+    due_date: issue.dueDate,
+    synced_at,
+  }));
+  if (issueRows.length > 0) {
+    const parquet = await encodeLinearIssue(encoder, issueRows);
+    await r2.put("linear/issues.parquet", parquet);
   }
 
-  return issues.length;
-}
-
-async function syncProjects(db: D1Database, apiKey: string): Promise<number> {
+  // 2. Fetch & write projects → linear/projects.parquet (snapshot)
   const projects = await fetchAllPages<LinearProject>(apiKey, PROJECTS_QUERY, "projects");
-
-  const statements = projects.map((project) => {
-    return db
-      .prepare(
-        `INSERT INTO linear_projects (id, name, state, progress, start_date, target_date,
-           created_at, updated_at, completed_at, synced_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
-         ON CONFLICT(id) DO UPDATE SET
-           name = excluded.name,
-           state = excluded.state,
-           progress = excluded.progress,
-           start_date = excluded.start_date,
-           target_date = excluded.target_date,
-           updated_at = excluded.updated_at,
-           completed_at = excluded.completed_at,
-           synced_at = excluded.synced_at`
-      )
-      .bind(
-        project.id,
-        project.name,
-        project.state,
-        project.progress,
-        project.startDate,
-        project.targetDate,
-        project.createdAt,
-        project.updatedAt,
-        project.completedAt
-      );
-  });
-
-  if (statements.length > 0) {
-    await db.batch(statements);
+  const projectRows: LinearProjectRow[] = projects.map((project) => ({
+    id: project.id,
+    name: project.name,
+    state: project.state,
+    progress: project.progress,
+    start_date: project.startDate,
+    target_date: project.targetDate,
+    created_at: project.createdAt,
+    updated_at: project.updatedAt,
+    completed_at: project.completedAt,
+    synced_at,
+  }));
+  if (projectRows.length > 0) {
+    const parquet = await encodeLinearProject(encoder, projectRows);
+    await r2.put("linear/projects.parquet", parquet);
   }
 
-  return projects.length;
-}
-
-async function syncLabels(db: D1Database, apiKey: string): Promise<number> {
-  const data = await fetchLinearGraphQL<{ issueLabels: { nodes: LinearLabel[] } }>(
+  // 3. Fetch & write labels → linear/labels.parquet (snapshot)
+  const labelsData = await fetchLinearGraphQL<{ issueLabels: { nodes: LinearLabel[] } }>(
     LABELS_QUERY,
     {},
     apiKey
   );
-  const labels = data.issueLabels.nodes;
-
-  const statements = labels.map((label) => {
-    return db
-      .prepare(
-        `INSERT INTO linear_labels (id, name, color, synced_at)
-         VALUES (?, ?, ?, datetime('now'))
-         ON CONFLICT(id) DO UPDATE SET
-           name = excluded.name,
-           color = excluded.color,
-           synced_at = excluded.synced_at`
-      )
-      .bind(label.id, label.name, label.color);
-  });
-
-  if (statements.length > 0) {
-    await db.batch(statements);
+  const labels = labelsData.issueLabels.nodes;
+  const labelRows: LinearLabelRow[] = labels.map((label) => ({
+    id: label.id,
+    name: label.name,
+    color: label.color,
+    synced_at,
+  }));
+  if (labelRows.length > 0) {
+    const parquet = await encodeLinearLabel(encoder, labelRows);
+    await r2.put("linear/labels.parquet", parquet);
   }
 
-  return labels.length;
-}
-
-// --- Main Sync ---
-
-export async function runSync(env: Env): Promise<SyncResult> {
-  const { DB: db, LINEAR_API_KEY: apiKey } = env;
-
-  const issueCount = await syncIssues(db, apiKey);
-  const projectCount = await syncProjects(db, apiKey);
-  const labelCount = await syncLabels(db, apiKey);
-
-  await db
-    .prepare("UPDATE sync_state SET last_sync_at = datetime('now') WHERE data_source_id = 'linear'")
-    .run();
+  // Update sync_state
+  await env.DB.prepare(
+    "UPDATE sync_state SET last_sync_at = datetime('now') WHERE data_source_id = 'linear'"
+  ).run();
 
   return {
     service: "linear",
     success: true,
-    message: `Synced ${issueCount} issues, ${projectCount} projects, ${labelCount} labels`,
-    count: issueCount,
+    message: `Synced ${issues.length} issues, ${projects.length} projects, ${labels.length} labels to R2 Parquet`,
+    count: issues.length,
   };
 }
 
@@ -295,29 +239,21 @@ app.post("/sync", async (c) => {
 });
 
 app.get("/stats", async (c) => {
-  const stats = await c.env.DB.prepare(
-    `SELECT
-       (SELECT COUNT(*) FROM linear_issues) as issues,
-       (SELECT COUNT(*) FROM linear_projects) as projects,
-       (SELECT COUNT(*) FROM linear_labels) as labels,
-       (SELECT MAX(synced_at) FROM linear_issues) as last_sync`
-  ).first();
-  return c.json(stats);
-});
+  const r2 = c.env.DATA_LAKE;
+  const files = ["linear/issues.parquet", "linear/projects.parquet", "linear/labels.parquet"];
+  const stats: Record<string, string | null> = {};
 
-app.get("/weekly", async (c) => {
-  const results = await c.env.DB.prepare("SELECT * FROM v_linear_weekly_completion LIMIT 12").all();
-  return c.json(results.results);
-});
+  for (const file of files) {
+    const obj = await r2.head(file);
+    const key = file.split("/").pop()?.replace(".parquet", "") ?? file;
+    stats[key] = obj ? new Date(obj.uploaded).toISOString() : null;
+  }
 
-app.get("/labels", async (c) => {
-  const results = await c.env.DB.prepare("SELECT * FROM v_linear_label_summary LIMIT 50").all();
-  return c.json(results.results);
-});
+  const syncState = await c.env.DB.prepare(
+    "SELECT last_sync_at FROM sync_state WHERE data_source_id = 'linear'"
+  ).first<{ last_sync_at: string | null }>();
 
-app.get("/projects", async (c) => {
-  const results = await c.env.DB.prepare("SELECT * FROM v_linear_project_progress").all();
-  return c.json(results.results);
+  return c.json({ ...stats, last_sync: syncState?.last_sync_at ?? null });
 });
 
 export default app;

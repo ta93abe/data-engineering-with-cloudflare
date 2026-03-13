@@ -3,6 +3,7 @@
   "name": "ingestion",
   "main": "src/index.ts",
   "compatibility_date": "2026-01-27",
+
   "preview_urls": true,
   "observability": {
     "enabled": true,
@@ -21,6 +22,12 @@
     {
       "binding": "DATA_LAKE",
       "bucket_name": "data-lake"
+    }
+  ],
+  "services": [
+    {
+      "binding": "PARQUET_ENCODER",
+      "service": "parquet-encoder"
     }
   ],
   "d1_databases": [
