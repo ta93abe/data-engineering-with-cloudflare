@@ -1,0 +1,34 @@
+{
+  "cli_version": "0.5.0",
+  "checkpoint_id": "4f2fdd7f94f3",
+  "session_id": "851da706-d87f-4a57-aa58-2d20610f4497",
+  "strategy": "manual-commit",
+  "created_at": "2026-03-14T00:24:03.626478Z",
+  "branch": "chore/oura-backfill-start-date",
+  "checkpoints_count": 5,
+  "files_touched": [
+    "ingestion/wrangler.jsonc"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-6",
+  "turn_id": "1e9b2ac707e6",
+  "token_usage": {
+    "input_tokens": 419,
+    "cache_creation_tokens": 987929,
+    "cache_read_tokens": 36387840,
+    "output_tokens": 114986,
+    "api_call_count": 321
+  },
+  "session_metrics": {
+    "turn_count": 35
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-03-14T00:24:01.949367Z",
+    "agent_lines": 1,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 1,
+    "agent_percentage": 100
+  }
+}
