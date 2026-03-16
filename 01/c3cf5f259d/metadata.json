@@ -1,0 +1,23 @@
+{
+  "cli_version": "0.5.0",
+  "checkpoint_id": "01c3cf5f259d",
+  "strategy": "manual-commit",
+  "branch": "chore/oura-backfill-start-date",
+  "checkpoints_count": 1,
+  "files_touched": null,
+  "sessions": [
+    {
+      "metadata": "/01/c3cf5f259d/0/metadata.json",
+      "transcript": "/01/c3cf5f259d/0/full.jsonl",
+      "content_hash": "/01/c3cf5f259d/0/content_hash.txt",
+      "prompt": "/01/c3cf5f259d/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 448,
+    "cache_creation_tokens": 1315530,
+    "cache_read_tokens": 38681221,
+    "output_tokens": 120626,
+    "api_call_count": 342
+  }
+}
