@@ -1,0 +1,46 @@
+{
+  "cli_version": "0.5.0",
+  "checkpoint_id": "596cf4cb1f79",
+  "session_id": "851da706-d87f-4a57-aa58-2d20610f4497",
+  "strategy": "manual-commit",
+  "created_at": "2026-03-16T12:56:36.624981Z",
+  "branch": "feat/dlt-github-iceberg",
+  "checkpoints_count": 9,
+  "files_touched": [
+    "dlt/github/.dlt/.sources",
+    "dlt/github/.dlt/config.toml",
+    "dlt/github/.dlt/secrets.toml.example",
+    "dlt/github/.gitignore",
+    "dlt/github/github/README.md",
+    "dlt/github/github/__init__.py",
+    "dlt/github/github/helpers.py",
+    "dlt/github/github/queries.py",
+    "dlt/github/github/settings.py",
+    "dlt/github/github_pipeline.py",
+    "dlt/github/pipeline.py",
+    "dlt/github/pyproject.toml",
+    "dlt/github/uv.lock"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-haiku-4-5-20251001",
+  "turn_id": "8da9565ce935",
+  "token_usage": {
+    "input_tokens": 649,
+    "cache_creation_tokens": 1562659,
+    "cache_read_tokens": 64647220,
+    "output_tokens": 156940,
+    "api_call_count": 477
+  },
+  "session_metrics": {
+    "turn_count": 66
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-03-16T12:56:34.441789Z",
+    "agent_lines": 1495,
+    "human_added": 28,
+    "human_modified": 6,
+    "human_removed": 0,
+    "total_committed": 1528,
+    "agent_percentage": 97.84031413612566
+  }
+}
