@@ -1,0 +1,5 @@
+.dlt/secrets.toml
+.venv/
+github_to_iceberg/
+__pycache__/
+*.pyc

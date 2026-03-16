@@ -1,0 +1,8 @@
+[project]
+name = "dlt-github-pipeline"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+    "dlt[iceberg]>=1.5.0",
+    "requests",
+]

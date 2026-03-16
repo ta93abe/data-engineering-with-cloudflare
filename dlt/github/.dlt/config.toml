@@ -1,0 +1,18 @@
+[destination.filesystem]
+bucket_url = "s3://data-lake/__r2_data_catalog"
+
+[destination.filesystem.credentials]
+endpoint_url = "https://b0047256d1afc1be1df08289ee3be552.r2.cloudflarestorage.com"
+region_name = "auto"
+
+[iceberg_catalog]
+iceberg_catalog_name = "r2_data_catalog"
+iceberg_catalog_type = "rest"
+
+[iceberg_catalog.iceberg_catalog_config]
+type = "rest"
+uri = "https://catalog.cloudflarestorage.com/b0047256d1afc1be1df08289ee3be552/data-lake"
+warehouse = "b0047256d1afc1be1df08289ee3be552_data-lake"
+
+[runtime]
+dlthub_telemetry = true
