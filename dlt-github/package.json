@@ -1,0 +1,21 @@
+{
+  "name": "dlt-github",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy --minify",
+    "typecheck": "tsc --noEmit",
+    "check": "biome check .",
+    "check:fix": "biome check --write ."
+  },
+  "dependencies": {
+    "@cloudflare/sandbox": "^0.7.13",
+    "hono": "^4.11.7"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.3.13",
+    "@cloudflare/workers-types": "^4.20250124.0",
+    "typescript": "^5.7.0",
+    "wrangler": "^4.4.0"
+  }
+}
