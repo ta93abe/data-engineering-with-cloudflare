@@ -631,6 +631,21 @@ app.post("/sync", async (c) => {
   try {
     const startDate = c.req.query("start_date");
     const endDate = c.req.query("end_date");
+    const isIsoDate = (v: string) => /^\d{4}-\d{2}-\d{2}$/.test(v);
+
+    if ((startDate && !isIsoDate(startDate)) || (endDate && !isIsoDate(endDate))) {
+      return c.json(
+        { service: "oura", success: false, message: "start_date/end_date must be YYYY-MM-DD" },
+        400
+      );
+    }
+    if (startDate && endDate && startDate > endDate) {
+      return c.json(
+        { service: "oura", success: false, message: "start_date must be <= end_date" },
+        400
+      );
+    }
+
     const options = startDate || endDate ? { startDate, endDate } : undefined;
     const result = await runSync(c.env, options);
     return c.json(result);
