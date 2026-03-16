@@ -432,7 +432,10 @@ async function syncHeartRate(
 // Main Sync
 // ============================================
 
-export async function runSync(env: Env): Promise<SyncResult> {
+export async function runSync(
+  env: Env,
+  options?: { startDate?: string; endDate?: string }
+): Promise<SyncResult> {
   const db = env.DB;
   const r2 = env.DATA_LAKE;
   const encoder = env.PARQUET_ENCODER;
@@ -440,29 +443,34 @@ export async function runSync(env: Env): Promise<SyncResult> {
   // Get valid OAuth token (refreshes if expired)
   let token = await getValidToken(db, env);
 
-  // Determine date range
-  const syncState = await db
-    .prepare("SELECT last_sync_at FROM sync_state WHERE id = 'oura'")
-    .first<{ last_sync_at: string | null }>();
-
-  const lastSyncAt = syncState?.last_sync_at ?? null;
   const today = new Date().toISOString().split("T")[0];
+  const isManualRange = !!(options?.startDate || options?.endDate);
 
+  // Determine date range
   let startDate: string;
-  if (!lastSyncAt) {
-    // First sync: use backfill start date
-    startDate = env.OURA_BACKFILL_START_DATE || "2024-01-01";
-    console.log(`Oura backfill from ${startDate} to ${today}`);
+  if (options?.startDate) {
+    startDate = options.startDate;
   } else {
-    // Incremental: from last sync - 1 day (overlap for idempotent overwrites)
-    const start = new Date(lastSyncAt);
-    start.setDate(start.getDate() - 1);
-    startDate = start.toISOString().split("T")[0];
+    const syncState = await db
+      .prepare("SELECT last_sync_at FROM sync_state WHERE id = 'oura'")
+      .first<{ last_sync_at: string | null }>();
+
+    const lastSyncAt = syncState?.last_sync_at ?? null;
+    if (!lastSyncAt) {
+      startDate = env.OURA_BACKFILL_START_DATE || "2024-01-01";
+      console.log(`Oura backfill from ${startDate} to ${today}`);
+    } else {
+      const start = new Date(lastSyncAt);
+      start.setDate(start.getDate() - 1);
+      startDate = start.toISOString().split("T")[0];
+    }
   }
 
+  const endDate = options?.endDate ?? today;
+
   // Split into monthly chunks
-  const chunks = splitIntoMonthlyChunks(startDate, today);
-  console.log(`Oura sync: ${chunks.length} monthly chunk(s) from ${startDate} to ${today}`);
+  const chunks = splitIntoMonthlyChunks(startDate, endDate);
+  console.log(`Oura sync: ${chunks.length} monthly chunk(s) from ${startDate} to ${endDate}`);
 
   let totalSleep = 0;
   let totalActivity = 0;
@@ -511,8 +519,8 @@ export async function runSync(env: Env): Promise<SyncResult> {
     }
   }
 
-  // Only update sync_state if at least one chunk succeeded
-  if (lastSuccessfulEnd) {
+  // Only update sync_state if at least one chunk succeeded (skip for manual range)
+  if (lastSuccessfulEnd && !isManualRange) {
     await db
       .prepare(
         "UPDATE sync_state SET last_sync_at = ?, updated_at = datetime('now') WHERE id = 'oura'"
@@ -618,10 +626,28 @@ app.get("/callback", async (c) => {
   return c.json({ success: true, message: "Oura connected successfully" });
 });
 
-// Manual sync
+// Manual sync — optional ?start_date=YYYY-MM-DD&end_date=YYYY-MM-DD
 app.post("/sync", async (c) => {
   try {
-    const result = await runSync(c.env);
+    const startDate = c.req.query("start_date");
+    const endDate = c.req.query("end_date");
+    const isIsoDate = (v: string) => /^\d{4}-\d{2}-\d{2}$/.test(v);
+
+    if ((startDate && !isIsoDate(startDate)) || (endDate && !isIsoDate(endDate))) {
+      return c.json(
+        { service: "oura", success: false, message: "start_date/end_date must be YYYY-MM-DD" },
+        400
+      );
+    }
+    if (startDate && endDate && startDate > endDate) {
+      return c.json(
+        { service: "oura", success: false, message: "start_date must be <= end_date" },
+        400
+      );
+    }
+
+    const options = startDate || endDate ? { startDate, endDate } : undefined;
+    const result = await runSync(c.env, options);
     return c.json(result);
   } catch (e) {
     const message = e instanceof Error ? e.message : "Unknown error";
