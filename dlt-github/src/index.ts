@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { bearerAuth } from "hono/bearer-auth";
 import { runPipeline } from "./services/pipeline-runner";
 import type { Env } from "./types";
 
@@ -8,7 +9,7 @@ const app = new Hono<{ Bindings: Env }>();
 
 app.get("/health", (c) => c.text("OK"));
 
-app.post("/run", async (c) => {
+app.post("/run", (c, next) => bearerAuth({ token: c.env.RUN_SECRET })(c, next), async (c) => {
   const ref = c.req.query("ref") ?? "main";
 
   console.log(`Starting dlt GitHub pipeline: ref=${ref}`);

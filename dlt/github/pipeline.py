@@ -13,7 +13,7 @@ A `repo_name` column is injected to identify which repository data belongs to.
 import dlt
 import requests
 
-from github import github_reactions, github_repo_events, github_stargazers
+from github import github_reactions, github_repo_events
 
 GITHUB_OWNER = "ta93abe"
 

@@ -7,6 +7,7 @@ type Env = {
   R2_ENDPOINT: string;
   R2_ACCESS_KEY_ID: string;
   R2_SECRET_ACCESS_KEY: string;
+  RUN_SECRET: string;
 };
 
 export class DbtContainer extends Container {
@@ -37,6 +38,14 @@ async function runDbt(env: Env, ref = "main", envPrefix = "prod") {
   return { started: true, ref, envPrefix };
 }
 
+function checkAuth(request: Request, secret: string): Response | null {
+  const token = request.headers.get("Authorization")?.replace("Bearer ", "");
+  if (token !== secret) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  return null;
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
@@ -46,6 +55,9 @@ export default {
     }
 
     if (url.pathname === "/run" && request.method === "POST") {
+      const authError = checkAuth(request, env.RUN_SECRET);
+      if (authError) return authError;
+
       const ref = url.searchParams.get("ref") ?? "main";
       const envPrefix = url.searchParams.get("env") ?? "dev";
       const result = await runDbt(env, ref, envPrefix);
@@ -55,7 +67,7 @@ export default {
     return Response.json({
       endpoints: {
         "GET /health": "Health check",
-        "POST /run": "Run dbt (?ref=main&env=dev|prod|ci-123)",
+        "POST /run": "Run dbt (Authorization: Bearer <secret>)",
       },
     });
   },

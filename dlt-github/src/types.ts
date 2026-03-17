@@ -10,6 +10,7 @@ export type Env = {
   R2_ENDPOINT: string;
   R2_CATALOG_URI: string;
   R2_CATALOG_WAREHOUSE: string;
+  RUN_SECRET: string;
 };
 
 export type PipelineRunResult = {
