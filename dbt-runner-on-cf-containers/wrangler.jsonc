@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "sandbox-dbt",
+  "name": "dbt-runner",
   "main": "src/index.ts",
   "compatibility_date": "2026-03-01",
   "compatibility_flags": ["nodejs_compat"],
@@ -13,35 +13,30 @@
   },
   "containers": [
     {
-      "class_name": "Sandbox",
+      "class_name": "DbtContainer",
       "image": "./Dockerfile",
-      "max_instances": 3
+      "instance_type": "lite",
+      "max_instances": 1
     }
   ],
   "durable_objects": {
     "bindings": [
       {
-        "class_name": "Sandbox",
-        "name": "SANDBOX"
+        "class_name": "DbtContainer",
+        "name": "DBT_CONTAINER"
       }
     ]
   },
   "migrations": [
     {
-      "new_sqlite_classes": ["Sandbox"],
+      "new_sqlite_classes": ["DbtContainer"],
       "tag": "v1"
-    }
-  ],
-  "r2_buckets": [
-    {
-      "binding": "R2_ARTIFACTS",
-      "bucket_name": "data-lake"
     }
   ]
   // シークレット:
+  //   wrangler secret put GITHUB_REPO
+  //   wrangler secret put GITHUB_TOKEN
   //   wrangler secret put R2_ENDPOINT
   //   wrangler secret put R2_ACCESS_KEY_ID
   //   wrangler secret put R2_SECRET_ACCESS_KEY
-  //   wrangler secret put GITHUB_REPO
-  //   wrangler secret put GITHUB_TOKEN
 }

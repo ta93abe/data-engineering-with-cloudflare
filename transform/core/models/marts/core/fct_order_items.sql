@@ -1,3 +1,4 @@
+{{ config(location=r2_location('fct_order_items')) }}
 with order_items as (
     select * from {{ ref('stg_order_items') }}
 ),

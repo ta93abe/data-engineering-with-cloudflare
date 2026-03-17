@@ -1,3 +1,4 @@
+{{ config(location=r2_location('fct_daily_sales')) }}
 with fct_orders as (
     select * from {{ ref('fct_orders') }}
 ),
