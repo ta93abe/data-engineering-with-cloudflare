@@ -1,0 +1,23 @@
+{
+  "cli_version": "0.5.0",
+  "checkpoint_id": "a21cd8c5abee",
+  "strategy": "manual-commit",
+  "branch": "feat/dlt-github-iceberg",
+  "checkpoints_count": 1,
+  "files_touched": null,
+  "sessions": [
+    {
+      "metadata": "/a2/1cd8c5abee/0/metadata.json",
+      "transcript": "/a2/1cd8c5abee/0/full.jsonl",
+      "content_hash": "/a2/1cd8c5abee/0/content_hash.txt",
+      "prompt": "/a2/1cd8c5abee/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 971,
+    "cache_creation_tokens": 2592018,
+    "cache_read_tokens": 141644367,
+    "output_tokens": 208475,
+    "api_call_count": 722
+  }
+}

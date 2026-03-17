@@ -1,0 +1,23 @@
+{
+  "cli_version": "0.5.0",
+  "checkpoint_id": "a21cd8c5abee",
+  "session_id": "851da706-d87f-4a57-aa58-2d20610f4497",
+  "strategy": "manual-commit",
+  "created_at": "2026-03-17T13:55:00.857377Z",
+  "branch": "feat/dlt-github-iceberg",
+  "checkpoints_count": 1,
+  "files_touched": [],
+  "agent": "Claude Code",
+  "model": "claude-haiku-4-5-20251001",
+  "turn_id": "9252133144b6",
+  "token_usage": {
+    "input_tokens": 971,
+    "cache_creation_tokens": 2592018,
+    "cache_read_tokens": 141644367,
+    "output_tokens": 208475,
+    "api_call_count": 722
+  },
+  "session_metrics": {
+    "turn_count": 99
+  }
+}
