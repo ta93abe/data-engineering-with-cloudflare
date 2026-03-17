@@ -1,0 +1,54 @@
+{
+  "cli_version": "0.5.0",
+  "checkpoint_id": "9d4bb82064a7",
+  "session_id": "851da706-d87f-4a57-aa58-2d20610f4497",
+  "strategy": "manual-commit",
+  "created_at": "2026-03-17T13:36:51.726392Z",
+  "branch": "feat/dlt-github-iceberg",
+  "checkpoints_count": 13,
+  "files_touched": [
+    "dbt-runner-on-cf-containers/.gitignore",
+    "dbt-runner-on-cf-containers/Dockerfile",
+    "dbt-runner-on-cf-containers/biome.json",
+    "dbt-runner-on-cf-containers/entrypoint.sh",
+    "dbt-runner-on-cf-containers/package.json",
+    "dbt-runner-on-cf-containers/pnpm-lock.yaml",
+    "dbt-runner-on-cf-containers/src/index.ts",
+    "dbt-runner-on-cf-containers/tsconfig.json",
+    "dbt-runner-on-cf-containers/wrangler.jsonc",
+    "sandbox-dbt/.gitignore",
+    "sandbox-dbt/Dockerfile",
+    "sandbox-dbt/README.md",
+    "sandbox-dbt/biome.json",
+    "sandbox-dbt/package.json",
+    "sandbox-dbt/pnpm-lock.yaml",
+    "sandbox-dbt/src/index.ts",
+    "sandbox-dbt/src/services/dbt-runner.ts",
+    "sandbox-dbt/src/services/r2-artifacts.ts",
+    "sandbox-dbt/src/types.ts",
+    "sandbox-dbt/tsconfig.json",
+    "sandbox-dbt/wrangler.jsonc"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-haiku-4-5-20251001",
+  "turn_id": "54a4f27bb2c4",
+  "token_usage": {
+    "input_tokens": 920,
+    "cache_creation_tokens": 2568664,
+    "cache_read_tokens": 127761490,
+    "output_tokens": 200295,
+    "api_call_count": 685
+  },
+  "session_metrics": {
+    "turn_count": 92
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-03-17T13:36:49.095108Z",
+    "agent_lines": 587,
+    "human_added": 0,
+    "human_modified": 87,
+    "human_removed": 361,
+    "total_committed": 674,
+    "agent_percentage": 87.0919881305638
+  }
+}

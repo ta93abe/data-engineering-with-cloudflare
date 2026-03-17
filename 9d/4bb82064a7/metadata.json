@@ -1,0 +1,45 @@
+{
+  "cli_version": "0.5.0",
+  "checkpoint_id": "9d4bb82064a7",
+  "strategy": "manual-commit",
+  "branch": "feat/dlt-github-iceberg",
+  "checkpoints_count": 13,
+  "files_touched": [
+    "dbt-runner-on-cf-containers/.gitignore",
+    "dbt-runner-on-cf-containers/Dockerfile",
+    "dbt-runner-on-cf-containers/biome.json",
+    "dbt-runner-on-cf-containers/entrypoint.sh",
+    "dbt-runner-on-cf-containers/package.json",
+    "dbt-runner-on-cf-containers/pnpm-lock.yaml",
+    "dbt-runner-on-cf-containers/src/index.ts",
+    "dbt-runner-on-cf-containers/tsconfig.json",
+    "dbt-runner-on-cf-containers/wrangler.jsonc",
+    "sandbox-dbt/.gitignore",
+    "sandbox-dbt/Dockerfile",
+    "sandbox-dbt/README.md",
+    "sandbox-dbt/biome.json",
+    "sandbox-dbt/package.json",
+    "sandbox-dbt/pnpm-lock.yaml",
+    "sandbox-dbt/src/index.ts",
+    "sandbox-dbt/src/services/dbt-runner.ts",
+    "sandbox-dbt/src/services/r2-artifacts.ts",
+    "sandbox-dbt/src/types.ts",
+    "sandbox-dbt/tsconfig.json",
+    "sandbox-dbt/wrangler.jsonc"
+  ],
+  "sessions": [
+    {
+      "metadata": "/9d/4bb82064a7/0/metadata.json",
+      "transcript": "/9d/4bb82064a7/0/full.jsonl",
+      "content_hash": "/9d/4bb82064a7/0/content_hash.txt",
+      "prompt": "/9d/4bb82064a7/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 920,
+    "cache_creation_tokens": 2568664,
+    "cache_read_tokens": 127761490,
+    "output_tokens": 200295,
+    "api_call_count": 685
+  }
+}
