@@ -16,14 +16,8 @@ EOF
 
 set -a && source .env && set +a
 
-# Install dbt packages
+# Install dbt packages and run build (seed + run + test)
 dbt deps --profiles-dir . --target ci
-
-# Run dbt commands (default: seed, run, test)
-IFS=',' read -ra CMDS <<< "${DBT_COMMANDS:-seed,run,test}"
-for cmd in "${CMDS[@]}"; do
-  echo "=== dbt $cmd ==="
-  dbt "$cmd" --profiles-dir . --target ci
-done
+dbt build --profiles-dir . --target ci
 
 echo "=== dbt complete ==="
