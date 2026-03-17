@@ -16,8 +16,8 @@ EOF
 
 set -a && source .env && set +a
 
-# Install dbt packages and run build (seed + run + test)
+# Install dbt packages and run build
 dbt deps --profiles-dir . --target ci
-dbt build --profiles-dir . --target ci
+dbt build --profiles-dir . --target ci --vars "{\"dbt_env_prefix\": \"${DBT_ENV_PREFIX:-dev}\"}"
 
-echo "=== dbt complete ==="
+echo "=== dbt complete (env: ${DBT_ENV_PREFIX:-dev}) ==="

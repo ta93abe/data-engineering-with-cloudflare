@@ -21,7 +21,7 @@ export class DbtContainer extends Container {
   }
 }
 
-async function runDbt(env: Env, ref = "main", commands = "seed,run,test") {
+async function runDbt(env: Env, ref = "main", envPrefix = "prod") {
   const container = getContainer(env.DBT_CONTAINER);
   await container.start({
     envVars: {
@@ -31,10 +31,10 @@ async function runDbt(env: Env, ref = "main", commands = "seed,run,test") {
       R2_ACCESS_KEY_ID: env.R2_ACCESS_KEY_ID,
       R2_SECRET_ACCESS_KEY: env.R2_SECRET_ACCESS_KEY,
       GIT_REF: ref,
-      DBT_COMMANDS: commands,
+      DBT_ENV_PREFIX: envPrefix,
     },
   });
-  return { started: true, ref, commands };
+  return { started: true, ref, envPrefix };
 }
 
 export default {
@@ -47,21 +47,21 @@ export default {
 
     if (url.pathname === "/run" && request.method === "POST") {
       const ref = url.searchParams.get("ref") ?? "main";
-      const commands = url.searchParams.get("commands") ?? "seed,run,test";
-      const result = await runDbt(env, ref, commands);
+      const envPrefix = url.searchParams.get("env") ?? "dev";
+      const result = await runDbt(env, ref, envPrefix);
       return Response.json(result);
     }
 
     return Response.json({
       endpoints: {
         "GET /health": "Health check",
-        "POST /run": "Run dbt (?ref=main&commands=seed,run,test)",
+        "POST /run": "Run dbt (?ref=main&env=dev|prod|ci-123)",
       },
     });
   },
 
   async scheduled(_controller: ScheduledController, env: Env) {
-    console.log("Scheduled dbt run started");
-    await runDbt(env);
+    console.log("Scheduled dbt run (prod)");
+    await runDbt(env, "main", "prod");
   },
 };
