@@ -1,3 +1,4 @@
+{{ config(location='s3://data-lake/dbt/marts/dim_users.parquet') }}
 with users as (
     select * from {{ ref('stg_users') }}
 ),

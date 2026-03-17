@@ -1,3 +1,4 @@
+{{ config(location='s3://data-lake/dbt/marts/dim_products.parquet') }}
 with products as (
     select * from {{ ref('stg_products') }}
 ),

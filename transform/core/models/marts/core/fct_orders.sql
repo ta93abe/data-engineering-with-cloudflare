@@ -1,3 +1,4 @@
+{{ config(location='s3://data-lake/dbt/marts/fct_orders.parquet') }}
 with orders as (
     select * from {{ ref('stg_orders') }}
 ),

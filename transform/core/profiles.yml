@@ -21,10 +21,11 @@ core:
         - httpfs
         - parquet
       settings:
-        s3_endpoint: "{{ env_var('R2_ENDPOINT', '') }}"
+        s3_endpoint: "{{ env_var('R2_ENDPOINT', '') | replace('https://', '') }}"
         s3_access_key_id: "{{ env_var('R2_ACCESS_KEY_ID', '') }}"
         s3_secret_access_key: "{{ env_var('R2_SECRET_ACCESS_KEY', '') }}"
         s3_url_style: 'path'
+        s3_use_ssl: true
       threads: 2
 
     prod:

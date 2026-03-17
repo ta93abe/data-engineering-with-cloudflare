@@ -1,3 +1,4 @@
+{{ config(location='s3://data-lake/dbt/marts/fct_daily_sales.parquet') }}
 with fct_orders as (
     select * from {{ ref('fct_orders') }}
 ),
