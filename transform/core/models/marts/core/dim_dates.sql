@@ -1,4 +1,4 @@
-{{ config(location='s3://data-lake/dbt/marts/dim_dates.parquet') }}
+{{ config(location=r2_location('dim_dates')) }}
 with date_spine as (
     {{ dbt_utils.date_spine(
         datepart="day",
