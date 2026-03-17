@@ -755,3 +755,11 @@ dbt のプロジェクトが今はsnowflake と繋がっているよね？
 ---
 
 書き出して
+
+---
+
+data-lake に実行結果を置くのではなく、dbt-prodバケットに本番Build、dbt-ci-<pr_number>バケットにCIビルド, dbt-dev-localバケット で開発できるようにしたい。
+
+---
+
+prefix 分離にする。ただしdata-lakeには生データだけ置きたい。新しいバケットを一つ用意して
