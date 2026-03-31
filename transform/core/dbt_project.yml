@@ -27,12 +27,11 @@ models:
       +tags: ['staging']
 
     marts:
-      +materialized: "{{ 'external' if target.name == 'ci' else 'table' }}"
-      +format: parquet
+      +materialized: table
       +schema: marts
       +tags: ['marts']
 
-  # Elementary - Data Quality Monitoring (some DuckDB compatibility issues)
+  # Elementary - Data Quality Monitoring (disabled for now)
   elementary:
     +schema: elementary
     +enabled: false
@@ -50,7 +49,7 @@ vars:
     backfill_days: 7
     edr_cli_run: true
 
-  # automate_dv Configuration (DuckDB not supported - commented out)
+  # automate_dv Configuration (not currently used)
   # automate_dv:
   #   hash: 'MD5'
   #   hash_null_collision: 'null_collision'

@@ -1,21 +1,23 @@
-target/
-dbt_packages/
-logs/
-.user.yml
-package-lock.yml
+# Worker
+node_modules/
+.wrangler/
+.dev.vars
 
-# DuckDB
+# dbt
+target/
+logs/
 *.duckdb
 *.duckdb.wal
+dbt_packages/
+.user.yml
+package-lock.yml
 
 # Python
 .venv/
 __pycache__/
 *.pyc
 
-# IDE
+# IDE / OS
 .idea/
 .vscode/
-
-# OS
 .DS_Store

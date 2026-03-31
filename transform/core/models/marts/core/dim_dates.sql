@@ -1,4 +1,3 @@
-{{ config(location=r2_location('dim_dates')) }}
 with date_spine as (
     {{ dbt_utils.date_spine(
         datepart="day",
@@ -16,28 +15,19 @@ final as (
         extract(year from date_day) as year,
         extract(quarter from date_day) as quarter,
         extract(month from date_day) as month,
-        extract(week from date_day) as week_of_year,
+        weekofyear(date_day) as week_of_year,
         extract(day from date_day) as day_of_month,
-        extract(dow from date_day) as day_of_week,
+        dayofweek(date_day) as day_of_week,
 
         -- Formatted Strings
-        {% if target.type == 'snowflake' %}
-        to_char(date_day, 'YYYY-MM') as year_month,
-        to_char(date_day, 'YYYY') || '-Q' || to_char(date_day, 'Q') as year_quarter,
-        to_char(date_day, 'MMMM') as month_name,
-        to_char(date_day, 'DAY') as day_name,
-        {% elif target.type == 'duckdb' %}
-        strftime(date_day, '%Y-%m') as year_month,
-        strftime(date_day, '%Y-Q') || extract(quarter from date_day) as year_quarter,
-        strftime(date_day, '%B') as month_name,
-        strftime(date_day, '%A') as day_name,
-        {% else %}
-        {{ exceptions.raise_compiler_error("Unsupported target type for dim_dates: " ~ target.type) }}
-        {% endif %}
+        date_format(date_day, 'yyyy-MM') as year_month,
+        date_format(date_day, 'yyyy') || '-Q' || extract(quarter from date_day) as year_quarter,
+        date_format(date_day, 'MMMM') as month_name,
+        date_format(date_day, 'EEEE') as day_name,
 
         -- Flags
-        case when extract(dow from date_day) in (0, 6) then true else false end as is_weekend,
-        case when extract(dow from date_day) between 1 and 5 then true else false end as is_weekday,
+        case when dayofweek(date_day) in (1, 7) then true else false end as is_weekend,
+        case when dayofweek(date_day) between 2 and 6 then true else false end as is_weekday,
 
         -- Fiscal (assuming fiscal year = calendar year)
         extract(year from date_day) as fiscal_year,
