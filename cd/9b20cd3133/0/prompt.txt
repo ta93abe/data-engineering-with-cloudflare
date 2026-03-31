@@ -1,0 +1,259 @@
+lightdash のセルフホストしたい。/Users/ta93abe/zettelkasten/notes/Cloudflare Data Platform/data-apps/Lightdash セルフホスト アーキテクチャ.md を読んで
+
+---
+
+supabase のプロジェクトを作った。
+
+---
+
+transform/core を databricks で動かしたい。
+
+---
+
+完全にDatabrickｓに寄せて。
+
+---
+
+MCPで
+
+---
+
+認証した
+
+---
+
+試して。
+動かすのはCloudflare Container。/Users/ta93abe/zettelkasten/notes/Cloudflare Data Platform/dbt/dbt を Cloudflare 環境で動かす.md
+
+---
+
+動かすのはCloudflare Container。/Users/ta93abe/zettelkasten/notes/Cloudflare Data Platform/dbt/dbt を Cloudflare 環境で動かす.md
+
+---
+
+container も bindingできるようになったよね。
+
+---
+
+R2バケット作っておいて。 <r2_bucket>/manifest.json,catalog.json,index.html,run_results.json みたいな感じでいいや
+
+---
+
+dbt-runner じゃなくて、coreの直下にDockerfileを置くのはダメ？
+
+---
+
+dbt-runner の他のファイルもcoreに置くのは？
+
+---
+
+1ディレクトリでいいよ。
+
+---
+
+wrangler.jsoncの中身を見直して
+
+---
+
+core という名前にして
+
+---
+
+環境変数追加したい
+
+---
+
+Databricksの情報
+
+---
+
+追加した。
+
+---
+
+コミットして。
+
+---
+
+動作も確認したい。
+
+---
+
+deployしてほしい。
+
+---
+
+起動した
+
+---
+
+<task-notification>
+<task-id>b1hufhgak</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-ta93abe-Developer-github-com-ta93abe-data-engineering-with-cloudflare/2b3ebe95-a039-46be-9a43-347debb84793/tasks/b1hufhgak.output</output-file>
+<status>completed</status>
+<summary>Background command "Retry /docs after container rollout" completed (exit code 0)</summary>
+</task-notification>
+Read the output file to retrieve the result: /private/tmp/claude-501/-Users-ta93abe-Developer-github-com-ta93abe-data-engineering-with-cloudflare/2b3ebe95-a039-46be-9a43-347debb84793/tasks/b1hufhgak.output
+
+---
+
+/coderabbit:review
+
+---
+
+修正して。
+
+---
+
+dbt-artifacts/ 直下の dbt-core フォルダ消してほしい。
+
+---
+
+走らせて
+
+---
+
+docs generate も実行して
+
+---
+
+<task-notification>
+<task-id>a50c9cc3c55843f09</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-ta93abe-Developer-github-com-ta93abe-data-engineering-with-cloudflare/2b3ebe95-a039-46be-9a43-347debb84793/tasks/a50c9cc3c55843f09.output</output-file>
+<status>completed</status>
+<summary>Agent "Codex rescue review" completed</summary>
+<result>I need Bash permission to forward this task to the Codex companion. The command I was trying to run invokes the Codex companion script at `/Users/ta93abe/.claude/plugins/cache/openai-codex/codex/1.0.0/scripts/codex-companion.mjs` with a `task` command to perform a read-only code review of the `feat/core-databricks-migration` branch changes.
+
+Could you grant Bash permission so I can forward this review task to Codex?</result>
+<usage><total_tokens>24759</total_tokens><tool_uses>1</tool_uses><duration_ms>15671</duration_ms></usage>
+</task-notification>
+Full transcript available at: /private/tmp/claude-501/-Users-ta93abe-Developer-github-com-ta93abe-data-engineering-with-cloudflare/2b3ebe95-a039-46be-9a43-347debb84793/tasks/a50c9cc3c55843f09.output
+
+---
+
+<task-notification>
+<task-id>a9bc73dadb4ca5bfe</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-ta93abe-Developer-github-com-ta93abe-data-engineering-with-cloudflare/2b3ebe95-a039-46be-9a43-347debb84793/tasks/a9bc73dadb4ca5bfe.output</output-file>
+<status>completed</status>
+<summary>Agent "CodeRabbit review on latest" completed</summary>
+<result>I now have a thorough understanding of all the files. Here is my review.
+
+---
+
+## Code Review: DuckDB to Databricks + Cloudflare Containers Migration
+
+### CRITICAL -- Security
+
+**1. Databricks token passed as plain environment variable to container (index.ts:18-22)**
+
+The `DATABRICKS_TOKEN` is forwarded directly from Worker secrets into the container's `envVars`. While Worker secrets are encrypted at rest, the token becomes a plain environment variable inside the container. This is the expected pattern for Cloudflare Containers, but be aware that any process inside the container (or anyone who can exec into it) can read it. Ensure:
+- The Databricks token has minimal scope (restricted to the SQL Warehouse only, no workspace admin).
+- The token is a service principal token, not a personal access token.
+
+**2. No authentication on the Worker's fetch handler (index.ts:69-133)**
+
+The Worker exposes `POST /run`, `POST /build`, `POST /seed`, `POST /test`, and `POST /docs` with zero authentication. Anyone who knows the Worker URL can trigger arbitrary dbt commands, including `--full-refresh` which drops and recreates tables. This is the single most critical issue in the PR.
+
+Recommendation: Add at minimum a shared secret header check (e.g., `Authorization: Bearer <API_KEY>` validated against a Worker secret), or use Cloudflare Access to gate the Worker.
+
+**3. Unvalidated `select` parameter enables dbt argument injection (server.py:49-54)**
+
+The `select` value from the JSON body is passed directly to the subprocess command list. While `subprocess.run` with a list (not `shell=True`) prevents shell injection, an attacker can still pass dbt-level flags disguised as select values. For example, a `select` value of `--vars '{"drop_all": true}'` would be interpreted by dbt's argument parser. Validate that `select` matches a reasonable pattern (e.g., alphanumeric, underscores, dots, plus/at signs for dbt graph selectors).
+
+Similarly, `target` (line 48) is passed to `--target` without validation. A value like `../../etc/something` is unlikely to cause harm via dbt, but explicit allowlisting (`dev` or `prod`) would be more robust.
+
+---
+
+### HIGH -- Bugs
+
+**4. `dim_dates.sql`: `dayofweek` behavior differs between DuckDB and Databricks (line 20, 29-30)**
+
+In Databricks (Spark SQL), `dayofweek()` returns 1=Sunday, 7=Saturday. But the YAML schema doc says "0=Sunday, 6=Saturday" which is the DuckDB convention. The `is_weekend` check on line 29 uses `in (1, 7)` which happens to be correct for Databricks (Sunday=1, Saturday=7), but:
+- The YAML documentation at `dim_dates.yml:22` is wrong for Databricks -- it should say "1=Sunday, 7=Saturday".
+- `weekofyear()` (line 18) is valid in Databricks/Spark SQL, so that is fine.
+
+**5. `dim_dates.sql`: `date_format` with `'MMMM'` and `'EEEE'` is locale-dependent (lines 25-26)**
+
+In Databricks Spark SQL, `date_format(date_day, 'MMMM')` and `date_format(date_day, 'EEEE')` produce English names by default but this depends on the cluster's JVM locale. If the cluster locale changes, output will change silently. Consider documenting the expected locale or casting explicitly.
+
+**6. Container `fetch` response Content-Type blindly set to `application/json` (index.ts:91-94)**
+
+The Worker forwards the container response and always sets `Content-Type: application/json`. If the container returns an error in a different format, the client will misinterpret it. Better to pass through the container's original Content-Type header.
+
+---
+
+### MEDIUM -- Code Quality
+
+**7. `_parse_body` can send a response AND return None, but callers don't return immediately in all paths (server.py:33-41)**
+
+The `_parse_body` method calls `self._json_response(400, ...)` and returns `None`. The callers (`_run_dbt`, `_run_docs_generate`) check for `None` and return, which is correct. However, the type hint says `dict | None` but the early return with a 400 response means headers are already sent. If a future caller forgets the `None` check and tries to send another response, it will cause an error. Consider raising an exception instead to make the control flow more explicit.
+
+**8. Duplicate artifact upload logic between `_save_artifacts_to_r2` and `_save_docs_to_r2` (server.py:112-159)**
+
+These two methods are nearly identical. `_save_docs_to_r2` handles content types per file, while `_save_artifacts_to_r2` defaults everything to `application/json`. They could be unified into a single method that accepts a list of `(path, content_type)` tuples.
+
+**9. The `analyses/` and `snapshots/` directories are copied in Dockerfile but may not exist (Dockerfile:19-20)**
+
+If these directories do not exist in the build context, the `COPY` instruction will fail. Use a pattern that tolerates missing directories, or ensure they exist (even empty with a `.gitkeep`).
+
+**10. `dbt_project.yml` still references DuckDB in comments (lines 34, 52-58)**
+
+Comments say "DuckDB compatibility issues" and "DuckDB not supported" which are stale after migrating to Databricks. These should be updated to reflect the current adapter.
+
+**11. `packages.yml` still references DuckDB in comments (line 27)**
+
+Same issue: `# Data Vault Automation (DuckDB not supported - commented out)` should be updated.
+
+---
+
+### LOW -- Suggestions
+
+**12. `wrangler.jsonc` has no vars/secrets declarations**
+
+The `DATABRICKS_HOST`, `DATABRICKS_HTTP_PATH`, and `DATABRICKS_TOKEN` bindings are referenced in the TypeScript `Env` interface but not declared in `wrangler.jsonc`. While Wrangler does not require secrets to be declared in the config (they are set via `wrangler secret put`), adding `[vars]` for the non-secret values (`DATABRICKS_HOST`, `DATABRICKS_HTTP_PATH`) would serve as documentation and allow local dev via `wrangler dev`.
+
+**13. `profiles.yml` uses the same token for dev and prod**
+
+Both `dev` and `prod` targets read from the same `DATABRICKS_TOKEN` env var. This means the container cannot distinguish between a dev-scoped and prod-scoped credential. If you intend to run production workloads through this same container, consider separate env vars (`DATABRICKS_TOKEN_DEV`, `DATABRICKS_TOKEN_PROD`) or use Databricks service principal tokens with different permission scopes.
+
+**14. The outbound worker R2 proxy (index.ts:38-67) does not handle DELETE or LIST**
+
+If you ever need to clean up artifacts from R2, you will need to add `DELETE` support. Not urgent, but worth noting for future extensibility.
+
+**15. `tsconfig.json` is clean and correct for Cloudflare Workers**
+
+No issues. The `ES2022` target, `bundler` module resolution, and `@cloudflare/workers-types` are all appropriate.
+
+**16. `generate_schema_name.sql` macro is correct**
+
+This overrides the default dbt behavior to use the custom schema name directly (without the `default_` prefix), which is the standard approach for Databricks catalogs. No issues.
+
+---
+
+### Summary
+
+| Severity | Count | Key Items |
+|----------|-------|-----------|
+| Critical | 3 | No auth on Worker endpoints, token scope, select param validation |
+| High | 3 | dayofweek semantics mismatch in docs, locale dependency, Content-Type passthrough |
+| Medium | 4 | Duplicate upload logic, Dockerfile COPY fragility, stale DuckDB comments |
+| Low | 5 | Missing wrangler vars, shared token for dev/prod, no DELETE on R2 proxy |
+
+The most important action item is adding authentication to the Worker's fetch handler. Without it, anyone who discovers the Worker URL can run `dbt build --full-refresh` against your Databricks warehouse.</result>
+<usage><total_tokens>45553</total_tokens><tool_uses>17</tool_uses><duration_ms>87074</duration_ms></usage>
+</task-notification>
+Full transcript available at: /private/tmp/claude-501/-Users-ta93abe-Developer-github-com-ta93abe-data-engineering-with-cloudflare/2b3ebe95-a039-46be-9a43-347debb84793/tasks/a9bc73dadb4ca5bfe.output
+
+---
+
+<task-notification>
+<task-id>b7w7i0231</task-id>
+<tool-use-id>toolu_01NpLVwQULMMgbAHTKeezovw</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-ta93abe-Developer-github-com-ta93abe-data-engineering-with-cloudflare/2b3ebe95-a039-46be-9a43-347debb84793/tasks/b7w7i0231.output</output-file>
+<status>completed</status>
+<summary>Background command "Run POST /docs on deployed Worker" completed (exit code 0)</summary>
+</task-notification>
+Read the output file to retrieve the result: /private/tmp/claude-501/-Users-ta93abe-Developer-github-com-ta93abe-data-engineering-with-cloudflare/2b3ebe95-a039-46be-9a43-347debb84793/tasks/b7w7i0231.output
