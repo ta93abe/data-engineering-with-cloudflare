@@ -68,7 +68,6 @@ DbtContainer.outboundByHost = {
 };
 
 function authenticate(request: Request, env: Env): Response | null {
-  // GET /health, /docs, /artifacts は認証不要
   if (request.method === "GET") return null;
 
   const authHeader = request.headers.get("Authorization");
@@ -83,8 +82,21 @@ export default {
     const url = new URL(request.url);
     const path = url.pathname;
 
+    // /health はコンテナの状態を反映
     if (path === "/health") {
-      return Response.json({ status: "ok" });
+      const container = getContainer(env.DBT_CONTAINER, "dbt-runner-main");
+      try {
+        const res = await container.fetch("http://container/health");
+        return new Response(res.body, {
+          status: res.status,
+          headers: { "Content-Type": "application/json" },
+        });
+      } catch {
+        return Response.json(
+          { status: "error", error: "container unavailable" },
+          { status: 503 }
+        );
+      }
     }
 
     // POST エンドポイントは認証必須
@@ -98,7 +110,13 @@ export default {
       request.method === "POST" &&
       ["/run", "/seed", "/test", "/build", "/docs"].includes(path)
     ) {
-      const body = await request.json().catch(() => ({}));
+      let body: Record<string, unknown>;
+      try {
+        body = (await request.json()) as Record<string, unknown>;
+      } catch {
+        return Response.json({ error: "invalid JSON" }, { status: 400 });
+      }
+
       const response = await container.fetch(`http://container${path}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -112,20 +130,29 @@ export default {
       });
     }
 
-    // dbt docs 配信 (R2 バケット直下から)
-    if (
-      request.method === "GET" &&
-      (path === "/docs" || path === "/docs/")
-    ) {
-      const object = await env.DBT_ARTIFACTS.get("index.html");
-      if (!object) {
-        return Response.json(
-          { error: "docs not generated yet. POST /docs first." },
-          { status: 404 }
-        );
+    // dbt docs 配信: /docs/ 以下のファイルを R2 から返す
+    if (request.method === "GET" && (path === "/docs" || path.startsWith("/docs/"))) {
+      const key =
+        path === "/docs" || path === "/docs/"
+          ? "index.html"
+          : path.replace(/^\/docs\//, "");
+      if (!key) {
+        return Response.json({ error: "not found" }, { status: 404 });
       }
+      const object = await env.DBT_ARTIFACTS.get(key);
+      if (!object) {
+        if (key === "index.html") {
+          return Response.json(
+            { error: "docs not generated yet. POST /docs first." },
+            { status: 404 }
+          );
+        }
+        return Response.json({ error: "not found" }, { status: 404 });
+      }
+      const contentType =
+        object.httpMetadata?.contentType || "application/octet-stream";
       return new Response(object.body, {
-        headers: { "Content-Type": "text/html" },
+        headers: { "Content-Type": contentType },
       });
     }
 

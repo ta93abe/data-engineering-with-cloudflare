@@ -9,5 +9,15 @@ logs/
 *.duckdb
 *.duckdb.wal
 dbt_packages/
-
 .user.yml
+package-lock.yml
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
