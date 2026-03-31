@@ -7,12 +7,25 @@ intercepts and translates to R2 binding calls.
 
 import json
 import os
+import re
 import subprocess
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.request import Request, urlopen
 
 R2_HOST = "http://r2.worker"
 DBT_TIMEOUT = 3600  # 1 hour
+
+ALLOWED_TARGETS = {"dev", "prod"}
+# dbt graph selector: alphanumeric, underscores, dots, plus, at, colon, slash, star
+SELECT_PATTERN = re.compile(r"^[a-zA-Z0-9_.+@:/\*\- ]+$")
+
+ARTIFACT_FILES: list[tuple[str, str]] = [
+    ("target/manifest.json", "application/json"),
+    ("target/run_results.json", "application/json"),
+    ("target/catalog.json", "application/json"),
+    ("target/sources.json", "application/json"),
+    ("target/index.html", "text/html"),
+]
 
 
 class DbtHandler(BaseHTTPRequestHandler):
@@ -40,13 +53,31 @@ class DbtHandler(BaseHTTPRequestHandler):
             self._json_response(400, {"error": "invalid JSON"})
             return None
 
+    def _validate_target(self, target: str) -> bool:
+        if target not in ALLOWED_TARGETS:
+            self._json_response(400, {"error": f"invalid target: {target}. allowed: {ALLOWED_TARGETS}"})
+            return False
+        return True
+
+    def _validate_select(self, select: str) -> bool:
+        if not SELECT_PATTERN.match(select):
+            self._json_response(400, {"error": f"invalid select pattern: {select}"})
+            return False
+        return True
+
     def _run_dbt(self, command: str):
         body = self._parse_body()
         if body is None:
             return
 
         target = body.get("target", "dev")
+        if not self._validate_target(target):
+            return
+
         select = body.get("select", None)
+        if select and not self._validate_select(select):
+            return
+
         full_refresh = body.get("full_refresh", False)
 
         cmd = ["uv", "run", "dbt", command, "--target", target, "--profiles-dir", "."]
@@ -65,7 +96,12 @@ class DbtHandler(BaseHTTPRequestHandler):
 
         artifacts_saved: list[str] = []
         if result.returncode == 0 and command in ("run", "build"):
-            artifacts_saved = self._save_artifacts_to_r2()
+            artifacts_saved = self._upload_artifacts([
+                ("target/manifest.json", "application/json"),
+                ("target/run_results.json", "application/json"),
+                ("target/catalog.json", "application/json"),
+                ("target/sources.json", "application/json"),
+            ])
 
         self._json_response(
             200 if result.returncode == 0 else 500,
@@ -82,7 +118,10 @@ class DbtHandler(BaseHTTPRequestHandler):
         body = self._parse_body()
         if body is None:
             return
+
         target = body.get("target", "dev")
+        if not self._validate_target(target):
+            return
 
         cmd = ["uv", "run", "dbt", "docs", "generate", "--target", target, "--profiles-dir", "."]
 
@@ -96,7 +135,7 @@ class DbtHandler(BaseHTTPRequestHandler):
 
         artifacts_saved: list[str] = []
         if result.returncode == 0:
-            artifacts_saved = self._save_docs_to_r2()
+            artifacts_saved = self._upload_artifacts(ARTIFACT_FILES)
 
         self._json_response(
             200 if result.returncode == 0 else 500,
@@ -109,17 +148,10 @@ class DbtHandler(BaseHTTPRequestHandler):
             },
         )
 
-    def _save_docs_to_r2(self) -> list[str]:
-        """Upload dbt docs artifacts (manifest, catalog, index.html) to R2."""
+    def _upload_artifacts(self, files: list[tuple[str, str]]) -> list[str]:
+        """Upload dbt artifacts to R2 via Outbound Workers."""
         saved = []
-        docs_files = [
-            ("target/manifest.json", "application/json"),
-            ("target/catalog.json", "application/json"),
-            ("target/index.html", "text/html"),
-            ("target/run_results.json", "application/json"),
-        ]
-
-        for artifact, content_type in docs_files:
+        for artifact, content_type in files:
             src = os.path.join("/app", artifact)
             if not os.path.exists(src):
                 continue
@@ -130,30 +162,6 @@ class DbtHandler(BaseHTTPRequestHandler):
                 data = f.read()
 
             if self._put_r2(filename, data, content_type):
-                saved.append(filename)
-
-        return saved
-
-    def _save_artifacts_to_r2(self) -> list[str]:
-        """Upload dbt artifacts to R2 via Outbound Workers."""
-        saved = []
-        artifact_files = [
-            "target/manifest.json",
-            "target/run_results.json",
-            "target/catalog.json",
-            "target/sources.json",
-        ]
-        for artifact in artifact_files:
-            src = os.path.join("/app", artifact)
-            if not os.path.exists(src):
-                continue
-
-            filename = os.path.basename(artifact)
-
-            with open(src, "rb") as f:
-                data = f.read()
-
-            if self._put_r2(filename, data):
                 saved.append(filename)
 
         return saved

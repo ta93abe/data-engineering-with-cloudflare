@@ -23,6 +23,6 @@ packages:
   - package: dbt-labs/dbt_project_evaluator
     version: 1.2.3
 
-  # Data Vault Automation (DuckDB not supported - commented out)
+  # Data Vault Automation (not currently used)
   # - package: Datavault-UK/automate_dv
   #   version: 0.11.2

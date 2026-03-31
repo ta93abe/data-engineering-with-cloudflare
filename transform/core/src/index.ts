@@ -9,6 +9,7 @@ interface Env {
   DATABRICKS_HOST: string;
   DATABRICKS_HTTP_PATH: string;
   DATABRICKS_TOKEN: string;
+  API_KEY: string;
 }
 
 export class DbtContainer extends Container<Env> {
@@ -66,6 +67,17 @@ DbtContainer.outboundByHost = {
   },
 };
 
+function authenticate(request: Request, env: Env): Response | null {
+  // GET /health, /docs, /artifacts は認証不要
+  if (request.method === "GET") return null;
+
+  const authHeader = request.headers.get("Authorization");
+  if (!authHeader || authHeader !== `Bearer ${env.API_KEY}`) {
+    return Response.json({ error: "unauthorized" }, { status: 401 });
+  }
+  return null;
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
@@ -74,6 +86,10 @@ export default {
     if (path === "/health") {
       return Response.json({ status: "ok" });
     }
+
+    // POST エンドポイントは認証必須
+    const authError = authenticate(request, env);
+    if (authError) return authError;
 
     const container = getContainer(env.DBT_CONTAINER, "dbt-runner-main");
 
@@ -88,9 +104,11 @@ export default {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
+      const containerContentType =
+        response.headers.get("Content-Type") || "application/json";
       return new Response(response.body, {
         status: response.status,
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": containerContentType },
       });
     }
 
