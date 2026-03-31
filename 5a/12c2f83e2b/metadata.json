@@ -1,0 +1,28 @@
+{
+  "cli_version": "0.5.2",
+  "checkpoint_id": "5a12c2f83e2b",
+  "strategy": "manual-commit",
+  "branch": "feat/core-databricks-migration",
+  "checkpoints_count": 5,
+  "files_touched": [
+    "transform/core/.gitignore",
+    "transform/core/packages.yml",
+    "transform/core/server.py",
+    "transform/core/src/index.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/5a/12c2f83e2b/0/metadata.json",
+      "transcript": "/5a/12c2f83e2b/0/full.jsonl",
+      "content_hash": "/5a/12c2f83e2b/0/content_hash.txt",
+      "prompt": "/5a/12c2f83e2b/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 237,
+    "cache_creation_tokens": 230166,
+    "cache_read_tokens": 28904132,
+    "output_tokens": 47649,
+    "api_call_count": 175
+  }
+}

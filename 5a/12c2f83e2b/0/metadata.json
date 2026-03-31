@@ -1,0 +1,37 @@
+{
+  "cli_version": "0.5.2",
+  "checkpoint_id": "5a12c2f83e2b",
+  "session_id": "2b3ebe95-a039-46be-9a43-347debb84793",
+  "strategy": "manual-commit",
+  "created_at": "2026-03-31T14:07:07.453362Z",
+  "branch": "feat/core-databricks-migration",
+  "checkpoints_count": 5,
+  "files_touched": [
+    "transform/core/.gitignore",
+    "transform/core/packages.yml",
+    "transform/core/server.py",
+    "transform/core/src/index.ts"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-6[1m]",
+  "turn_id": "5229a0d3a03e",
+  "token_usage": {
+    "input_tokens": 237,
+    "cache_creation_tokens": 230166,
+    "cache_read_tokens": 28904132,
+    "output_tokens": 47649,
+    "api_call_count": 175
+  },
+  "session_metrics": {
+    "turn_count": 22
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-03-31T14:07:06.702432Z",
+    "agent_lines": 81,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 81,
+    "agent_percentage": 100
+  }
+}
