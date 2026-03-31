@@ -42,8 +42,9 @@ DbtContainer.outboundByHost = {
 
     if (request.method === "PUT") {
       const body = await request.arrayBuffer();
+      const contentType = request.headers.get("Content-Type") || "application/json";
       await env.DBT_ARTIFACTS.put(key, body, {
-        httpMetadata: { contentType: "application/json" },
+        httpMetadata: { contentType },
       });
       return new Response("OK", { status: 200 });
     }
@@ -73,10 +74,10 @@ export default {
 
     const container = getContainer(env.DBT_CONTAINER, "dbt-runner-main");
 
-    // dbt commands: POST /run, /seed, /test, /build
+    // dbt commands: POST /run, /seed, /test, /build, /docs
     if (
       request.method === "POST" &&
-      ["/run", "/seed", "/test", "/build"].includes(path)
+      ["/run", "/seed", "/test", "/build", "/docs"].includes(path)
     ) {
       const body = await request.json().catch(() => ({}));
       const response = await container.fetch(`http://container${path}`, {
@@ -90,15 +91,32 @@ export default {
       });
     }
 
-    // アーティファクト取得 (R2 binding 経由)
+    // dbt docs 配信 (R2 バケット直下から)
+    if (path === "/docs" || path === "/docs/") {
+      const object = await env.DBT_ARTIFACTS.get("index.html");
+      if (!object) {
+        return Response.json(
+          { error: "docs not generated yet. POST /docs first." },
+          { status: 404 }
+        );
+      }
+      return new Response(object.body, {
+        headers: { "Content-Type": "text/html" },
+      });
+    }
+
+    // アーティファクト取得 (R2 バケット直下)
     if (path.startsWith("/artifacts/")) {
-      const key = `dbt-core/${path.replace("/artifacts/", "")}`;
+      const key = path.replace("/artifacts/", "");
       const object = await env.DBT_ARTIFACTS.get(key);
       if (!object) {
         return Response.json({ error: "not found" }, { status: 404 });
       }
+      const contentType = key.endsWith(".html")
+        ? "text/html"
+        : "application/json";
       return new Response(object.body, {
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": contentType },
       });
     }
 

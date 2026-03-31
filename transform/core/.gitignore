@@ -9,3 +9,5 @@ logs/
 *.duckdb
 *.duckdb.wal
 dbt_packages/
+
+.user.yml

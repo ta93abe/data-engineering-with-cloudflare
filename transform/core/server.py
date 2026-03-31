@@ -8,7 +8,6 @@ intercepts and translates to R2 binding calls.
 import json
 import os
 import subprocess
-from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.request import Request, urlopen
 
@@ -25,6 +24,8 @@ class DbtHandler(BaseHTTPRequestHandler):
     def do_POST(self):
         if self.path in ("/run", "/seed", "/test", "/build"):
             self._run_dbt(self.path.lstrip("/"))
+        elif self.path == "/docs":
+            self._run_docs_generate()
         else:
             self._json_response(404, {"error": "not found"})
 
@@ -59,6 +60,54 @@ class DbtHandler(BaseHTTPRequestHandler):
             },
         )
 
+    def _run_docs_generate(self):
+        content_length = int(self.headers.get("Content-Length", 0))
+        body = json.loads(self.rfile.read(content_length)) if content_length > 0 else {}
+        target = body.get("target", "dev")
+
+        cmd = ["uv", "run", "dbt", "docs", "generate", "--target", target, "--profiles-dir", "."]
+        result = subprocess.run(cmd, capture_output=True, text=True, cwd="/app")
+
+        artifacts_saved: list[str] = []
+        if result.returncode == 0:
+            artifacts_saved = self._save_docs_to_r2()
+
+        self._json_response(
+            200 if result.returncode == 0 else 500,
+            {
+                "command": "docs generate",
+                "returncode": result.returncode,
+                "stdout": result.stdout,
+                "stderr": result.stderr,
+                "artifacts_saved": artifacts_saved,
+            },
+        )
+
+    def _save_docs_to_r2(self) -> list[str]:
+        """Upload dbt docs artifacts (manifest, catalog, index.html) to R2."""
+        saved = []
+        docs_files = [
+            ("target/manifest.json", "application/json"),
+            ("target/catalog.json", "application/json"),
+            ("target/index.html", "text/html"),
+            ("target/run_results.json", "application/json"),
+        ]
+
+        for artifact, content_type in docs_files:
+            src = os.path.join("/app", artifact)
+            if not os.path.exists(src):
+                continue
+
+            filename = os.path.basename(artifact)
+
+            with open(src, "rb") as f:
+                data = f.read()
+
+            self._put_r2(filename, data, content_type)
+            saved.append(filename)
+
+        return saved
+
     def _save_artifacts_to_r2(self) -> list[str]:
         """Upload dbt artifacts to R2 via Outbound Workers."""
         saved = []
@@ -68,8 +117,6 @@ class DbtHandler(BaseHTTPRequestHandler):
             "target/catalog.json",
             "target/sources.json",
         ]
-        timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-
         for artifact in artifact_files:
             src = os.path.join("/app", artifact)
             if not os.path.exists(src):
@@ -80,21 +127,18 @@ class DbtHandler(BaseHTTPRequestHandler):
             with open(src, "rb") as f:
                 data = f.read()
 
-            # PUT to latest/
-            self._put_r2(f"dbt-core/latest/{filename}", data)
-            # PUT to history/{timestamp}/
-            self._put_r2(f"dbt-core/history/{timestamp}/{filename}", data)
+            self._put_r2(filename, data)
             saved.append(filename)
 
         return saved
 
-    def _put_r2(self, key: str, data: bytes):
+    def _put_r2(self, key: str, data: bytes, content_type: str = "application/json"):
         """PUT object to R2 via Outbound Worker at http://r2.worker."""
         req = Request(
             f"{R2_HOST}/{key}",
             data=data,
             method="PUT",
-            headers={"Content-Type": "application/json"},
+            headers={"Content-Type": content_type},
         )
         try:
             urlopen(req)
