@@ -1,0 +1,23 @@
+{
+  "cli_version": "0.5.2",
+  "checkpoint_id": "f6fd89f2a1a1",
+  "strategy": "manual-commit",
+  "branch": "feat/core-databricks-migration",
+  "checkpoints_count": 3,
+  "files_touched": null,
+  "sessions": [
+    {
+      "metadata": "/f6/fd89f2a1a1/0/metadata.json",
+      "transcript": "/f6/fd89f2a1a1/0/full.jsonl",
+      "content_hash": "/f6/fd89f2a1a1/0/content_hash.txt",
+      "prompt": "/f6/fd89f2a1a1/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 262,
+    "cache_creation_tokens": 249175,
+    "cache_read_tokens": 34190170,
+    "output_tokens": 54458,
+    "api_call_count": 197
+  }
+}
