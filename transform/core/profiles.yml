@@ -16,5 +16,5 @@ core:
       http_path: "{{ env_var('DATABRICKS_HTTP_PATH') }}"
       token: "{{ env_var('DATABRICKS_TOKEN') }}"
       catalog: core
-      schema: staging
+      schema: prod
       threads: 8

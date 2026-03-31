@@ -42,7 +42,8 @@ DbtContainer.outboundByHost = {
 
     if (request.method === "PUT") {
       const body = await request.arrayBuffer();
-      const contentType = request.headers.get("Content-Type") || "application/json";
+      const contentType =
+        request.headers.get("Content-Type") || "application/json";
       await env.DBT_ARTIFACTS.put(key, body, {
         httpMetadata: { contentType },
       });
@@ -54,8 +55,10 @@ DbtContainer.outboundByHost = {
       if (!object) {
         return new Response("Not Found", { status: 404 });
       }
+      const contentType =
+        object.httpMetadata?.contentType || "application/octet-stream";
       return new Response(object.body, {
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": contentType },
       });
     }
 
@@ -92,7 +95,10 @@ export default {
     }
 
     // dbt docs 配信 (R2 バケット直下から)
-    if (path === "/docs" || path === "/docs/") {
+    if (
+      request.method === "GET" &&
+      (path === "/docs" || path === "/docs/")
+    ) {
       const object = await env.DBT_ARTIFACTS.get("index.html");
       if (!object) {
         return Response.json(
@@ -106,15 +112,17 @@ export default {
     }
 
     // アーティファクト取得 (R2 バケット直下)
-    if (path.startsWith("/artifacts/")) {
+    if (request.method === "GET" && path.startsWith("/artifacts/")) {
       const key = path.replace("/artifacts/", "");
+      if (!key) {
+        return Response.json({ error: "not found" }, { status: 404 });
+      }
       const object = await env.DBT_ARTIFACTS.get(key);
       if (!object) {
         return Response.json({ error: "not found" }, { status: 404 });
       }
-      const contentType = key.endsWith(".html")
-        ? "text/html"
-        : "application/json";
+      const contentType =
+        object.httpMetadata?.contentType || "application/octet-stream";
       return new Response(object.body, {
         headers: { "Content-Type": contentType },
       });

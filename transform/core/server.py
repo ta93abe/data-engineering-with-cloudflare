@@ -12,6 +12,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.request import Request, urlopen
 
 R2_HOST = "http://r2.worker"
+DBT_TIMEOUT = 3600  # 1 hour
 
 
 class DbtHandler(BaseHTTPRequestHandler):
@@ -29,9 +30,20 @@ class DbtHandler(BaseHTTPRequestHandler):
         else:
             self._json_response(404, {"error": "not found"})
 
-    def _run_dbt(self, command: str):
+    def _parse_body(self) -> dict | None:
         content_length = int(self.headers.get("Content-Length", 0))
-        body = json.loads(self.rfile.read(content_length)) if content_length > 0 else {}
+        if content_length == 0:
+            return {}
+        try:
+            return json.loads(self.rfile.read(content_length))
+        except json.JSONDecodeError:
+            self._json_response(400, {"error": "invalid JSON"})
+            return None
+
+    def _run_dbt(self, command: str):
+        body = self._parse_body()
+        if body is None:
+            return
 
         target = body.get("target", "dev")
         select = body.get("select", None)
@@ -43,7 +55,13 @@ class DbtHandler(BaseHTTPRequestHandler):
         if full_refresh:
             cmd.append("--full-refresh")
 
-        result = subprocess.run(cmd, capture_output=True, text=True, cwd="/app")
+        try:
+            result = subprocess.run(
+                cmd, capture_output=True, text=True, cwd="/app", timeout=DBT_TIMEOUT
+            )
+        except subprocess.TimeoutExpired:
+            self._json_response(504, {"error": f"dbt {command} timed out"})
+            return
 
         artifacts_saved: list[str] = []
         if result.returncode == 0 and command in ("run", "build"):
@@ -61,12 +79,20 @@ class DbtHandler(BaseHTTPRequestHandler):
         )
 
     def _run_docs_generate(self):
-        content_length = int(self.headers.get("Content-Length", 0))
-        body = json.loads(self.rfile.read(content_length)) if content_length > 0 else {}
+        body = self._parse_body()
+        if body is None:
+            return
         target = body.get("target", "dev")
 
         cmd = ["uv", "run", "dbt", "docs", "generate", "--target", target, "--profiles-dir", "."]
-        result = subprocess.run(cmd, capture_output=True, text=True, cwd="/app")
+
+        try:
+            result = subprocess.run(
+                cmd, capture_output=True, text=True, cwd="/app", timeout=DBT_TIMEOUT
+            )
+        except subprocess.TimeoutExpired:
+            self._json_response(504, {"error": "dbt docs generate timed out"})
+            return
 
         artifacts_saved: list[str] = []
         if result.returncode == 0:
@@ -103,8 +129,8 @@ class DbtHandler(BaseHTTPRequestHandler):
             with open(src, "rb") as f:
                 data = f.read()
 
-            self._put_r2(filename, data, content_type)
-            saved.append(filename)
+            if self._put_r2(filename, data, content_type):
+                saved.append(filename)
 
         return saved
 
@@ -127,12 +153,12 @@ class DbtHandler(BaseHTTPRequestHandler):
             with open(src, "rb") as f:
                 data = f.read()
 
-            self._put_r2(filename, data)
-            saved.append(filename)
+            if self._put_r2(filename, data):
+                saved.append(filename)
 
         return saved
 
-    def _put_r2(self, key: str, data: bytes, content_type: str = "application/json"):
+    def _put_r2(self, key: str, data: bytes, content_type: str = "application/json") -> bool:
         """PUT object to R2 via Outbound Worker at http://r2.worker."""
         req = Request(
             f"{R2_HOST}/{key}",
@@ -141,9 +167,11 @@ class DbtHandler(BaseHTTPRequestHandler):
             headers={"Content-Type": content_type},
         )
         try:
-            urlopen(req)
+            urlopen(req, timeout=30)
+            return True
         except Exception as e:
             print(f"Failed to PUT {key} to R2: {e}")
+            return False
 
     def _json_response(self, status: int, body: dict):
         self.send_response(status)
