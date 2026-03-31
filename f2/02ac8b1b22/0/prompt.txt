@@ -265,3 +265,7 @@ Read the output file to retrieve the result: /private/tmp/claude-501/-Users-ta93
 ---
 
 文字列を生成して登録して
+
+---
+
+/pr review
