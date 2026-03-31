@@ -1,0 +1,44 @@
+{
+  "cli_version": "0.5.2",
+  "checkpoint_id": "490667579207",
+  "strategy": "manual-commit",
+  "branch": "feat/core-databricks-migration",
+  "checkpoints_count": 18,
+  "files_touched": [
+    "transform/core/.gitignore",
+    "transform/core/Dockerfile",
+    "transform/core/dbt_project.yml",
+    "transform/core/macros/generate_schema_name.sql",
+    "transform/core/macros/r2_location.sql",
+    "transform/core/models/marts/core/dim_dates.sql",
+    "transform/core/models/marts/core/dim_products.sql",
+    "transform/core/models/marts/core/dim_users.sql",
+    "transform/core/models/marts/core/fct_daily_sales.sql",
+    "transform/core/models/marts/core/fct_order_items.sql",
+    "transform/core/models/marts/core/fct_orders.sql",
+    "transform/core/package.json",
+    "transform/core/pnpm-lock.yaml",
+    "transform/core/profiles.yml",
+    "transform/core/pyproject.toml",
+    "transform/core/server.py",
+    "transform/core/src/index.ts",
+    "transform/core/tsconfig.json",
+    "transform/core/uv.lock",
+    "transform/core/wrangler.jsonc"
+  ],
+  "sessions": [
+    {
+      "metadata": "/49/0667579207/0/metadata.json",
+      "transcript": "/49/0667579207/0/full.jsonl",
+      "content_hash": "/49/0667579207/0/content_hash.txt",
+      "prompt": "/49/0667579207/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 178,
+    "cache_creation_tokens": 194457,
+    "cache_read_tokens": 18321713,
+    "output_tokens": 35506,
+    "api_call_count": 126
+  }
+}
