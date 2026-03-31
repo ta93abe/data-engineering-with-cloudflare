@@ -1,4 +1,3 @@
-{{ config(location=r2_location('dim_users')) }}
 with users as (
     select * from {{ ref('stg_users') }}
 ),

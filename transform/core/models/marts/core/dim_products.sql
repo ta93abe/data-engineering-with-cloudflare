@@ -1,4 +1,3 @@
-{{ config(location=r2_location('dim_products')) }}
 with products as (
     select * from {{ ref('stg_products') }}
 ),

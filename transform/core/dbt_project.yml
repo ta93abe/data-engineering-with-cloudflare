@@ -27,8 +27,7 @@ models:
       +tags: ['staging']
 
     marts:
-      +materialized: "{{ 'external' if target.name == 'ci' else 'table' }}"
-      +format: parquet
+      +materialized: table
       +schema: marts
       +tags: ['marts']
 
