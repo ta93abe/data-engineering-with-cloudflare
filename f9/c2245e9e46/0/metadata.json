@@ -1,0 +1,22 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "f9c2245e9e46",
+  "session_id": "e228f0b7-4e23-4192-a3bf-e7930bff83d5",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-04T11:21:12.774355Z",
+  "branch": "feat/agent-rag-architecture",
+  "checkpoints_count": 5,
+  "files_touched": [],
+  "agent": "Claude Code",
+  "turn_id": "3d44c57138d9",
+  "token_usage": {
+    "input_tokens": 142,
+    "cache_creation_tokens": 230672,
+    "cache_read_tokens": 10748073,
+    "output_tokens": 48092,
+    "api_call_count": 116
+  },
+  "session_metrics": {
+    "turn_count": 4
+  }
+}
