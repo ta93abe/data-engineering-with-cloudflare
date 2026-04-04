@@ -1,5 +1,6 @@
 import { generateText } from "ai";
 import { createWorkersAI } from "workers-ai-provider";
+import { retrieveRelevantContext } from "./knowledge";
 import { D1_SCHEMA } from "./schema";
 import type { Env } from "./types";
 import { isSafeQuery } from "./utils";
@@ -164,12 +165,16 @@ export async function handleSlackEvent(request: Request, env: Env): Promise<Resp
       const queryResult = await env.DB.prepare(sql).all();
       const rows = queryResult.results.slice(0, 50);
 
-      // Step 3: Summarize results (truncate to avoid exceeding model context limits)
+      // Step 2.5: Retrieve relevant context from knowledge base for RAG
+      const ragResults = await retrieveRelevantContext(env, userText, 2);
+      const contextBlock = ragResults ? `\n\n関連する過去のインサイト:\n${ragResults}` : "";
+
+      // Step 3: Summarize results with RAG context (truncate to avoid exceeding model context limits)
       const rowsPreview =
         rows.length > 10 ? [...rows.slice(0, 10), `... and ${rows.length - 10} more rows`] : rows;
       const { text: answer } = await generateText({
         model: workersai(MODEL_ID),
-        system: SUMMARIZE_PROMPT,
+        system: SUMMARIZE_PROMPT + contextBlock,
         prompt: `ユーザーの質問: ${userText}\n\n実行したSQL: ${sql}\n\nクエリ結果 (${queryResult.results.length}件):\n${JSON.stringify(rowsPreview, null, 2)}`,
       });
 

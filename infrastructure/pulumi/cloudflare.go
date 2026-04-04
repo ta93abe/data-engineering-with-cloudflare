@@ -10,6 +10,7 @@ type CloudflareOutputs struct {
 	D1DatabaseName pulumi.StringOutput
 	R2BucketName   pulumi.StringOutput
 	KvNamespaceId  pulumi.IDOutput
+	AiGatewayId    pulumi.StringOutput
 }
 
 func createCloudflareResources(ctx *pulumi.Context, accountId string) (*CloudflareOutputs, error) {
@@ -49,10 +50,28 @@ func createCloudflareResources(ctx *pulumi.Context, accountId string) (*Cloudfla
 		return nil, err
 	}
 
+	// ===========================================
+	// AI Gateway (for data-agent)
+	// ===========================================
+	aiGateway, err := cloudflare.NewAiGateway(ctx, "data-agent-gateway", &cloudflare.AiGatewayArgs{
+		AccountId:              pulumi.String(accountId),
+		Id:                     pulumi.String("data-agent-gateway"),
+		CacheInvalidateOnUpdate: pulumi.Bool(true),
+		CacheTtl:               pulumi.Int(3600),
+		CollectLogs:            pulumi.Bool(true),
+		RateLimitingLimit:      pulumi.Int(100),
+		RateLimitingInterval:   pulumi.Int(60),
+		RateLimitingTechnique:  pulumi.String("fixed"),
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	return &CloudflareOutputs{
 		D1DatabaseId:   rawDb.ID(),
 		D1DatabaseName: rawDb.Name,
 		R2BucketName:   dataLake.Name,
 		KvNamespaceId:  cacheKv.ID(),
+		AiGatewayId:    aiGateway.ID().ToStringOutput(),
 	}, nil
 }

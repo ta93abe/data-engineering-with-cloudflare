@@ -1,4 +1,5 @@
 import { routeAgentRequest } from "agents";
+import { generateDailyInsight, generateWeeklySummary } from "./knowledge";
 import { handleSlackEvent } from "./slack";
 import type { Env } from "./types";
 
@@ -26,5 +27,28 @@ export default {
     }
 
     return new Response("Not Found", { status: 404 });
+  },
+
+  async scheduled(_event: ScheduledEvent, env: Env, ctx: ExecutionContext) {
+    // Daily: generate insight from yesterday's health data
+    ctx.waitUntil(
+      generateDailyInsight(env).then((insight) => {
+        if (insight) {
+          console.log("Daily insight generated:", insight.substring(0, 100));
+        }
+      })
+    );
+
+    // Weekly (Monday): generate weekly summary
+    const today = new Date();
+    if (today.getUTCDay() === 1) {
+      ctx.waitUntil(
+        generateWeeklySummary(env).then((summary) => {
+          if (summary) {
+            console.log("Weekly summary generated:", summary.substring(0, 100));
+          }
+        })
+      );
+    }
   },
 };

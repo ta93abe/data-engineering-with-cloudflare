@@ -39,4 +39,20 @@ export const D1_SCHEMA = `
 --   sleep_deep_sleep, sleep_efficiency, sleep_total_sleep
 
 -- 注意: 日付は TEXT 型 (ISO 8601)。SQLite の date() / strftime() を使うこと。
+
+-- ============ Agent Tables ============
+
+-- agent_knowledge_base: 知識ベース (埋め込み済みインサイト)
+--   id TEXT PK, content TEXT, content_type TEXT ('weekly_summary'|'insight'|'pattern')
+--   metadata_json TEXT (JSON), vector_id TEXT, created_at TEXT, updated_at TEXT
+
+-- agent_reports: 生成レポートメタデータ
+--   id TEXT PK, report_type TEXT ('weekly_health'|'monthly_health'|'custom')
+--   title TEXT, period_start TEXT, period_end TEXT
+--   r2_key TEXT (R2オブジェクトキー), summary TEXT, vector_id TEXT, created_at TEXT
+
+-- agent_conversation_logs: 会話履歴
+--   id TEXT PK, session_id TEXT, source TEXT ('chat'|'slack')
+--   user_message TEXT, assistant_response TEXT, tools_used TEXT (JSON)
+--   model_id TEXT, created_at TEXT
 `;
