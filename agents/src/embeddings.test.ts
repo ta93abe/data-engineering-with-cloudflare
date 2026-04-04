@@ -49,7 +49,7 @@ describe("embedText", () => {
     const result = await embedText(ai, "テストテキスト");
 
     expect(result).toEqual(expectedEmbedding);
-    expect(ai.run).toHaveBeenCalledWith("@cf/baai/bge-base-en-v1.5", {
+    expect(ai.run).toHaveBeenCalledWith("@cf/baai/bge-small-en-v1.5", {
       text: ["テストテキスト"],
     });
   });

@@ -1,9 +1,6 @@
-import { generateText } from "ai";
-import { createWorkersAI } from "workers-ai-provider";
 import { embedAndStore, semanticSearch } from "./embeddings";
+import { generateTextWithFallback } from "./models";
 import type { Env } from "./types";
-
-const MODEL_ID = "@cf/meta/llama-3.3-70b-instruct-fp8-fast" as const;
 
 const INSIGHT_PROMPT = `You are a health data analyst. Given the following health metrics, generate a concise insight in Japanese (2-3 sentences). Focus on trends, anomalies, or noteworthy patterns.`;
 
@@ -25,9 +22,7 @@ export async function generateDailyInsight(env: Env): Promise<string | null> {
   if (!results.length) return null;
 
   const row = results[0];
-  const workersai = createWorkersAI({ binding: env.AI });
-  const { text: insight } = await generateText({
-    model: workersai(MODEL_ID),
+  const { text: insight } = await generateTextWithFallback(env.AI, {
     system: INSIGHT_PROMPT,
     prompt: `日付: ${row.day}\n睡眠スコア: ${row.sleep_score}\n活動スコア: ${row.activity_score}\nコンディション: ${row.readiness_score}\n歩数: ${row.steps}\n消費カロリー: ${row.total_calories}`,
   });
@@ -57,9 +52,7 @@ export async function generateWeeklySummary(env: Env): Promise<string | null> {
 
   if (!results.length) return null;
 
-  const workersai = createWorkersAI({ binding: env.AI });
-  const { text: summary } = await generateText({
-    model: workersai(MODEL_ID),
+  const { text: summary } = await generateTextWithFallback(env.AI, {
     system: `You are a health data analyst. Given a week of health metrics, write a comprehensive weekly summary in Japanese (4-6 sentences). Include averages, best/worst days, and trends.`,
     prompt: `週間データ:\n${JSON.stringify(results, null, 2)}`,
   });

@@ -1,4 +1,4 @@
-const EMBEDDING_MODEL = "@cf/baai/bge-base-en-v1.5" as const;
+import { EMBEDDING_MODEL } from "./models";
 
 export type SearchResult = {
   id: string;

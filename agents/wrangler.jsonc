@@ -37,7 +37,7 @@
     }
   },
 
-  // Vectorize — RAG 用ベクトルインデックス (768次元, cosine)
+  // Vectorize — RAG 用ベクトルインデックス (384次元, cosine, bge-small-en-v1.5)
   "vectorize": [
     {
       "binding": "VECTORIZE",

@@ -1,11 +1,8 @@
-import { generateText } from "ai";
-import { createWorkersAI } from "workers-ai-provider";
 import { retrieveRelevantContext } from "./knowledge";
+import { generateTextWithFallback } from "./models";
 import { D1_SCHEMA } from "./schema";
 import type { Env } from "./types";
 import { isSafeQuery } from "./utils";
-
-const MODEL_ID = "@cf/meta/llama-3.3-70b-instruct-fp8-fast" as const;
 
 const SQL_GEN_PROMPT = `You are a SQL generator for a SQLite (D1) database containing Oura Ring health data.
 Given a user question, output ONLY a valid SELECT SQL query. No explanation, no markdown, no backticks. Just the raw SQL.
@@ -140,11 +137,8 @@ export async function handleSlackEvent(request: Request, env: Env): Promise<Resp
 
   const promise = (async () => {
     try {
-      const workersai = createWorkersAI({ binding: env.AI });
-
-      // Step 1: Generate SQL from user question
-      const { text: rawSql } = await generateText({
-        model: workersai(MODEL_ID),
+      // Step 1: Generate SQL from user question (with model fallback)
+      const { text: rawSql } = await generateTextWithFallback(env.AI, {
         system: SQL_GEN_PROMPT,
         prompt: userText,
       });
@@ -172,8 +166,7 @@ export async function handleSlackEvent(request: Request, env: Env): Promise<Resp
       // Step 3: Summarize results with RAG context (truncate to avoid exceeding model context limits)
       const rowsPreview =
         rows.length > 10 ? [...rows.slice(0, 10), `... and ${rows.length - 10} more rows`] : rows;
-      const { text: answer } = await generateText({
-        model: workersai(MODEL_ID),
+      const { text: answer } = await generateTextWithFallback(env.AI, {
         system: SUMMARIZE_PROMPT + contextBlock,
         prompt: `ユーザーの質問: ${userText}\n\n実行したSQL: ${sql}\n\nクエリ結果 (${queryResult.results.length}件):\n${JSON.stringify(rowsPreview, null, 2)}`,
       });

@@ -1,0 +1,46 @@
+import { generateText } from "ai";
+import { createWorkersAI } from "workers-ai-provider";
+
+/**
+ * チャットモデル: Neuron 消費が少ない順にフォールバック
+ * - qwen3-30b-a3b-fp8:  $0.051/M input, $0.335/M output (最安 30B クラス)
+ * - llama-3-8b-instruct-awq: $0.123/M input, $0.266/M output (8B フォールバック)
+ */
+export const CHAT_MODELS = [
+  "@cf/qwen/qwen3-30b-a3b-fp8",
+  "@cf/meta/llama-3-8b-instruct-awq",
+] as const;
+
+/**
+ * 埋め込みモデル: 384次元、$0.020/M input (最安クラス)
+ */
+export const EMBEDDING_MODEL = "@cf/baai/bge-small-en-v1.5" as const;
+export const EMBEDDING_DIMENSIONS = 384;
+
+/**
+ * generateText をモデルフォールバック付きで実行する。
+ * CHAT_MODELS を順に試し、最初に成功したものを返す。
+ */
+export async function generateTextWithFallback(
+  ai: Ai,
+  options: { system?: string; prompt: string }
+): Promise<{ text: string }> {
+  const workersai = createWorkersAI({ binding: ai });
+  let lastError: unknown;
+
+  for (const modelId of CHAT_MODELS) {
+    try {
+      const result = await generateText({
+        model: workersai(modelId),
+        system: options.system,
+        prompt: options.prompt,
+      });
+      return { text: result.text };
+    } catch (error) {
+      console.error(`Model ${modelId} failed, trying next:`, error);
+      lastError = error;
+    }
+  }
+
+  throw lastError ?? new Error("All chat models failed");
+}

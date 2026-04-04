@@ -1,9 +1,6 @@
-import { generateText } from "ai";
-import { createWorkersAI } from "workers-ai-provider";
 import { embedAndStore } from "./embeddings";
+import { generateTextWithFallback } from "./models";
 import type { Env } from "./types";
-
-const MODEL_ID = "@cf/meta/llama-3.3-70b-instruct-fp8-fast" as const;
 
 const REPORT_PROMPT = `You are a health data analyst. Generate a detailed health report in Japanese Markdown format.
 Include:
@@ -43,18 +40,14 @@ export async function generateHealthReport(
     throw new Error(`期間 ${periodStart} ~ ${periodEnd} のデータが見つかりません。`);
   }
 
-  const workersai = createWorkersAI({ binding: env.AI });
-
-  // Generate full report
-  const { text: reportContent } = await generateText({
-    model: workersai(MODEL_ID),
+  // Generate full report (with model fallback)
+  const { text: reportContent } = await generateTextWithFallback(env.AI, {
     system: REPORT_PROMPT,
     prompt: `期間: ${periodStart} ~ ${periodEnd}\nデータ件数: ${results.length}日分\n\nデータ:\n${JSON.stringify(results, null, 2)}`,
   });
 
-  // Generate concise summary for embedding
-  const { text: summary } = await generateText({
-    model: workersai(MODEL_ID),
+  // Generate concise summary for embedding (with model fallback)
+  const { text: summary } = await generateTextWithFallback(env.AI, {
     system: "Summarize the following health report in 2-3 sentences in Japanese.",
     prompt: reportContent,
   });
