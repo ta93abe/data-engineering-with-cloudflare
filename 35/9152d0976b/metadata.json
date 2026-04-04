@@ -1,0 +1,43 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "359152d0976b",
+  "strategy": "manual-commit",
+  "branch": "feat/agent-rag-architecture",
+  "checkpoints_count": 0,
+  "files_touched": [
+    "agents/package.json",
+    "agents/src/agent.ts",
+    "agents/src/embeddings.test.ts",
+    "agents/src/embeddings.ts",
+    "agents/src/index.ts",
+    "agents/src/knowledge.test.ts",
+    "agents/src/knowledge.ts",
+    "agents/src/reports.test.ts",
+    "agents/src/reports.ts",
+    "agents/src/schema.ts",
+    "agents/src/slack.ts",
+    "agents/src/tools.ts",
+    "agents/src/types.ts",
+    "agents/src/utils.test.ts",
+    "agents/vitest.config.ts",
+    "agents/wrangler.jsonc",
+    "infrastructure/d1/migrations/0006_agent_tables.sql",
+    "infrastructure/pulumi/cloudflare.go",
+    "infrastructure/pulumi/main.go"
+  ],
+  "sessions": [
+    {
+      "metadata": "/35/9152d0976b/0/metadata.json",
+      "transcript": "/35/9152d0976b/0/full.jsonl",
+      "content_hash": "/35/9152d0976b/0/content_hash.txt",
+      "prompt": "/35/9152d0976b/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 98,
+    "cache_creation_tokens": 199217,
+    "cache_read_tokens": 6711129,
+    "output_tokens": 33942,
+    "api_call_count": 84
+  }
+}

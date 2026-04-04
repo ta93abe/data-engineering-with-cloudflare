@@ -1,0 +1,6 @@
+/Users/takumi.abe/Downloads/working-with-legacy-code-the-true-record.pdf
+この内容をt-wadaというプロジェクトレベルのスキルにしてほしい。
+
+---
+
+PullRequestを作って
