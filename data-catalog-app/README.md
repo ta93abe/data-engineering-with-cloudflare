@@ -1,46 +1,49 @@
-# Astro Starter Kit: Basics
+# Flame - Data Catalog
 
-```sh
-pnpm create astro@latest -- --template basics
-```
+Cloudflare Workers上にデプロイされるデータカタログアプリケーション。
+データプラットフォーム全体のデータセットを閲覧・検索できるUIを提供します。
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+## Tech Stack
 
-## 🚀 Project Structure
+- **Astro 6** - Webフレームワーク
+- **React 19** - UIコンポーネント
+- **Cloudflare Kumo** - UIコンポーネントライブラリ
+- **Tailwind CSS v4** - スタイリング
+- **Cloudflare Workers** - デプロイ先
 
-Inside of your Astro project, you'll see the following folders and files:
+## Project Structure
 
 ```text
-/
+data-catalog-app/
 ├── public/
 │   └── favicon.svg
-├── src
-│   ├── assets
-│   │   └── astro.svg
-│   ├── components
-│   │   └── Welcome.astro
-│   ├── layouts
-│   │   └── Layout.astro
-│   └── pages
-│       └── index.astro
+├── src/
+│   ├── components/
+│   │   ├── AppSidebar.tsx      # Kumo Sidebar ナビゲーション
+│   │   └── DataCatalog.tsx     # データセット一覧・検索UI
+│   ├── layouts/
+│   │   └── Layout.astro        # ベースHTMLレイアウト
+│   ├── pages/
+│   │   └── index.astro         # ホームページ
+│   └── styles/
+│       └── global.css          # Kumo + Tailwind CSS設定
+├── astro.config.mjs            # Astro設定
+├── wrangler.jsonc              # Cloudflare Workers設定
 └── package.json
 ```
 
-To learn more about the folder structure of an Astro project, refer to [our guide on project structure](https://docs.astro.build/en/basics/project-structure/).
+## Getting Started
 
-## 🧞 Commands
+```bash
+pnpm install
+pnpm dev        # localhost:4321 で起動
+```
 
-All commands are run from the root of the project, from a terminal:
+## Commands
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `pnpm install`             | Installs dependencies                            |
-| `pnpm dev`             | Starts local dev server at `localhost:4321`      |
-| `pnpm build`           | Build your production site to `./dist/`          |
-| `pnpm preview`         | Preview your build locally, before deploying     |
-| `pnpm astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `pnpm astro -- --help` | Get help using the Astro CLI                     |
-
-## 👀 Want to learn more?
-
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+| Command          | Action                              |
+| :--------------- | :---------------------------------- |
+| `pnpm install`   | 依存関係をインストール              |
+| `pnpm dev`       | 開発サーバーを起動 (`localhost:4321`) |
+| `pnpm build`     | プロダクションビルド (`./dist/`)     |
+| `pnpm preview`   | ビルド結果をローカルでプレビュー    |

@@ -1,5 +1,5 @@
 import { Badge, Button, Input, Surface, Table, Tabs, Text } from "@cloudflare/kumo";
-import { MagnifyingGlass, Plus, ArrowsClockwise } from "@phosphor-icons/react";
+import { Plus, ArrowsClockwise } from "@phosphor-icons/react";
 import { useState } from "react";
 
 const datasets = [
@@ -54,11 +54,14 @@ function StatusBadge({ status }: { status: string }) {
 
 export function DataCatalog() {
   const [search, setSearch] = useState("");
+  const [selectedTab, setSelectedTab] = useState("all");
 
+  const lowercasedSearch = search.toLowerCase();
   const filtered = datasets.filter(
     (d) =>
-      d.name.toLowerCase().includes(search.toLowerCase()) ||
-      d.source.toLowerCase().includes(search.toLowerCase())
+      (selectedTab === "all" || d.type === selectedTab) &&
+      (d.name.toLowerCase().includes(lowercasedSearch) ||
+        d.source.toLowerCase().includes(lowercasedSearch))
   );
 
   return (
@@ -84,16 +87,19 @@ export function DataCatalog() {
         variant="underline"
         tabs={[
           { value: "all", label: "All Datasets" },
-          { value: "tables", label: "Tables" },
-          { value: "views", label: "Views" },
-          { value: "kv", label: "Key-Value" },
+          { value: "Table", label: "Tables" },
+          { value: "View", label: "Views" },
+          { value: "Key-Value", label: "Key-Value" },
+          { value: "Time Series", label: "Time Series" },
         ]}
-        selectedValue="all"
+        selectedValue={selectedTab}
+        onValueChange={setSelectedTab}
       />
 
       <div className="flex items-center gap-4">
         <div className="flex-1">
           <Input
+            aria-label="Search datasets"
             placeholder="Search datasets..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}

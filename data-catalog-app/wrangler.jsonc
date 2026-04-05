@@ -1,5 +1,5 @@
 {
-	"compatibility_date": "2026-04-04",
+	"compatibility_date": "2025-04-01",
 	"compatibility_flags": ["global_fetch_strictly_public"],
 	"name": "flame",
 	"main": "@astrojs/cloudflare/entrypoints/server",
