@@ -27,10 +27,31 @@
     }
   ],
 
-  // Workers AI
+  // Workers AI — AI Gateway 経由でログ/キャッシュ/レート制限
   "ai": {
-    "binding": "AI"
+    "binding": "AI",
+    "gateway": {
+      "id": "data-agent-gateway",
+      "skipCache": false,
+      "cacheTtl": 3600
+    }
   },
+
+  // Vectorize — RAG 用ベクトルインデックス (1024次元, cosine, bge-m3 多言語対応)
+  "vectorize": [
+    {
+      "binding": "VECTORIZE",
+      "index_name": "data-agent-index"
+    }
+  ],
+
+  // R2 — レポート保存 + データレイク参照
+  "r2_buckets": [
+    {
+      "binding": "DATA_LAKE",
+      "bucket_name": "data-lake"
+    }
+  ],
 
   // D1 — 既存の raw データベースに接続
   "d1_databases": [
@@ -39,7 +60,12 @@
       "database_name": "raw",
       "database_id": "30fb49b7-8321-4792-8706-06c9205ce026"
     }
-  ]
+  ],
+
+  // Cron — 日次インサイト生成 + 週次レポート
+  "triggers": {
+    "crons": ["0 9 * * *"]
+  }
 
   // シークレット:
   //   wrangler secret put SLACK_BOT_TOKEN

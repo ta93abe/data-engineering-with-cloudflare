@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/pulumi/pulumi-cloudflare/sdk/v5/go/cloudflare"
+	"github.com/pulumi/pulumi-cloudflare/sdk/v6/go/cloudflare"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 )
 
@@ -48,6 +48,14 @@ func createCloudflareResources(ctx *pulumi.Context, accountId string) (*Cloudfla
 	if err != nil {
 		return nil, err
 	}
+
+	// ===========================================
+	// AI Gateway (for data-agent)
+	// ===========================================
+	// AI Gateway is not yet supported by the Pulumi Cloudflare provider.
+	// Manage via Cloudflare Dashboard or API:
+	//   wrangler ai-gateway create data-agent-gateway
+	// Gateway config: cache TTL 3600s, rate limit 100 req/60s, logs disabled (health data)
 
 	return &CloudflareOutputs{
 		D1DatabaseId:   rawDb.ID(),

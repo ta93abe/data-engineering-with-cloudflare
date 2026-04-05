@@ -10,6 +10,14 @@ export function isSafeQuery(sql: string): boolean {
     return false;
   }
 
+  // Reject WITH + DML (INSERT/UPDATE/DELETE) — CTEs can wrap mutating statements
+  if (normalized.startsWith("WITH")) {
+    const hasDml = /\b(INSERT|UPDATE|DELETE)\b/.test(normalized);
+    if (hasDml) {
+      return false;
+    }
+  }
+
   // Reject multi-statement queries (semicolon not at the end)
   const semicolonIdx = trimmed.indexOf(";");
   if (semicolonIdx !== -1 && semicolonIdx !== trimmed.length - 1) {
