@@ -1,0 +1,31 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "f3c95836a564",
+  "strategy": "manual-commit",
+  "branch": "feat/data-catalog-app",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "data-catalog-app/astro.config.mjs",
+    "data-catalog-app/pnpm-workspace.yaml",
+    "data-catalog-app/src/components/AppSidebar.tsx",
+    "data-catalog-app/src/components/DataCatalog.tsx",
+    "data-catalog-app/src/layouts/Layout.astro",
+    "data-catalog-app/src/pages/index.astro",
+    "data-catalog-app/src/styles/global.css"
+  ],
+  "sessions": [
+    {
+      "metadata": "/f3/c95836a564/0/metadata.json",
+      "transcript": "/f3/c95836a564/0/full.jsonl",
+      "content_hash": "/f3/c95836a564/0/content_hash.txt",
+      "prompt": "/f3/c95836a564/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 1501,
+    "cache_creation_tokens": 53443,
+    "cache_read_tokens": 2188673,
+    "output_tokens": 11857,
+    "api_call_count": 45
+  }
+}
