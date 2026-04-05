@@ -1,0 +1,39 @@
+/Users/takumi.abe/Downloads/working-with-legacy-code-the-true-record.pdf
+この内容をt-wadaというプロジェクトレベルのスキルにしてほしい。
+
+---
+
+PullRequestを作って
+
+---
+
+どんなアーキテクチャ？
+
+---
+
+AI　Gatewayはまだ1つのモデルだけになっている？
+
+---
+
+この二つは無料？
+
+---
+
+無料枠があるものでフォールバックを実装してほしい。
+
+---
+
+このアーキテクチャお金かからない？
+
+---
+
+pnpm dlx cloudflare@latest -- data-catalog-app --framework=astro
+これでAstroのアプリできる？
+
+---
+
+それで作って。フォルダは data-catalog-app にするんだけどアプリ名は flame にしてほしい。
+
+---
+
+Workers AIでGemma4が使えるようになったね。データエージェントのプログラムで使えるようにして。価格は？

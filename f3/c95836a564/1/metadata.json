@@ -1,0 +1,46 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "f3c95836a564",
+  "session_id": "e228f0b7-4e23-4192-a3bf-e7930bff83d5",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-05T08:54:52.213613Z",
+  "branch": "feat/data-catalog-app",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "data-catalog-app/.gitignore",
+    "data-catalog-app/README.md",
+    "data-catalog-app/astro.config.mjs",
+    "data-catalog-app/package.json",
+    "data-catalog-app/pnpm-lock.yaml",
+    "data-catalog-app/public/favicon.ico",
+    "data-catalog-app/public/favicon.svg",
+    "data-catalog-app/src/layouts/Layout.astro",
+    "data-catalog-app/src/pages/index.astro",
+    "data-catalog-app/tsconfig.json",
+    "data-catalog-app/wrangler.jsonc"
+  ],
+  "agent": "Claude Code",
+  "turn_id": "1cdf0c6ca60f",
+  "token_usage": {
+    "input_tokens": 172,
+    "cache_creation_tokens": 417277,
+    "cache_read_tokens": 14093089,
+    "output_tokens": 53571,
+    "api_call_count": 138
+  },
+  "session_metrics": {
+    "turn_count": 9
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-05T08:54:51.653527Z",
+    "agent_lines": 4376,
+    "agent_removed": 0,
+    "human_added": 207,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 4583,
+    "total_lines_changed": 4583,
+    "agent_percentage": 95.48330787693651,
+    "metric_version": 2
+  }
+}
