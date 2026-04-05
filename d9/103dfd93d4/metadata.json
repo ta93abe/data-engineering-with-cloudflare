@@ -1,0 +1,23 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "d9103dfd93d4",
+  "strategy": "manual-commit",
+  "branch": "feat/agent-rag-architecture",
+  "checkpoints_count": 2,
+  "files_touched": null,
+  "sessions": [
+    {
+      "metadata": "/d9/103dfd93d4/0/metadata.json",
+      "transcript": "/d9/103dfd93d4/0/full.jsonl",
+      "content_hash": "/d9/103dfd93d4/0/content_hash.txt",
+      "prompt": "/d9/103dfd93d4/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 1644,
+    "cache_creation_tokens": 189695,
+    "cache_read_tokens": 21697316,
+    "output_tokens": 45793,
+    "api_call_count": 176
+  }
+}
