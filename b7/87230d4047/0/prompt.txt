@@ -33,3 +33,7 @@ pnpm dlx cloudflare@latest -- data-catalog-app --framework=astro
 ---
 
 それで作って。フォルダは data-catalog-app にするんだけどアプリ名は flame にしてほしい。
+
+---
+
+Workers AIでGemma4が使えるようになったね。データエージェントのプログラムで使えるようにして。価格は？
