@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/pulumi/pulumi-cloudflare/sdk/v5/go/cloudflare"
+	"github.com/pulumi/pulumi-cloudflare/sdk/v6/go/cloudflare"
 	"github.com/pulumi/pulumi/sdk/v3/go/pulumi"
 )
 
@@ -10,7 +10,6 @@ type CloudflareOutputs struct {
 	D1DatabaseName pulumi.StringOutput
 	R2BucketName   pulumi.StringOutput
 	KvNamespaceId  pulumi.IDOutput
-	AiGatewayId    pulumi.StringOutput
 }
 
 func createCloudflareResources(ctx *pulumi.Context, accountId string) (*CloudflareOutputs, error) {
@@ -53,27 +52,15 @@ func createCloudflareResources(ctx *pulumi.Context, accountId string) (*Cloudfla
 	// ===========================================
 	// AI Gateway (for data-agent)
 	// ===========================================
-	// Note: CollectLogs is disabled by default as this gateway processes health data.
-	// Enable explicitly in non-production environments if needed for debugging.
-	aiGateway, err := cloudflare.NewAiGateway(ctx, "data-agent-gateway", &cloudflare.AiGatewayArgs{
-		AccountId:              pulumi.String(accountId),
-		Id:                     pulumi.String("data-agent-gateway"),
-		CacheInvalidateOnUpdate: pulumi.Bool(true),
-		CacheTtl:               pulumi.Int(3600),
-		CollectLogs:            pulumi.Bool(false),
-		RateLimitingLimit:      pulumi.Int(100),
-		RateLimitingInterval:   pulumi.Int(60),
-		RateLimitingTechnique:  pulumi.String("fixed"),
-	})
-	if err != nil {
-		return nil, err
-	}
+	// AI Gateway is not yet supported by the Pulumi Cloudflare provider.
+	// Manage via Cloudflare Dashboard or API:
+	//   wrangler ai-gateway create data-agent-gateway
+	// Gateway config: cache TTL 3600s, rate limit 100 req/60s, logs disabled (health data)
 
 	return &CloudflareOutputs{
 		D1DatabaseId:   rawDb.ID(),
 		D1DatabaseName: rawDb.Name,
 		R2BucketName:   dataLake.Name,
 		KvNamespaceId:  cacheKv.ID(),
-		AiGatewayId:    aiGateway.ID().ToStringOutput(),
 	}, nil
 }
