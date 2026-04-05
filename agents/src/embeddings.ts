@@ -24,6 +24,14 @@ export async function embedAndStore(
   const id = crypto.randomUUID();
   const embedding = await embedText(ai, content);
 
+  // Write D1 first (source of truth), then Vectorize (search index)
+  await db
+    .prepare(
+      "INSERT INTO agent_knowledge_base (id, content, content_type, metadata_json, vector_id) VALUES (?, ?, ?, ?, ?)"
+    )
+    .bind(id, content, contentType, metadata ? JSON.stringify(metadata) : null, id)
+    .run();
+
   await vectorize.upsert([
     {
       id,
@@ -31,13 +39,6 @@ export async function embedAndStore(
       metadata: { content_type: contentType, ...metadata },
     },
   ]);
-
-  await db
-    .prepare(
-      "INSERT INTO agent_knowledge_base (id, content, content_type, metadata_json, vector_id) VALUES (?, ?, ?, ?, ?)"
-    )
-    .bind(id, content, contentType, metadata ? JSON.stringify(metadata) : null, id)
-    .run();
 
   return id;
 }

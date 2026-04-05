@@ -51,13 +51,18 @@ export class DataAgent extends AIChatAgent<Env> {
       tools: createTools(this.env),
     };
 
-    // Model fallback: try each model in order
+    // Model fallback: streamText() is sync but stream errors occur asynchronously.
+    // Use onError callback to log streaming failures. The try-catch handles
+    // synchronous setup errors (invalid model, binding issues).
     let lastError: unknown;
     for (const modelId of CHAT_MODELS) {
       try {
         const result = streamText({
           ...streamOptions,
           model: workersai(modelId),
+          onError: ({ error }) => {
+            console.error(`Stream error for model ${modelId}:`, error);
+          },
         });
         return result.toUIMessageStreamResponse();
       } catch (error) {
