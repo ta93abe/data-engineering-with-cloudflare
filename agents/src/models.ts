@@ -2,11 +2,13 @@ import { generateText } from "ai";
 import { createWorkersAI } from "workers-ai-provider";
 
 /**
- * チャットモデル: Neuron 消費が少ない順にフォールバック
- * - qwen3-30b-a3b-fp8:  $0.051/M input, $0.335/M output (最安 30B クラス)
- * - llama-3-8b-instruct-awq: $0.123/M input, $0.266/M output (8B フォールバック)
+ * チャットモデル: 高性能→コスト効率→軽量の順にフォールバック
+ * - gemma-4-26b-a4b-it:  $0.100/M input, $0.300/M output (256K ctx, Reasoning, Vision, Function calling)
+ * - qwen3-30b-a3b-fp8:   $0.051/M input, $0.335/M output (最安 30B クラス)
+ * - llama-3-8b-instruct-awq: $0.123/M input, $0.266/M output (8B 最軽量フォールバック)
  */
 export const CHAT_MODELS = [
+  "@cf/google/gemma-4-26b-a4b-it",
   "@cf/qwen/qwen3-30b-a3b-fp8",
   "@cf/meta/llama-3-8b-instruct-awq",
 ] as const;
