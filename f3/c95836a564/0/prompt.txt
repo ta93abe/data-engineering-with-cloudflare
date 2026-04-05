@@ -7,3 +7,7 @@ data-catalog-app のUIパーツを cloudflare の　kumo 使って欲しい
 ---
 
 data-catalog-app はフォルダ名そのままにflameという名前にして欲しい。
+
+---
+
+pr 作って
