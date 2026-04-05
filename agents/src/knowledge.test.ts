@@ -81,8 +81,11 @@ describe("generateWeeklySummary", () => {
   });
 
   it("過去7日分のデータがある場合、週次サマリーを生成して保存する", async () => {
-    const weekData = Array.from({ length: 7 }, (_, i) => ({
-      day: `2026-03-${28 + i}`,
+    const weekData = Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(Date.UTC(2026, 2, 25 + i)); // 2026-03-25 ~ 2026-03-31
+      return d;
+    }).map((d, i) => ({
+      day: d.toISOString().slice(0, 10),
       sleep_score: 80 + i,
       activity_score: 70 + i,
       readiness_score: 85 + i,

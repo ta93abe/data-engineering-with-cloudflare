@@ -4,7 +4,7 @@
 CREATE TABLE IF NOT EXISTS agent_knowledge_base (
     id TEXT PRIMARY KEY,
     content TEXT NOT NULL,
-    content_type TEXT NOT NULL,  -- 'weekly_summary', 'insight', 'pattern'
+    content_type TEXT NOT NULL,  -- 'weekly_summary', 'insight', 'pattern', 'report'
     metadata_json TEXT,
     vector_id TEXT,
     created_at TEXT DEFAULT (datetime('now')),
@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS agent_reports (
     title TEXT NOT NULL,
     period_start TEXT,
     period_end TEXT,
-    r2_key TEXT,
+    r2_key TEXT NOT NULL,
     summary TEXT,
     vector_id TEXT,
     created_at TEXT DEFAULT (datetime('now'))

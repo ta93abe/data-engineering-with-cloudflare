@@ -59,7 +59,13 @@ export async function semanticSearch(
     return [];
   }
 
-  const ids = matches.matches.map((m) => m.id);
+  // Filter by score before D1 query to avoid unnecessary reads
+  const relevantMatches = matches.matches.filter((m) => m.score > 0.6);
+  if (!relevantMatches.length) {
+    return [];
+  }
+
+  const ids = relevantMatches.map((m) => m.id);
   const placeholders = ids.map(() => "?").join(", ");
   const rows = await db
     .prepare(
@@ -70,16 +76,26 @@ export async function semanticSearch(
 
   const contentMap = new Map(rows.results.map((r) => [r.id, r]));
 
-  return matches.matches
-    .filter((m) => m.score > 0.6)
-    .map((m) => {
-      const row = contentMap.get(m.id);
-      return {
-        id: m.id,
-        content: row?.content ?? "",
-        contentType: row?.content_type ?? "",
-        score: m.score,
-        metadata: row?.metadata_json ? JSON.parse(row.metadata_json) : null,
-      };
+  const results: SearchResult[] = [];
+  for (const m of relevantMatches) {
+    const row = contentMap.get(m.id);
+    if (!row) continue;
+
+    let metadata: Record<string, string> | null = null;
+    if (row.metadata_json) {
+      try {
+        metadata = JSON.parse(row.metadata_json);
+      } catch {
+        console.error(`Failed to parse metadata_json for id=${m.id}`);
+      }
+    }
+    results.push({
+      id: m.id,
+      content: row.content,
+      contentType: row.content_type,
+      score: m.score,
+      metadata,
     });
+  }
+  return results;
 }

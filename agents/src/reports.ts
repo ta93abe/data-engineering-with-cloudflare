@@ -53,28 +53,35 @@ export async function generateHealthReport(
   });
 
   const id = crypto.randomUUID();
-  const r2Key = `reports/${type}/${periodStart}_${periodEnd}.md`;
+  const r2Key = `reports/${type}/${periodStart}_${periodEnd}_${id}.md`;
   const title = `${type === "weekly_health" ? "週次" : type === "monthly_health" ? "月次" : "カスタム"}ヘルスレポート (${periodStart} ~ ${periodEnd})`;
+
+  // Store metadata in D1 first (most critical for discoverability)
+  await env.DB.prepare(
+    `INSERT INTO agent_reports (id, report_type, title, period_start, period_end, r2_key, summary)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`
+  )
+    .bind(id, type, title, periodStart, periodEnd, r2Key, summary)
+    .run();
 
   // Store full report in R2
   await env.DATA_LAKE.put(r2Key, reportContent, {
     customMetadata: { report_id: id, type, period_start: periodStart, period_end: periodEnd },
   });
 
-  // Embed summary in Vectorize
-  const vectorId = await embedAndStore(env.AI, env.VECTORIZE, env.DB, summary, "report", {
-    report_id: id,
-    period_start: periodStart,
-    period_end: periodEnd,
-  });
-
-  // Store metadata in D1
-  await env.DB.prepare(
-    `INSERT INTO agent_reports (id, report_type, title, period_start, period_end, r2_key, summary, vector_id)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
-  )
-    .bind(id, type, title, periodStart, periodEnd, r2Key, summary, vectorId)
-    .run();
+  // Embed summary in Vectorize (best-effort for search)
+  try {
+    const vectorId = await embedAndStore(env.AI, env.VECTORIZE, env.DB, summary, "report", {
+      report_id: id,
+      period_start: periodStart,
+      period_end: periodEnd,
+    });
+    await env.DB.prepare("UPDATE agent_reports SET vector_id = ? WHERE id = ?")
+      .bind(vectorId, id)
+      .run();
+  } catch (error) {
+    console.error("Failed to embed report summary, report saved without vector:", error);
+  }
 
   return { id, title, r2Key, summary };
 }

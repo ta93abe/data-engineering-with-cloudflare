@@ -44,7 +44,7 @@ describe("generateHealthReport", () => {
       .mockResolvedValueOnce({ text: "週間サマリー要約" });
   });
 
-  it("D1からデータを取得し、レポート生成→R2保存→埋め込み→D1記録の順で実行する", async () => {
+  it("D1からデータを取得し、レポート生成→D1記録→R2保存→埋め込みの順で実行する", async () => {
     const env = createMockEnv([
       {
         day: "2026-03-28",
@@ -66,12 +66,12 @@ describe("generateHealthReport", () => {
     // 返り値の検証
     expect(result.id).toBe("report-uuid-1");
     expect(result.title).toContain("週次");
-    expect(result.r2Key).toBe("reports/weekly_health/2026-03-28_2026-04-03.md");
+    expect(result.r2Key).toMatch(/^reports\/weekly_health\/2026-03-28_2026-04-03_.+\.md$/);
     expect(result.summary).toBe("週間サマリー要約");
 
     // R2に保存されている
     expect(env.DATA_LAKE.put).toHaveBeenCalledWith(
-      "reports/weekly_health/2026-03-28_2026-04-03.md",
+      expect.stringMatching(/^reports\/weekly_health\/2026-03-28_2026-04-03_.+\.md$/),
       "# レポート本文\n詳細な分析...",
       expect.objectContaining({
         customMetadata: expect.objectContaining({

@@ -39,7 +39,7 @@ export async function generateWeeklySummary(env: Env): Promise<string | null> {
   const { results } = await env.DB.prepare(
     `SELECT day, sleep_score, activity_score, readiness_score, steps, total_calories
      FROM v_oura_daily_summary
-     WHERE day >= date('now', '-7 days')
+     WHERE day BETWEEN date('now', '-7 days') AND date('now', '-1 day')
      ORDER BY day`
   ).all<{
     day: string;

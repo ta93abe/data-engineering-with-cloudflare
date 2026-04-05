@@ -14,10 +14,10 @@ export const CHAT_MODELS = [
 ] as const;
 
 /**
- * 埋め込みモデル: 384次元、$0.020/M input (最安クラス)
+ * 埋め込みモデル: 1024次元、多言語対応 (日本語含む)
  */
-export const EMBEDDING_MODEL = "@cf/baai/bge-small-en-v1.5" as const;
-export const EMBEDDING_DIMENSIONS = 384;
+export const EMBEDDING_MODEL = "@cf/baai/bge-m3" as const;
+export const EMBEDDING_DIMENSIONS = 1024;
 
 /**
  * generateText をモデルフォールバック付きで実行する。

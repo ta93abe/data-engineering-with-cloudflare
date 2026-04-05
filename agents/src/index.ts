@@ -32,22 +32,30 @@ export default {
   async scheduled(_event: ScheduledEvent, env: Env, ctx: ExecutionContext) {
     // Daily: generate insight from yesterday's health data
     ctx.waitUntil(
-      generateDailyInsight(env).then((insight) => {
-        if (insight) {
-          console.log("Daily insight generated:", insight.substring(0, 100));
-        }
-      })
+      generateDailyInsight(env)
+        .then((insight) => {
+          if (insight) {
+            console.log("Daily insight generated successfully");
+          }
+        })
+        .catch((error) => {
+          console.error("Failed to generate daily insight:", error);
+        })
     );
 
     // Weekly (Monday): generate weekly summary
     const today = new Date();
     if (today.getUTCDay() === 1) {
       ctx.waitUntil(
-        generateWeeklySummary(env).then((summary) => {
-          if (summary) {
-            console.log("Weekly summary generated:", summary.substring(0, 100));
-          }
-        })
+        generateWeeklySummary(env)
+          .then((summary) => {
+            if (summary) {
+              console.log("Weekly summary generated successfully");
+            }
+          })
+          .catch((error) => {
+            console.error("Failed to generate weekly summary:", error);
+          })
       );
     }
   },

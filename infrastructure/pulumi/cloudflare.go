@@ -53,12 +53,14 @@ func createCloudflareResources(ctx *pulumi.Context, accountId string) (*Cloudfla
 	// ===========================================
 	// AI Gateway (for data-agent)
 	// ===========================================
+	// Note: CollectLogs is disabled by default as this gateway processes health data.
+	// Enable explicitly in non-production environments if needed for debugging.
 	aiGateway, err := cloudflare.NewAiGateway(ctx, "data-agent-gateway", &cloudflare.AiGatewayArgs{
 		AccountId:              pulumi.String(accountId),
 		Id:                     pulumi.String("data-agent-gateway"),
 		CacheInvalidateOnUpdate: pulumi.Bool(true),
 		CacheTtl:               pulumi.Int(3600),
-		CollectLogs:            pulumi.Bool(true),
+		CollectLogs:            pulumi.Bool(false),
 		RateLimitingLimit:      pulumi.Int(100),
 		RateLimitingInterval:   pulumi.Int(60),
 		RateLimitingTechnique:  pulumi.String("fixed"),

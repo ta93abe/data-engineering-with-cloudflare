@@ -43,7 +43,7 @@ export const D1_SCHEMA = `
 -- ============ Agent Tables ============
 
 -- agent_knowledge_base: 知識ベース (埋め込み済みインサイト)
---   id TEXT PK, content TEXT, content_type TEXT ('weekly_summary'|'insight'|'pattern')
+--   id TEXT PK, content TEXT, content_type TEXT ('weekly_summary'|'insight'|'pattern'|'report')
 --   metadata_json TEXT (JSON), vector_id TEXT, created_at TEXT, updated_at TEXT
 
 -- agent_reports: 生成レポートメタデータ

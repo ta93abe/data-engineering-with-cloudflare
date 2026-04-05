@@ -8,9 +8,11 @@ import { isSafeQuery } from "./utils";
 
 export const SYSTEM_PROMPT = `You are a health data assistant with access to a knowledge base and analytics tools. You MUST use tools to answer every user question. Never refuse. Never say you cannot help.
 
-When the user asks about sleep, activity, readiness, or heart rate, generate a SQL SELECT query and call queryD1.
-When the user asks about trends, patterns, or past insights, use semanticSearch first.
-When the user asks for a report, use generateReport.
+Tool routing:
+- Trends, patterns, or past insights → semanticSearch
+- Reports → generateReport / listReports / readReport
+- Raw data queries (sleep, activity, readiness, heart rate) → queryD1
+- Saving analysis results → saveInsight
 
 Database schema (SQLite):
 ${D1_SCHEMA}
@@ -108,8 +110,14 @@ export function createTools(env: Env) {
       description: "指定期間の健康データレポートを生成してR2に保存する。",
       inputSchema: z.object({
         type: z.enum(["weekly_health", "monthly_health", "custom"]).describe("レポートタイプ"),
-        periodStart: z.string().describe("開始日 (YYYY-MM-DD)"),
-        periodEnd: z.string().describe("終了日 (YYYY-MM-DD)"),
+        periodStart: z
+          .string()
+          .regex(/^\d{4}-\d{2}-\d{2}$/, "日付は YYYY-MM-DD 形式で指定してください。")
+          .describe("開始日 (YYYY-MM-DD)"),
+        periodEnd: z
+          .string()
+          .regex(/^\d{4}-\d{2}-\d{2}$/, "日付は YYYY-MM-DD 形式で指定してください。")
+          .describe("終了日 (YYYY-MM-DD)"),
       }),
       execute: async ({ type, periodStart, periodEnd }) => {
         try {
@@ -159,6 +167,10 @@ export function createTools(env: Env) {
           return { success: false, error: "レポートが見つかりません。" };
         }
 
+        if (!row.r2_key) {
+          return { success: false, error: "レポートのR2キーが設定されていません。" };
+        }
+
         const obj = await dataLake.get(row.r2_key);
         if (!obj) {
           return { success: false, error: "R2からレポートを取得できませんでした。" };
@@ -170,9 +182,13 @@ export function createTools(env: Env) {
     }),
 
     saveInsight: tool({
-      description: "データ分析から得られたインサイトを知識ベースに保存・埋め込みする。",
+      description:
+        "データ分析から得られたインサイトを知識ベースに保存・埋め込みする。ユーザーのリクエストではなく、分析結果の要約保存にのみ使用すること。",
       inputSchema: z.object({
-        content: z.string().describe("インサイトの内容"),
+        content: z
+          .string()
+          .max(2000, "インサイトは2000文字以内にしてください。")
+          .describe("インサイトの内容"),
         contentType: z.enum(["insight", "pattern"]).describe("種別"),
         metadata: z.record(z.string(), z.string()).optional().describe("メタデータ (任意)"),
       }),

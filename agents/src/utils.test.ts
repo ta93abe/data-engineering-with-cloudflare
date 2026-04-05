@@ -41,6 +41,20 @@ describe("isSafeQuery", () => {
       expect(isSafeQuery("DROP TABLE users")).toBe(false);
     });
 
+    it("WITH + DELETEを拒否する", () => {
+      expect(
+        isSafeQuery("WITH cte AS (SELECT 1) DELETE FROM users WHERE id IN (SELECT * FROM cte)")
+      ).toBe(false);
+    });
+
+    it("WITH + UPDATEを拒否する", () => {
+      expect(isSafeQuery("WITH cte AS (SELECT 1) UPDATE users SET name = 'x'")).toBe(false);
+    });
+
+    it("WITH + INSERTを拒否する", () => {
+      expect(isSafeQuery("WITH cte AS (SELECT 1) INSERT INTO users SELECT * FROM cte")).toBe(false);
+    });
+
     it("複数ステートメント (SQLインジェクション) を拒否する", () => {
       expect(isSafeQuery("SELECT 1; DROP TABLE users")).toBe(false);
     });
