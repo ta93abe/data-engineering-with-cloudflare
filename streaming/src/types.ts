@@ -1,7 +1,7 @@
 import type { Pipeline } from "cloudflare:pipelines";
 
 export interface SecretStoreSecret {
-  get(): Promise<string>;
+  get(): Promise<string | null>;
 }
 
 export interface Env {
