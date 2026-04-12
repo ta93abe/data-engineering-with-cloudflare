@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import type { Env, R2SqlResponse } from "../types";
-import { R2_SQL_ACCOUNT_ID, R2_SQL_WAREHOUSE } from "../types";
+import { R2_SQL_ACCOUNT_ID, R2_SQL_BUCKET_NAME } from "../types";
 
 const query = new Hono<{ Bindings: Env }>();
 
@@ -15,7 +15,7 @@ query.post("/", async (c) => {
     return c.json({ error: "R2 SQL token not configured" }, 500);
   }
 
-  const r2SqlUrl = `https://api.sql.cloudflarestorage.com/api/v1/accounts/${R2_SQL_ACCOUNT_ID}/r2-sql/query/${R2_SQL_WAREHOUSE}`;
+  const r2SqlUrl = `https://api.sql.cloudflarestorage.com/api/v1/accounts/${R2_SQL_ACCOUNT_ID}/r2-sql/query/${R2_SQL_BUCKET_NAME}`;
 
   const startTime = Date.now();
 
@@ -33,19 +33,23 @@ query.post("/", async (c) => {
   if (!response.ok) {
     const errorText = await response.text();
     return c.json(
-      {
-        error: errorText,
-        status: response.status,
-        elapsed,
-        engine: "r2sql",
-      },
+      { error: errorText, status: response.status, elapsed, engine: "r2sql" },
       response.status as 400 | 401 | 403 | 500
     );
   }
 
-  const data = (await response.json()) as R2SqlResponse;
+  const raw = (await response.json()) as R2SqlResponse;
+
+  if (!raw.success) {
+    return c.json({
+      error: raw.errors.map((e) => e.message).join("; "),
+      elapsed,
+      engine: "r2sql",
+    });
+  }
+
   return c.json({
-    ...data,
+    data: raw.result?.rows ?? [],
     elapsed,
     engine: "r2sql",
   });

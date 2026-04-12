@@ -8,10 +8,15 @@ export interface Env {
 }
 
 export interface R2SqlResponse {
-  data?: Record<string, unknown>[];
-  columns?: string[];
-  [key: string]: unknown;
+  result?: {
+    schema?: { name: string; descriptor: { type: { name: string }; nullable: boolean } }[];
+    rows?: Record<string, unknown>[];
+    metrics?: Record<string, unknown>;
+  };
+  success: boolean;
+  errors: { code: number; message: string }[];
+  messages: string[];
 }
 
 export const R2_SQL_ACCOUNT_ID = "b0047256d1afc1be1df08289ee3be552";
-export const R2_SQL_WAREHOUSE = "b0047256d1afc1be1df08289ee3be552_lake";
+export const R2_SQL_BUCKET_NAME = "lake";
