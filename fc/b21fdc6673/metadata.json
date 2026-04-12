@@ -1,0 +1,26 @@
+{
+  "cli_version": "0.5.4",
+  "checkpoint_id": "fcb21fdc6673",
+  "strategy": "manual-commit",
+  "branch": "fix/pulumi-d1-database-id",
+  "checkpoints_count": 9,
+  "files_touched": [
+    "infrastructure/pulumi/cloudflare.go",
+    "infrastructure/pulumi/main.go"
+  ],
+  "sessions": [
+    {
+      "metadata": "/fc/b21fdc6673/0/metadata.json",
+      "transcript": "/fc/b21fdc6673/0/full.jsonl",
+      "content_hash": "/fc/b21fdc6673/0/content_hash.txt",
+      "prompt": "/fc/b21fdc6673/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 741,
+    "cache_creation_tokens": 518537,
+    "cache_read_tokens": 34357272,
+    "output_tokens": 67976,
+    "api_call_count": 206
+  }
+}
