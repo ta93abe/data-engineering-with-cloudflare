@@ -56,3 +56,7 @@ code mirror で。
 ---
 
 CodeMirror でDuckDB WASM 統合（Phase 2）でのオートコンプリート実装できる？
+
+---
+
+コミットして。
