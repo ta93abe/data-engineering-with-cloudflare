@@ -46,7 +46,12 @@ linear.post("/", async (c) => {
     return c.json({ error: "Invalid signature" }, 401);
   }
 
-  const payload: LinearWebhookPayload = JSON.parse(rawBody);
+  let payload: LinearWebhookPayload;
+  try {
+    payload = JSON.parse(rawBody) as LinearWebhookPayload;
+  } catch {
+    return c.json({ error: "Invalid JSON payload" }, 400);
+  }
 
   if (!validateTimestamp(payload.webhookTimestamp)) {
     return c.json({ error: "Timestamp out of range" }, 401);

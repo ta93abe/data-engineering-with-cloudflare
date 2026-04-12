@@ -266,7 +266,7 @@ npx wrangler pipelines create linear-events-pipeline \
 `infrastructure/pulumi/cloudflare.go` に追加：
 
 ```go
-lakeR2Bucket, err := r2.NewBucket(ctx, "lake", &r2.BucketArgs{
+lake, err := cloudflare.NewR2Bucket(ctx, "lake", &cloudflare.R2BucketArgs{
     AccountId: pulumi.String(accountId),
     Name:      pulumi.String("lake"),
     Location:  pulumi.String("APAC"),

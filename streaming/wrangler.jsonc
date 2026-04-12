@@ -12,7 +12,7 @@
   },
   "pipelines": [
     {
-      "pipeline": "REPLACE_WITH_STREAM_ID",
+      "pipeline": "6592c325ce2a4bc388840c1ea1eedeeb",
       "binding": "STREAM"
     }
   ]

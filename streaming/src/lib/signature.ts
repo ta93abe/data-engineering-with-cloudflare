@@ -33,5 +33,5 @@ export async function verifySignature(
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
 
-  return timingSafeEqual(computed, signature);
+  return timingSafeEqual(computed, signature.toLowerCase());
 }
