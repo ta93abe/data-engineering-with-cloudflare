@@ -88,3 +88,7 @@ B
 ---
 
 pr 作って。GitHubのワークフローでPulumiのリソースは作られる。
+
+---
+
+/pr review
