@@ -1,0 +1,96 @@
+docs/superpowers/plans/2026-04-12-sql-editor-phase1.md
+subagentで実装して。
+
+---
+
+You can also directly specify the project name and the template you want to use via additional command line options. For example, to scaffold a Vite + Vue project, run:
+
+
+npm
+
+Yarn
+
+pnpm
+
+Bun
+
+Deno
+
+pnpm create vite my-vue-app --template vue
+See create-vite for more details on each supported template: vanilla, vanilla-ts, vue, vue-ts, react, react-ts, preact, preact-ts, lit, lit-ts, svelte, svelte-ts, solid, solid-ts, qwik, qwik-ts.
+
+You can use . for the project name to scaffold in the current directory.
+
+To create a project without interactive prompts, you can use the --no-interactive flag.
+
+---
+
+You can also directly specify the project name and the template you want to use via additional command line options. For example, to scaffold a Vite + Vue project, run:
+
+
+npm
+
+Yarn
+
+pnpm
+
+Bun
+
+Deno
+
+pnpm create vite my-vue-app --template vue
+See create-vite for more details on each supported template: vanilla, vanilla-ts, vue, vue-ts, react, react-ts, preact, preact-ts, lit, lit-ts, svelte, svelte-ts, solid, solid-ts, qwik, qwik-ts.
+
+You can use . for the project name to scaffold in the current directory.
+
+To create a project without interactive prompts, you can use the --no-interactive flag.
+
+---
+
+Monaco Editor以外の選択肢ある？TipTapとか
+
+---
+
+code mirror で。
+
+---
+
+CodeMirror でDuckDB WASM 統合（Phase 2）でのオートコンプリート実装できる？
+
+---
+
+コミットして。
+
+---
+
+実際にデプロイ環境でも動作確認できる？
+
+---
+
+16dbae494da74139a51c1b15d7a7e6d1
+ってGitでコミットしていいの？
+
+---
+
+登録した。
+R2 SQLはバインディング対応していないんだね。
+
+---
+
+クエリのログをD1に保存したりしたほうがいい？それともWorkers Observabilityとかで取得できる？
+
+---
+
+console.log はブラウザのログに出ちゃわない？
+
+---
+
+セキュリティ的に大丈夫なの？
+
+---
+
+console.log はコードに含めないほうがいいのでは？
+
+---
+
+Analytics Engine使いたい。
