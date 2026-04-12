@@ -69,3 +69,8 @@ CodeMirror でDuckDB WASM 統合（Phase 2）でのオートコンプリート�
 
 16dbae494da74139a51c1b15d7a7e6d1
 ってGitでコミットしていいの？
+
+---
+
+登録した。
+R2 SQLはバインディング対応していないんだね。
