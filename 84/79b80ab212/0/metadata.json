@@ -1,0 +1,23 @@
+{
+  "cli_version": "0.5.4",
+  "checkpoint_id": "8479b80ab212",
+  "session_id": "08454ee3-abc4-4d7f-bc59-3c18a0c892f3",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-12T10:00:35.111122Z",
+  "branch": "feat/linear-webhook-pipelines",
+  "checkpoints_count": 1,
+  "files_touched": [],
+  "agent": "Claude Code",
+  "model": "claude-haiku-4-5-20251001",
+  "turn_id": "e63f7a002db6",
+  "token_usage": {
+    "input_tokens": 544,
+    "cache_creation_tokens": 287200,
+    "cache_read_tokens": 9770889,
+    "output_tokens": 40273,
+    "api_call_count": 83
+  },
+  "session_metrics": {
+    "turn_count": 17
+  }
+}

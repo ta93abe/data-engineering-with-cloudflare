@@ -1,0 +1,23 @@
+{
+  "cli_version": "0.5.4",
+  "checkpoint_id": "8479b80ab212",
+  "strategy": "manual-commit",
+  "branch": "feat/linear-webhook-pipelines",
+  "checkpoints_count": 1,
+  "files_touched": null,
+  "sessions": [
+    {
+      "metadata": "/84/79b80ab212/0/metadata.json",
+      "transcript": "/84/79b80ab212/0/full.jsonl",
+      "content_hash": "/84/79b80ab212/0/content_hash.txt",
+      "prompt": "/84/79b80ab212/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 544,
+    "cache_creation_tokens": 287200,
+    "cache_read_tokens": 9770889,
+    "output_tokens": 40273,
+    "api_call_count": 83
+  }
+}
