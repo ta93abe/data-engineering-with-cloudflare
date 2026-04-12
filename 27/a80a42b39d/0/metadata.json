@@ -1,0 +1,137 @@
+{
+  "cli_version": "0.5.4",
+  "checkpoint_id": "27a80a42b39d",
+  "session_id": "d2d186ba-d564-4b3b-87da-22715d5ae5a9",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-12T13:15:10.165298Z",
+  "branch": "feat/sql-editor-phase1",
+  "checkpoints_count": 4,
+  "files_touched": [
+    "sql-editor/.gitignore",
+    "sql-editor/biome.json",
+    "sql-editor/index.html",
+    "sql-editor/package.json",
+    "sql-editor/pnpm-workspace.yaml",
+    "sql-editor/src/App.tsx",
+    "sql-editor/src/components/Editor.tsx",
+    "sql-editor/src/components/ResultPanel.tsx",
+    "sql-editor/src/components/Sidebar.tsx",
+    "sql-editor/src/components/Toolbar.tsx",
+    "sql-editor/src/env.d.ts",
+    "sql-editor/src/hooks/useCatalog.ts",
+    "sql-editor/src/hooks/useQuery.ts",
+    "sql-editor/src/lib/api.ts",
+    "sql-editor/src/main.tsx",
+    "sql-editor/tsconfig.app.json",
+    "sql-editor/tsconfig.json",
+    "sql-editor/tsconfig.node.json",
+    "sql-editor/vite.config.ts",
+    "sql-editor/worker/api/catalog.ts",
+    "sql-editor/worker/api/query.ts",
+    "sql-editor/worker/index.ts",
+    "sql-editor/worker/types.ts",
+    "sql-editor/wrangler.jsonc"
+  ],
+  "agent": "Claude Code",
+  "model": "",
+  "turn_id": "a6cdd7f1f998",
+  "token_usage": {
+    "input_tokens": 89,
+    "cache_creation_tokens": 268693,
+    "cache_read_tokens": 6650296,
+    "output_tokens": 29432,
+    "api_call_count": 64
+  },
+  "session_metrics": {
+    "turn_count": 4
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-12T13:15:09.568725Z",
+    "agent_lines": 607,
+    "agent_removed": 0,
+    "human_added": 172,
+    "human_modified": 114,
+    "human_removed": 0,
+    "total_committed": 891,
+    "total_lines_changed": 893,
+    "agent_percentage": 67.97312430011199,
+    "metric_version": 2
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 1,
+      "user_lines_added": 5961,
+      "user_lines_removed": 32,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0,
+      "user_added_per_file": {
+        ".claude/settings.local.json": 306,
+        ".serena/project.yml": 44,
+        "docs/superpowers/plans/2026-03-13-github-linear-withings-r2-parquet.md": 1594,
+        "docs/superpowers/plans/2026-04-12-sql-editor-phase1.md": 1126,
+        "sql-editor/biome.json": 35,
+        "sql-editor/index.html": 12,
+        "sql-editor/package.json": 34,
+        "sql-editor/pnpm-lock.yaml": 2768,
+        "sql-editor/tsconfig.json": 14,
+        "sql-editor/vite.config.ts": 7,
+        "sql-editor/wrangler.jsonc": 21
+      },
+      "user_removed_per_file": {
+        ".serena/project.yml": 32
+      }
+    },
+    {
+      "checkpoint_number": 2,
+      "user_lines_added": 308,
+      "user_lines_removed": 0,
+      "agent_lines_added": 5808,
+      "agent_lines_removed": 32,
+      "user_added_per_file": {
+        ".claude/settings.local.json": 308
+      }
+    },
+    {
+      "checkpoint_number": 3,
+      "user_lines_added": 308,
+      "user_lines_removed": 0,
+      "agent_lines_added": 5808,
+      "agent_lines_removed": 32,
+      "user_added_per_file": {
+        ".claude/settings.local.json": 308
+      }
+    },
+    {
+      "checkpoint_number": 4,
+      "user_lines_added": 449,
+      "user_lines_removed": 56,
+      "agent_lines_added": 5830,
+      "agent_lines_removed": 32,
+      "user_added_per_file": {
+        ".claude/settings.local.json": 308,
+        "sql-editor/package.json": 4,
+        "sql-editor/pnpm-lock.yaml": 137
+      },
+      "user_removed_per_file": {
+        "sql-editor/package.json": 2,
+        "sql-editor/pnpm-lock.yaml": 54
+      }
+    },
+    {
+      "checkpoint_number": 5,
+      "user_lines_added": 449,
+      "user_lines_removed": 56,
+      "agent_lines_added": 5830,
+      "agent_lines_removed": 32,
+      "user_added_per_file": {
+        ".claude/settings.local.json": 308,
+        "sql-editor/package.json": 4,
+        "sql-editor/pnpm-lock.yaml": 137
+      },
+      "user_removed_per_file": {
+        "sql-editor/package.json": 2,
+        "sql-editor/pnpm-lock.yaml": 54
+      }
+    }
+  ]
+}

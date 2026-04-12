@@ -1,0 +1,48 @@
+{
+  "cli_version": "0.5.4",
+  "checkpoint_id": "27a80a42b39d",
+  "strategy": "manual-commit",
+  "branch": "feat/sql-editor-phase1",
+  "checkpoints_count": 4,
+  "files_touched": [
+    "sql-editor/.gitignore",
+    "sql-editor/biome.json",
+    "sql-editor/index.html",
+    "sql-editor/package.json",
+    "sql-editor/pnpm-workspace.yaml",
+    "sql-editor/src/App.tsx",
+    "sql-editor/src/components/Editor.tsx",
+    "sql-editor/src/components/ResultPanel.tsx",
+    "sql-editor/src/components/Sidebar.tsx",
+    "sql-editor/src/components/Toolbar.tsx",
+    "sql-editor/src/env.d.ts",
+    "sql-editor/src/hooks/useCatalog.ts",
+    "sql-editor/src/hooks/useQuery.ts",
+    "sql-editor/src/lib/api.ts",
+    "sql-editor/src/main.tsx",
+    "sql-editor/tsconfig.app.json",
+    "sql-editor/tsconfig.json",
+    "sql-editor/tsconfig.node.json",
+    "sql-editor/vite.config.ts",
+    "sql-editor/worker/api/catalog.ts",
+    "sql-editor/worker/api/query.ts",
+    "sql-editor/worker/index.ts",
+    "sql-editor/worker/types.ts",
+    "sql-editor/wrangler.jsonc"
+  ],
+  "sessions": [
+    {
+      "metadata": "/27/a80a42b39d/0/metadata.json",
+      "transcript": "/27/a80a42b39d/0/full.jsonl",
+      "content_hash": "/27/a80a42b39d/0/content_hash.txt",
+      "prompt": "/27/a80a42b39d/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 89,
+    "cache_creation_tokens": 268693,
+    "cache_read_tokens": 6650296,
+    "output_tokens": 29432,
+    "api_call_count": 64
+  }
+}
