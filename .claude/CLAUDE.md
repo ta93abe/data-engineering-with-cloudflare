@@ -21,7 +21,6 @@ Cloudflareのエッジコンピューティングプラットフォームを活�
 - **TypeScript**: 型安全な開発（メイン言語）
 - **Hono**: Workers用軽量Webフレームワーク
 - **Python**: dbt変換パイプライン
-- **Go**: Pulumiインフラ管理
 - **Wrangler**: Cloudflare Workers用CLI
 
 ### データストレージ
@@ -66,8 +65,6 @@ data-engineering-with-cloudflare/
 ├── dashboard/                 # ダッシュボード（予定）
 ├── ml/                        # ML関連（予定）
 ├── infrastructure/
-│   ├── pulumi/                # IaC (Go + Pulumi)
-│   │   └── main.go           # インフラ定義
 │   └── d1/                    # D1マイグレーション
 │       └── migrations/        # SQLマイグレーションファイル
 ├── docs/                      # ドキュメント
@@ -378,7 +375,7 @@ console.log("User created", { userId, timestamp: new Date().toISOString() });
 - [x] Wrangler環境セットアップ
 - [x] リポジトリ構造リストラクチャリング
 - [x] D1スキーマ設計（初期マイグレーション）
-- [x] Pulumiインフラ管理セットアップ
+
 - [x] Biome Linting導入
 - [x] Workers Observability有効化
 
@@ -504,7 +501,7 @@ sequenceDiagram
    ├── Graphiteでトラッキング: gt track
    ├── PRを作成: gt submit --no-interactive
    ├── Draft PRが作成される
-   └── CI確認（Pulumi Preview、claude-code-review、biome-check、GitGuardian等）
+   └── CI確認（claude-code-review、biome-check、GitGuardian等）
 
 5. レビュー & 修正
    ├── Linear: In Progress → In Review
@@ -533,7 +530,7 @@ sequenceDiagram
 
 例:
 feat/add-r2-bucket-management
-fix/pulumi-authentication-error
+
 chore/update-dependencies
 refactor/restructure-repository
 docs/update-development-workflow
@@ -603,41 +600,15 @@ PR作成後、以下のCIが自動実行されます:
 
 | CI | 用途 | 確認内容 |
 |---|---|---|
-| **Pulumi Preview** | インフラ変更プレビュー | PRコメントでリソース変更を確認 |
 | **biome-check** | Lint & Format | TypeScript/JSコード品質 |
 | **claude-code-review** | AIコードレビュー | コード品質、潜在的バグ |
 | **GitGuardian** | セキュリティチェック | シークレット漏洩検知 |
 
 **マージ前の確認事項:**
 - ✅ 全CIが pass していること
-- ✅ Pulumi Previewで意図しない変更がないこと
 - ✅ レビューコメントに対応済み
 
 ### インフラ開発サイクル
-
-#### Pulumiでのリソース管理
-
-```bash
-# 1. インフラ変更
-vim infrastructure/pulumi/main.go
-
-# 2. ローカルでpreview
-cd infrastructure/pulumi
-set -a; source .env.local; set +a
-pulumi preview
-
-# 3. コミット＆PR作成
-git add infrastructure/pulumi/
-git commit -m "feat: Add R2 bucket for data lake"
-git push
-
-# 4. PRでPreview確認
-# → GitHub ActionsがPulumi Previewを実行
-# → PRコメントにリソース変更が表示される
-
-# 5. マージ後、自動デプロイ
-# → pulumi-deploy.yml が pulumi up --yes を実行
-```
 
 #### D1マイグレーション
 
@@ -683,17 +654,9 @@ git checkout -b chore/update-dependencies
 npm view wrangler version  # 最新版確認
 # .github/workflows/d1-migrations.yml の wranglerVersion を更新
 
-# 3. Pulumi更新
-cd infrastructure/pulumi
-# go.mod の require セクションを更新
-go mod tidy
-
-# 4. GitHub Actions のGoバージョン更新
-# .github/workflows/pulumi-*.yml の go-version を更新
-
-# 5. コミット＆PR
+# 3. コミット＆PR
 git add .
-git commit -m "chore: Update Wrangler and Pulumi dependencies"
+git commit -m "chore: Update Wrangler dependencies"
 git push
 ```
 

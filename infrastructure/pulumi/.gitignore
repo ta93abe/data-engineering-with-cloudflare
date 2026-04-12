@@ -1,8 +1,0 @@
-# Pulumi
-.pulumi/
-
-# Go
-go.sum
-
-# Environment
-*.local
