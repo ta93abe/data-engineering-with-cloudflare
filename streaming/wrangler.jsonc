@@ -1,0 +1,21 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "streaming",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-04-01",
+  "compatibility_flags": ["nodejs_compat"],
+
+  "preview_urls": true,
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  },
+  "pipelines": [
+    {
+      "pipeline": "REPLACE_WITH_STREAM_ID",
+      "binding": "STREAM"
+    }
+  ]
+  // シークレット:
+  //   wrangler secret put LINEAR_WEBHOOK_SECRET
+}
