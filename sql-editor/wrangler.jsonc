@@ -1,0 +1,21 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "sql-editor",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-04-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  },
+  "assets": {
+    "not_found_handling": "single-page-application"
+  },
+  "secrets_store_secrets": [
+    {
+      "binding": "R2_SQL_TOKEN",
+      "store_id": "16dbae494da74139a51c1b15d7a7e6d1",
+      "secret_name": "R2_SQL_TOKEN"
+    }
+  ]
+}
