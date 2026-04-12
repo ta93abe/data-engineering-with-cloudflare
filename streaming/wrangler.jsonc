@@ -15,7 +15,12 @@
       "pipeline": "6592c325ce2a4bc388840c1ea1eedeeb",
       "binding": "STREAM"
     }
+  ],
+  "secrets_store_secrets": [
+    {
+      "binding": "LINEAR_WEBHOOK_SECRET",
+      "store_id": "16dbae494da74139a51c1b15d7a7e6d1",
+      "secret_name": "LINEAR_WEBHOOK_SECRET"
+    }
   ]
-  // シークレット:
-  //   wrangler secret put LINEAR_WEBHOOK_SECRET
 }

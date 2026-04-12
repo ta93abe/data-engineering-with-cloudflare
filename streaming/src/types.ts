@@ -1,8 +1,12 @@
 import type { Pipeline } from "cloudflare:pipelines";
 
+export interface SecretStoreSecret {
+  get(): Promise<string>;
+}
+
 export interface Env {
   STREAM: Pipeline;
-  LINEAR_WEBHOOK_SECRET: string;
+  LINEAR_WEBHOOK_SECRET: SecretStoreSecret;
 }
 
 // Linear Webhook の生ペイロード（camelCase）

@@ -41,7 +41,8 @@ linear.post("/", async (c) => {
 
   const rawBody = await c.req.text();
 
-  const isValid = await verifySignature(rawBody, signature, c.env.LINEAR_WEBHOOK_SECRET);
+  const secret = await c.env.LINEAR_WEBHOOK_SECRET.get();
+  const isValid = await verifySignature(rawBody, signature, secret);
   if (!isValid) {
     return c.json({ error: "Invalid signature" }, 401);
   }
