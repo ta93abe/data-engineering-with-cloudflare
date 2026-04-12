@@ -6,10 +6,11 @@ import (
 )
 
 type CloudflareOutputs struct {
-	D1DatabaseId   pulumi.IDOutput
-	D1DatabaseName pulumi.StringOutput
-	R2BucketName   pulumi.StringOutput
-	KvNamespaceId  pulumi.IDOutput
+	D1DatabaseId     pulumi.IDOutput
+	D1DatabaseName   pulumi.StringOutput
+	R2BucketName     pulumi.StringOutput
+	LakeR2BucketName pulumi.StringOutput
+	KvNamespaceId    pulumi.IDOutput
 }
 
 func createCloudflareResources(ctx *pulumi.Context, accountId string) (*CloudflareOutputs, error) {
@@ -39,6 +40,18 @@ func createCloudflareResources(ctx *pulumi.Context, accountId string) (*Cloudfla
 	}
 
 	// ===========================================
+	// R2 Bucket (for Iceberg data lake)
+	// ===========================================
+	lake, err := cloudflare.NewR2Bucket(ctx, "lake", &cloudflare.R2BucketArgs{
+		AccountId: pulumi.String(accountId),
+		Name:      pulumi.String("lake"),
+		Location:  pulumi.String("APAC"),
+	}, pulumi.Protect(true))
+	if err != nil {
+		return nil, err
+	}
+
+	// ===========================================
 	// Workers KV Namespace (for caching)
 	// ===========================================
 	cacheKv, err := cloudflare.NewWorkersKvNamespace(ctx, "data-cache", &cloudflare.WorkersKvNamespaceArgs{
@@ -58,9 +71,10 @@ func createCloudflareResources(ctx *pulumi.Context, accountId string) (*Cloudfla
 	// Gateway config: cache TTL 3600s, rate limit 100 req/60s, logs disabled (health data)
 
 	return &CloudflareOutputs{
-		D1DatabaseId:   rawDb.ID(),
-		D1DatabaseName: rawDb.Name,
-		R2BucketName:   dataLake.Name,
-		KvNamespaceId:  cacheKv.ID(),
+		D1DatabaseId:     rawDb.ID(),
+		D1DatabaseName:   rawDb.Name,
+		R2BucketName:     dataLake.Name,
+		LakeR2BucketName: lake.Name,
+		KvNamespaceId:    cacheKv.ID(),
 	}, nil
 }

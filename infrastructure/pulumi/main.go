@@ -26,6 +26,7 @@ func main() {
 		ctx.Export("d1DatabaseId", cf.D1DatabaseId)
 		ctx.Export("d1DatabaseName", cf.D1DatabaseName)
 		ctx.Export("r2BucketName", cf.R2BucketName)
+		ctx.Export("lakeR2BucketName", cf.LakeR2BucketName)
 		ctx.Export("kvNamespaceId", cf.KvNamespaceId)
 		ctx.Export("snowflakeDatabaseName", sf.DatabaseName)
 		ctx.Export("snowflakeSchemaName", sf.SchemaName)

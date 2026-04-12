@@ -1,0 +1,14 @@
+{
+  "fields": [
+    { "name": "action", "type": "string", "required": true },
+    { "name": "type", "type": "string", "required": true },
+    { "name": "created_at", "type": "timestamp", "required": true },
+    { "name": "webhook_id", "type": "string", "required": true },
+    { "name": "webhook_timestamp", "type": "int64", "required": true },
+    { "name": "organization_id", "type": "string", "required": true },
+    { "name": "url", "type": "string", "required": false },
+    { "name": "actor", "type": "json", "required": false },
+    { "name": "data", "type": "json", "required": true },
+    { "name": "updated_from", "type": "json", "required": false }
+  ]
+}
