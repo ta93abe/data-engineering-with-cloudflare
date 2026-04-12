@@ -1,0 +1,268 @@
+{
+  "cli_version": "0.5.4",
+  "checkpoint_id": "98aa3e7a5393",
+  "session_id": "08454ee3-abc4-4d7f-bc59-3c18a0c892f3",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-12T12:30:11.322303Z",
+  "branch": "fix/secrets-store-binding",
+  "checkpoints_count": 21,
+  "files_touched": [
+    "streaming/src/types.ts",
+    "streaming/src/webhooks/linear.ts",
+    "streaming/wrangler.jsonc"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-haiku-4-5-20251001",
+  "turn_id": "fc88da58f1e2",
+  "token_usage": {
+    "input_tokens": 856,
+    "cache_creation_tokens": 566679,
+    "cache_read_tokens": 51424345,
+    "output_tokens": 79794,
+    "api_call_count": 271
+  },
+  "session_metrics": {
+    "turn_count": 49
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-12T12:30:09.48878Z",
+    "agent_lines": 14,
+    "agent_removed": 4,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 14,
+    "total_lines_changed": 18,
+    "agent_percentage": 100,
+    "metric_version": 2
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 2,
+      "user_lines_added": 0,
+      "user_lines_removed": 0,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0
+    },
+    {
+      "checkpoint_number": 3,
+      "user_lines_added": 1897,
+      "user_lines_removed": 0,
+      "agent_lines_added": 44,
+      "agent_lines_removed": 32,
+      "user_added_per_file": {
+        ".claude/settings.local.json": 303,
+        "docs/superpowers/plans/2026-03-13-github-linear-withings-r2-parquet.md": 1594
+      }
+    },
+    {
+      "checkpoint_number": 4,
+      "user_lines_added": 1897,
+      "user_lines_removed": 0,
+      "agent_lines_added": 44,
+      "agent_lines_removed": 32,
+      "user_added_per_file": {
+        ".claude/settings.local.json": 303,
+        "docs/superpowers/plans/2026-03-13-github-linear-withings-r2-parquet.md": 1594
+      }
+    },
+    {
+      "checkpoint_number": 5,
+      "user_lines_added": 1897,
+      "user_lines_removed": 0,
+      "agent_lines_added": 44,
+      "agent_lines_removed": 32,
+      "user_added_per_file": {
+        ".claude/settings.local.json": 303,
+        "docs/superpowers/plans/2026-03-13-github-linear-withings-r2-parquet.md": 1594
+      }
+    },
+    {
+      "checkpoint_number": 6,
+      "user_lines_added": 1897,
+      "user_lines_removed": 0,
+      "agent_lines_added": 44,
+      "agent_lines_removed": 32,
+      "user_added_per_file": {
+        ".claude/settings.local.json": 303,
+        "docs/superpowers/plans/2026-03-13-github-linear-withings-r2-parquet.md": 1594
+      }
+    },
+    {
+      "checkpoint_number": 7,
+      "user_lines_added": 1897,
+      "user_lines_removed": 0,
+      "agent_lines_added": 44,
+      "agent_lines_removed": 32,
+      "user_added_per_file": {
+        ".claude/settings.local.json": 303,
+        "docs/superpowers/plans/2026-03-13-github-linear-withings-r2-parquet.md": 1594
+      }
+    },
+    {
+      "checkpoint_number": 8,
+      "user_lines_added": 1897,
+      "user_lines_removed": 0,
+      "agent_lines_added": 44,
+      "agent_lines_removed": 32,
+      "user_added_per_file": {
+        ".claude/settings.local.json": 303,
+        "docs/superpowers/plans/2026-03-13-github-linear-withings-r2-parquet.md": 1594
+      }
+    },
+    {
+      "checkpoint_number": 9,
+      "user_lines_added": 1897,
+      "user_lines_removed": 0,
+      "agent_lines_added": 44,
+      "agent_lines_removed": 32,
+      "user_added_per_file": {
+        ".claude/settings.local.json": 303,
+        "docs/superpowers/plans/2026-03-13-github-linear-withings-r2-parquet.md": 1594
+      }
+    },
+    {
+      "checkpoint_number": 10,
+      "user_lines_added": 1897,
+      "user_lines_removed": 0,
+      "agent_lines_added": 44,
+      "agent_lines_removed": 32,
+      "user_added_per_file": {
+        ".claude/settings.local.json": 303,
+        "docs/superpowers/plans/2026-03-13-github-linear-withings-r2-parquet.md": 1594
+      }
+    },
+    {
+      "checkpoint_number": 11,
+      "user_lines_added": 1897,
+      "user_lines_removed": 0,
+      "agent_lines_added": 44,
+      "agent_lines_removed": 32,
+      "user_added_per_file": {
+        ".claude/settings.local.json": 303,
+        "docs/superpowers/plans/2026-03-13-github-linear-withings-r2-parquet.md": 1594
+      }
+    },
+    {
+      "checkpoint_number": 12,
+      "user_lines_added": 1897,
+      "user_lines_removed": 0,
+      "agent_lines_added": 51,
+      "agent_lines_removed": 34,
+      "user_added_per_file": {
+        ".claude/settings.local.json": 303,
+        "docs/superpowers/plans/2026-03-13-github-linear-withings-r2-parquet.md": 1594
+      }
+    },
+    {
+      "checkpoint_number": 13,
+      "user_lines_added": 1897,
+      "user_lines_removed": 0,
+      "agent_lines_added": 51,
+      "agent_lines_removed": 34,
+      "user_added_per_file": {
+        ".claude/settings.local.json": 303,
+        "docs/superpowers/plans/2026-03-13-github-linear-withings-r2-parquet.md": 1594
+      }
+    },
+    {
+      "checkpoint_number": 14,
+      "user_lines_added": 1898,
+      "user_lines_removed": 0,
+      "agent_lines_added": 51,
+      "agent_lines_removed": 34,
+      "user_added_per_file": {
+        ".claude/settings.local.json": 304,
+        "docs/superpowers/plans/2026-03-13-github-linear-withings-r2-parquet.md": 1594
+      }
+    },
+    {
+      "checkpoint_number": 15,
+      "user_lines_added": 1898,
+      "user_lines_removed": 0,
+      "agent_lines_added": 51,
+      "agent_lines_removed": 34,
+      "user_added_per_file": {
+        ".claude/settings.local.json": 304,
+        "docs/superpowers/plans/2026-03-13-github-linear-withings-r2-parquet.md": 1594
+      }
+    },
+    {
+      "checkpoint_number": 16,
+      "user_lines_added": 1898,
+      "user_lines_removed": 0,
+      "agent_lines_added": 58,
+      "agent_lines_removed": 36,
+      "user_added_per_file": {
+        ".claude/settings.local.json": 304,
+        "docs/superpowers/plans/2026-03-13-github-linear-withings-r2-parquet.md": 1594
+      }
+    },
+    {
+      "checkpoint_number": 17,
+      "user_lines_added": 1898,
+      "user_lines_removed": 0,
+      "agent_lines_added": 58,
+      "agent_lines_removed": 36,
+      "user_added_per_file": {
+        ".claude/settings.local.json": 304,
+        "docs/superpowers/plans/2026-03-13-github-linear-withings-r2-parquet.md": 1594
+      }
+    },
+    {
+      "checkpoint_number": 18,
+      "user_lines_added": 1898,
+      "user_lines_removed": 0,
+      "agent_lines_added": 58,
+      "agent_lines_removed": 36,
+      "user_added_per_file": {
+        ".claude/settings.local.json": 304,
+        "docs/superpowers/plans/2026-03-13-github-linear-withings-r2-parquet.md": 1594
+      }
+    },
+    {
+      "checkpoint_number": 19,
+      "user_lines_added": 1898,
+      "user_lines_removed": 0,
+      "agent_lines_added": 58,
+      "agent_lines_removed": 36,
+      "user_added_per_file": {
+        ".claude/settings.local.json": 304,
+        "docs/superpowers/plans/2026-03-13-github-linear-withings-r2-parquet.md": 1594
+      }
+    },
+    {
+      "checkpoint_number": 20,
+      "user_lines_added": 1898,
+      "user_lines_removed": 0,
+      "agent_lines_added": 58,
+      "agent_lines_removed": 36,
+      "user_added_per_file": {
+        ".claude/settings.local.json": 304,
+        "docs/superpowers/plans/2026-03-13-github-linear-withings-r2-parquet.md": 1594
+      }
+    },
+    {
+      "checkpoint_number": 21,
+      "user_lines_added": 1898,
+      "user_lines_removed": 0,
+      "agent_lines_added": 58,
+      "agent_lines_removed": 36,
+      "user_added_per_file": {
+        ".claude/settings.local.json": 304,
+        "docs/superpowers/plans/2026-03-13-github-linear-withings-r2-parquet.md": 1594
+      }
+    },
+    {
+      "checkpoint_number": 22,
+      "user_lines_added": 1899,
+      "user_lines_removed": 0,
+      "agent_lines_added": 58,
+      "agent_lines_removed": 36,
+      "user_added_per_file": {
+        ".claude/settings.local.json": 305,
+        "docs/superpowers/plans/2026-03-13-github-linear-withings-r2-parquet.md": 1594
+      }
+    }
+  ]
+}

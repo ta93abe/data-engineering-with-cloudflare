@@ -1,0 +1,27 @@
+{
+  "cli_version": "0.5.4",
+  "checkpoint_id": "98aa3e7a5393",
+  "strategy": "manual-commit",
+  "branch": "fix/secrets-store-binding",
+  "checkpoints_count": 21,
+  "files_touched": [
+    "streaming/src/types.ts",
+    "streaming/src/webhooks/linear.ts",
+    "streaming/wrangler.jsonc"
+  ],
+  "sessions": [
+    {
+      "metadata": "/98/aa3e7a5393/0/metadata.json",
+      "transcript": "/98/aa3e7a5393/0/full.jsonl",
+      "content_hash": "/98/aa3e7a5393/0/content_hash.txt",
+      "prompt": "/98/aa3e7a5393/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 856,
+    "cache_creation_tokens": 566679,
+    "cache_read_tokens": 51424345,
+    "output_tokens": 79794,
+    "api_call_count": 271
+  }
+}
