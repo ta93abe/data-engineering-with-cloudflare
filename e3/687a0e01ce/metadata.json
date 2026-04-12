@@ -1,0 +1,25 @@
+{
+  "cli_version": "0.5.4",
+  "checkpoint_id": "e3687a0e01ce",
+  "strategy": "manual-commit",
+  "branch": "feat/linear-webhook-pipelines",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "infrastructure/pulumi/cloudflare.go"
+  ],
+  "sessions": [
+    {
+      "metadata": "/e3/687a0e01ce/0/metadata.json",
+      "transcript": "/e3/687a0e01ce/0/full.jsonl",
+      "content_hash": "/e3/687a0e01ce/0/content_hash.txt",
+      "prompt": "/e3/687a0e01ce/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 532,
+    "cache_creation_tokens": 282362,
+    "cache_read_tokens": 7821315,
+    "output_tokens": 37038,
+    "api_call_count": 71
+  }
+}
