@@ -20,6 +20,10 @@ async function executeR2Sql(token: string, sql: string): Promise<R2SqlResponse> 
   return (await response.json()) as R2SqlResponse;
 }
 
+function quoteIdentifier(id: string): string {
+  return `"${id.replace(/"/g, '""')}"`;
+}
+
 catalog.get("/tables", async (c) => {
   const token = await c.env.R2_SQL_TOKEN.get();
   if (!token) {
@@ -27,18 +31,19 @@ catalog.get("/tables", async (c) => {
   }
 
   const namespaces = await executeR2Sql(token, "SHOW NAMESPACES");
-  const tables: { namespace: string; table: string }[] = [];
 
-  for (const ns of namespaces.result?.rows ?? []) {
-    const nsName = Object.values(ns)[0] as string;
-    const tblResult = await executeR2Sql(token, `SHOW TABLES IN ${nsName}`);
-    for (const tbl of tblResult.result?.rows ?? []) {
-      tables.push({
-        namespace: nsName,
-        table: Object.values(tbl)[0] as string,
-      });
-    }
-  }
+  const tables = (
+    await Promise.all(
+      (namespaces.result?.rows ?? []).map(async (ns) => {
+        const nsName = Object.values(ns)[0] as string;
+        const tblResult = await executeR2Sql(token, `SHOW TABLES IN ${quoteIdentifier(nsName)}`);
+        return (tblResult.result?.rows ?? []).map((tbl) => ({
+          namespace: nsName,
+          table: Object.values(tbl)[0] as string,
+        }));
+      })
+    )
+  ).flat();
 
   return c.json({ tables });
 });
@@ -50,7 +55,10 @@ catalog.get("/describe/:namespace/:table", async (c) => {
     return c.json({ error: "R2 SQL token not configured" }, 500);
   }
 
-  const raw = await executeR2Sql(token, `DESCRIBE ${namespace}.${table}`);
+  const raw = await executeR2Sql(
+    token,
+    `DESCRIBE ${quoteIdentifier(namespace)}.${quoteIdentifier(table)}`
+  );
   return c.json({ data: raw.result?.rows ?? [] });
 });
 
