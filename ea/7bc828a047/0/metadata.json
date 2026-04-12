@@ -1,0 +1,38 @@
+{
+  "cli_version": "0.5.4",
+  "checkpoint_id": "ea7bc828a047",
+  "session_id": "08454ee3-abc4-4d7f-bc59-3c18a0c892f3",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-12T09:58:01.54744Z",
+  "branch": "feat/linear-webhook-pipelines",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "streaming/package.json",
+    "streaming/tsconfig.json"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-haiku-4-5-20251001",
+  "turn_id": "e63f7a002db6",
+  "token_usage": {
+    "input_tokens": 532,
+    "cache_creation_tokens": 282362,
+    "cache_read_tokens": 7821315,
+    "output_tokens": 37038,
+    "api_call_count": 71
+  },
+  "session_metrics": {
+    "turn_count": 17
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-12T09:58:00.598651Z",
+    "agent_lines": 37,
+    "agent_removed": 0,
+    "human_added": 2792,
+    "human_modified": 9,
+    "human_removed": 0,
+    "total_committed": 2838,
+    "total_lines_changed": 2838,
+    "agent_percentage": 1.3037350246652573,
+    "metric_version": 2
+  }
+}
