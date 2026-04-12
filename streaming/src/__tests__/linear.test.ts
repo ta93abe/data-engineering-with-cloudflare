@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { normalizePayload, validateTimestamp } from "../webhooks/linear";
 import type { LinearWebhookPayload } from "../types";
+import { normalizePayload, validateTimestamp } from "../webhooks/linear";
 
 describe("normalizePayload", () => {
   it("converts camelCase keys to snake_case", () => {
