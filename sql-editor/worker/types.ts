@@ -4,6 +4,7 @@ export interface SecretStoreSecret {
 
 export interface Env {
   R2_SQL_TOKEN: SecretStoreSecret;
+  QUERY_ANALYTICS: AnalyticsEngineDataset;
   ASSETS: Fetcher;
 }
 

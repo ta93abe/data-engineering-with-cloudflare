@@ -32,6 +32,11 @@ query.post("/", async (c) => {
 
   if (!response.ok) {
     const errorText = await response.text();
+    c.env.QUERY_ANALYTICS.writeDataPoint({
+      indexes: [sqlKeyword(body.query)],
+      blobs: [body.query, "error", errorText.slice(0, 256)],
+      doubles: [elapsed, 0],
+    });
     return c.json(
       { error: errorText, status: response.status, elapsed, engine: "r2sql" },
       response.status as 400 | 401 | 403 | 500
@@ -41,12 +46,21 @@ query.post("/", async (c) => {
   const raw = (await response.json()) as R2SqlResponse;
 
   if (!raw.success) {
-    return c.json({
-      error: raw.errors.map((e) => e.message).join("; "),
-      elapsed,
-      engine: "r2sql",
+    const errorMsg = raw.errors.map((e) => e.message).join("; ");
+    c.env.QUERY_ANALYTICS.writeDataPoint({
+      indexes: [sqlKeyword(body.query)],
+      blobs: [body.query, "error", errorMsg.slice(0, 256)],
+      doubles: [elapsed, 0],
     });
+    return c.json({ error: errorMsg, elapsed, engine: "r2sql" });
   }
+
+  const rowCount = raw.result?.rows?.length ?? 0;
+  c.env.QUERY_ANALYTICS.writeDataPoint({
+    indexes: [sqlKeyword(body.query)],
+    blobs: [body.query, "ok"],
+    doubles: [elapsed, rowCount],
+  });
 
   return c.json({
     data: raw.result?.rows ?? [],
@@ -54,5 +68,10 @@ query.post("/", async (c) => {
     engine: "r2sql",
   });
 });
+
+function sqlKeyword(sql: string): string {
+  const match = sql.trimStart().match(/^\w+/);
+  return match ? match[0].toUpperCase() : "UNKNOWN";
+}
 
 export default query;

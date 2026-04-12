@@ -11,6 +11,12 @@
   "assets": {
     "not_found_handling": "single-page-application"
   },
+  "analytics_engine_datasets": [
+    {
+      "binding": "QUERY_ANALYTICS",
+      "dataset": "sql_editor_queries"
+    }
+  ],
   "secrets_store_secrets": [
     {
       "binding": "R2_SQL_TOKEN",
