@@ -1,0 +1,27 @@
+{
+  "cli_version": "0.5.4",
+  "checkpoint_id": "f048b6eac39a",
+  "strategy": "manual-commit",
+  "branch": "feat/sql-editor-phase1.5",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "sql-editor/e2e/sql-editor.spec.ts",
+    "sql-editor/src/components/Editor.tsx",
+    "sql-editor/worker/api/catalog.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/f0/48b6eac39a/0/metadata.json",
+      "transcript": "/f0/48b6eac39a/0/full.jsonl",
+      "content_hash": "/f0/48b6eac39a/0/content_hash.txt",
+      "prompt": "/f0/48b6eac39a/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 300,
+    "cache_creation_tokens": 1680881,
+    "cache_read_tokens": 37865457,
+    "output_tokens": 111303,
+    "api_call_count": 207
+  }
+}
