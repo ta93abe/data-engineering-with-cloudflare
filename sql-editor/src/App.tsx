@@ -24,16 +24,14 @@ export default function App() {
       <header
         style={{
           padding: "8px 16px",
-          borderBottom: "1px solid light-dark(#e5e7eb, #27272a)",
+          borderBottom: "1px solid var(--color-border, #e5e7eb)",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
         }}
       >
         <strong>SQL Editor</strong>
-        <span style={{ fontSize: "12px", color: "light-dark(#888, #a1a1aa)" }}>
-          R2 Data Catalog
-        </span>
+        <span style={{ fontSize: "12px", color: "#888" }}>R2 Data Catalog</span>
       </header>
       <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
         <Sidebar tables={tables} loading={loadingTables} onInsert={handleInsert} />

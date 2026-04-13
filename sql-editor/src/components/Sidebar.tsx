@@ -20,7 +20,7 @@ export default function Sidebar({ tables, loading, onInsert }: SidebarProps) {
       style={{
         width: 240,
         flexShrink: 0,
-        borderRight: "1px solid light-dark(#e5e7eb, #27272a)",
+        borderRight: "1px solid #e5e7eb",
         overflow: "auto",
         padding: "12px 0",
         fontSize: 13,
@@ -30,13 +30,13 @@ export default function Sidebar({ tables, loading, onInsert }: SidebarProps) {
         style={{
           padding: "0 12px 8px",
           fontWeight: 600,
-          color: "light-dark(#374151, #d4d4d8)",
+          color: "#374151",
         }}
       >
         Tables
       </div>
       {loading ? (
-        <div style={{ padding: "0 12px", color: "light-dark(#888, #a1a1aa)" }}>Loading...</div>
+        <div style={{ padding: "0 12px", color: "#888" }}>Loading...</div>
       ) : (
         Object.entries(grouped).map(([ns, tbls]) => (
           <div key={ns} style={{ marginBottom: 8 }}>
@@ -44,7 +44,7 @@ export default function Sidebar({ tables, loading, onInsert }: SidebarProps) {
               style={{
                 padding: "4px 12px",
                 fontWeight: 600,
-                color: "light-dark(#6b7280, #71717a)",
+                color: "#6b7280",
                 fontSize: 11,
                 textTransform: "uppercase",
                 letterSpacing: "0.05em",
@@ -65,7 +65,7 @@ export default function Sidebar({ tables, loading, onInsert }: SidebarProps) {
                   background: "none",
                   border: "none",
                   cursor: "pointer",
-                  color: "light-dark(#1f2937, #e4e4e7)",
+                  color: "#1f2937",
                   fontSize: 13,
                 }}
                 title={`Click to insert ${t.namespace}.${t.table}`}
