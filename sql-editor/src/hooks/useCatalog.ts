@@ -18,24 +18,19 @@ export function useCatalog() {
     fetchTables()
       .then(async (res: TablesResult) => {
         const list = res.tables ?? [];
-        setTables(list.map((t) => ({ ...t })));
 
         const described = await Promise.all(
           list.map(async (t) => {
             const desc = await describeTable(t.namespace, t.table);
-            return {
-              fqn: `${t.namespace}.${t.table}`,
-              columns: desc.data ?? [],
-            };
+            return { namespace: t.namespace, table: t.table, columns: desc.data ?? [] };
           })
         );
 
         const newSchema: SqlSchema = {};
         const enriched: TableInfo[] = [];
         for (const d of described) {
-          newSchema[d.fqn] = d.columns.map((c) => c.column_name);
-          const [ns, tbl] = d.fqn.split(".");
-          enriched.push({ namespace: ns, table: tbl, columns: d.columns });
+          newSchema[`${d.namespace}.${d.table}`] = d.columns.map((c) => c.column_name);
+          enriched.push({ namespace: d.namespace, table: d.table, columns: d.columns });
         }
         setTables(enriched);
         setSchema(newSchema);
