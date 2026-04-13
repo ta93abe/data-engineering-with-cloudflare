@@ -33,7 +33,13 @@ export interface TablesResult {
   error?: string;
 }
 
+export interface ColumnInfo {
+  column_name: string;
+  type: string;
+  required: string;
+}
+
 export interface DescribeResult {
-  data?: Record<string, unknown>[];
+  data?: ColumnInfo[];
   error?: string;
 }
