@@ -1,0 +1,23 @@
+{
+  "cli_version": "0.5.4",
+  "checkpoint_id": "c34b67292427",
+  "strategy": "manual-commit",
+  "branch": "feat/sql-editor-phase1.5",
+  "checkpoints_count": 1,
+  "files_touched": null,
+  "sessions": [
+    {
+      "metadata": "/c3/4b67292427/0/metadata.json",
+      "transcript": "/c3/4b67292427/0/full.jsonl",
+      "content_hash": "/c3/4b67292427/0/content_hash.txt",
+      "prompt": "/c3/4b67292427/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 249,
+    "cache_creation_tokens": 921034,
+    "cache_read_tokens": 25857563,
+    "output_tokens": 76602,
+    "api_call_count": 171
+  }
+}
