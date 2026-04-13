@@ -1,0 +1,25 @@
+{
+  "cli_version": "0.5.4",
+  "checkpoint_id": "c6d6349cdaee",
+  "strategy": "manual-commit",
+  "branch": "feat/sql-editor-phase1.5",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "sql-editor/playwright.config.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/c6/d6349cdaee/0/metadata.json",
+      "transcript": "/c6/d6349cdaee/0/full.jsonl",
+      "content_hash": "/c6/d6349cdaee/0/content_hash.txt",
+      "prompt": "/c6/d6349cdaee/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 423,
+    "cache_creation_tokens": 2589221,
+    "cache_read_tokens": 69043936,
+    "output_tokens": 152253,
+    "api_call_count": 285
+  }
+}
