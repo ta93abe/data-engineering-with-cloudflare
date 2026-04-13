@@ -1,17 +1,13 @@
 import { defineConfig } from "@playwright/test";
 
+const BASE_URL = process.env.E2E_BASE_URL ?? "https://sql-editor.ta93abe.workers.dev";
+
 export default defineConfig({
   testDir: "./e2e",
   timeout: 30000,
   retries: 0,
   use: {
-    baseURL: "http://localhost:5173",
+    baseURL: BASE_URL,
     headless: true,
-  },
-  webServer: {
-    command: "pnpm dev",
-    port: 5173,
-    reuseExistingServer: true,
-    timeout: 30000,
   },
 });

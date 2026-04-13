@@ -37,8 +37,10 @@ test.describe("SQL Editor", () => {
     await page.keyboard.press("Meta+a");
     await page.keyboard.type("SELECT action FROM streaming.linear_events LIMIT 1");
 
-    // Cmd+Enter で実行
-    await page.keyboard.press("Meta+Enter");
+    // explicit modifier down/up is more reliable in headless chromium
+    await page.keyboard.down("Meta");
+    await page.keyboard.press("Enter");
+    await page.keyboard.up("Meta");
 
     await expect(page.locator("table")).toBeVisible({ timeout: 15000 });
     await expect(page.locator("text=1 rows")).toBeVisible();
@@ -60,7 +62,7 @@ test.describe("SQL Editor", () => {
     await content.click();
     await page.keyboard.press("Meta+a");
     await page.keyboard.type("SELECT action FROM streaming.linear_events LIMIT 1");
-    await page.keyboard.press("Meta+Enter");
+    await page.click("button:has-text('Run')");
 
     // 結果が表示されるのを待つ
     await expect(page.locator("table")).toBeVisible({ timeout: 15000 });
@@ -75,7 +77,7 @@ test.describe("SQL Editor", () => {
     await content.click();
     await page.keyboard.press("Meta+a");
     await page.keyboard.type("INVALID SQL QUERY");
-    await page.keyboard.press("Meta+Enter");
+    await page.click("button:has-text('Run')");
 
     // エラー表示を待つ
     await expect(page.locator("text=Query Error")).toBeVisible({ timeout: 15000 });
@@ -103,7 +105,7 @@ test.describe("SQL Editor", () => {
     await page.keyboard.type(
       "SELECT action FROM streaming.linear_events WHERE action = 'nonexistent_action_xyz' LIMIT 1"
     );
-    await page.keyboard.press("Meta+Enter");
+    await page.click("button:has-text('Run')");
 
     await expect(page.locator("text=0 rows")).toBeVisible({ timeout: 15000 });
   });
