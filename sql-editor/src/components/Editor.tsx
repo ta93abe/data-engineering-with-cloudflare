@@ -1,5 +1,5 @@
 import { sql } from "@codemirror/lang-sql";
-import { Compartment, EditorState } from "@codemirror/state";
+import { Compartment, EditorState, Prec } from "@codemirror/state";
 import { EditorView, keymap } from "@codemirror/view";
 import { basicSetup } from "codemirror";
 import { useEffect, useRef } from "react";
@@ -32,15 +32,17 @@ export default function Editor({ value, onChange, onRun, schema }: EditorProps) 
         extensions: [
           basicSetup,
           sqlCompartment.current.of(sql()),
-          keymap.of([
-            {
-              key: "Mod-Enter",
-              run: () => {
-                onRunRef.current();
-                return true;
+          Prec.highest(
+            keymap.of([
+              {
+                key: "Mod-Enter",
+                run: () => {
+                  onRunRef.current();
+                  return true;
+                },
               },
-            },
-          ]),
+            ])
+          ),
           EditorView.updateListener.of((update) => {
             if (update.docChanged) {
               onChangeRef.current(update.state.doc.toString());

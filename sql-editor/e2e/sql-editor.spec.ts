@@ -37,10 +37,25 @@ test.describe("SQL Editor", () => {
     await page.keyboard.press("Meta+a");
     await page.keyboard.type("SELECT action FROM streaming.linear_events LIMIT 1");
 
-    // explicit modifier down/up is more reliable in headless chromium
-    await page.keyboard.down("Meta");
-    await page.keyboard.press("Enter");
-    await page.keyboard.up("Meta");
+    // Dispatch a synthetic Cmd+Enter KeyboardEvent directly to the CodeMirror content.
+    // Playwright's keyboard API doesn't reliably trigger CodeMirror's Mod-Enter binding
+    // in headless chromium, so we dispatch the event manually.
+    // Note: navigator.platform is "MacIntel" in headless Chromium on macOS, so
+    // CodeMirror's browser.mac=true and Mod-Enter maps to metaKey (not ctrlKey).
+    // We also use Prec.highest on the keymap in Editor.tsx to ensure our handler
+    // takes priority over basicSetup's defaultKeymap (which also binds Mod-Enter).
+    await content.evaluate((el) => {
+      el.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          key: "Enter",
+          code: "Enter",
+          keyCode: 13,
+          metaKey: true,
+          bubbles: true,
+          cancelable: true,
+        })
+      );
+    });
 
     await expect(page.locator("table")).toBeVisible({ timeout: 15000 });
     await expect(page.locator("text=1 rows")).toBeVisible();
