@@ -19,6 +19,7 @@ export default function Sidebar({ tables, loading, onInsert }: SidebarProps) {
     <div
       style={{
         width: 240,
+        flexShrink: 0,
         borderRight: "1px solid #e5e7eb",
         overflow: "auto",
         padding: "12px 0",

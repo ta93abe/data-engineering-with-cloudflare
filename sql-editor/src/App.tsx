@@ -35,7 +35,14 @@ export default function App() {
       </header>
       <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
         <Sidebar tables={tables} loading={loadingTables} onInsert={handleInsert} />
-        <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+        <div
+          style={{
+            flex: 1,
+            minWidth: 0,
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
           <div style={{ flex: 1, minHeight: 0 }}>
             <Editor value={sql} onChange={setSql} onRun={handleRun} schema={schema} />
           </div>

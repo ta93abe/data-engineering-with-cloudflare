@@ -1,3 +1,4 @@
+import { acceptCompletion, completionStatus } from "@codemirror/autocomplete";
 import { sql } from "@codemirror/lang-sql";
 import { Compartment, EditorState, Prec } from "@codemirror/state";
 import { EditorView, keymap } from "@codemirror/view";
@@ -39,6 +40,15 @@ export default function Editor({ value, onChange, onRun, schema }: EditorProps) 
                 run: () => {
                   onRunRef.current();
                   return true;
+                },
+              },
+              {
+                key: "Tab",
+                run: (view) => {
+                  if (completionStatus(view.state) !== null) {
+                    return acceptCompletion(view);
+                  }
+                  return false;
                 },
               },
             ])
