@@ -11,7 +11,7 @@ export default function App() {
     "-- R2 Data Catalog の Iceberg テーブルにクエリを実行できます\n-- 例: SELECT * FROM streaming.linear_events LIMIT 10\n-- Cmd+Enter で実行\n"
   );
   const { result, loading, execute } = useQuery();
-  const { tables, loadingTables } = useCatalog();
+  const { tables, schema, loadingTables } = useCatalog();
 
   const handleRun = () => execute(sql);
 
@@ -37,7 +37,7 @@ export default function App() {
         <Sidebar tables={tables} loading={loadingTables} onInsert={handleInsert} />
         <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
           <div style={{ flex: 1, minHeight: 0 }}>
-            <Editor value={sql} onChange={setSql} onRun={handleRun} />
+            <Editor value={sql} onChange={setSql} onRun={handleRun} schema={schema} />
           </div>
           <Toolbar loading={loading} onRun={handleRun} result={result} />
           <div style={{ flex: 1, minHeight: 0, overflow: "auto" }}>
