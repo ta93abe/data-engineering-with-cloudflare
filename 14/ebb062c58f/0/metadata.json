@@ -1,0 +1,37 @@
+{
+  "cli_version": "0.5.4",
+  "checkpoint_id": "14ebb062c58f",
+  "session_id": "d2d186ba-d564-4b3b-87da-22715d5ae5a9",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-13T05:23:25.004478Z",
+  "branch": "feat/sql-editor-phase1.5",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "sql-editor/package.json"
+  ],
+  "agent": "Claude Code",
+  "model": "",
+  "turn_id": "ef4051297575",
+  "token_usage": {
+    "input_tokens": 253,
+    "cache_creation_tokens": 931286,
+    "cache_read_tokens": 27148894,
+    "output_tokens": 83693,
+    "api_call_count": 175
+  },
+  "session_metrics": {
+    "turn_count": 23
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-13T05:23:23.62666Z",
+    "agent_lines": 0,
+    "agent_removed": 0,
+    "human_added": 57,
+    "human_modified": 1,
+    "human_removed": 0,
+    "total_committed": 57,
+    "total_lines_changed": 58,
+    "agent_percentage": 0,
+    "metric_version": 2
+  }
+}
