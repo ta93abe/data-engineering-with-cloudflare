@@ -10,7 +10,8 @@
     "typecheck": "tsc -b",
     "lint": "biome lint .",
     "check": "biome check .",
-    "check:fix": "biome check --write ."
+    "check:fix": "biome check --write .",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@cloudflare/kumo": "latest",
@@ -27,6 +28,7 @@
     "@biomejs/biome": "^2.4.11",
     "@cloudflare/vite-plugin": "^1.0.0",
     "@cloudflare/workers-types": "^4.20250124.0",
+    "@playwright/test": "^1.59.1",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",
