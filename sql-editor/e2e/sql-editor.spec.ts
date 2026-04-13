@@ -19,7 +19,7 @@ test.describe("SQL Editor", () => {
     // デフォルトのプレースホルダーを消して SQL を入力
     const content = page.locator(".cm-content");
     await content.click();
-    await page.keyboard.press("Meta+a");
+    await page.keyboard.press("ControlOrMeta+a");
     await page.keyboard.type("SELECT action, type FROM streaming.linear_events LIMIT 2");
 
     // Run ボタンをクリック
@@ -34,28 +34,29 @@ test.describe("SQL Editor", () => {
   test("Cmd+Enter でクエリが実行される", async ({ page }) => {
     const content = page.locator(".cm-content");
     await content.click();
-    await page.keyboard.press("Meta+a");
+    await page.keyboard.press("ControlOrMeta+a");
     await page.keyboard.type("SELECT action FROM streaming.linear_events LIMIT 1");
 
-    // Dispatch a synthetic Cmd+Enter KeyboardEvent directly to the CodeMirror content.
+    // Dispatch a synthetic Mod+Enter KeyboardEvent directly to the CodeMirror content.
     // Playwright's keyboard API doesn't reliably trigger CodeMirror's Mod-Enter binding
     // in headless chromium, so we dispatch the event manually.
-    // Note: navigator.platform is "MacIntel" in headless Chromium on macOS, so
-    // CodeMirror's browser.mac=true and Mod-Enter maps to metaKey (not ctrlKey).
-    // We also use Prec.highest on the keymap in Editor.tsx to ensure our handler
-    // takes priority over basicSetup's defaultKeymap (which also binds Mod-Enter).
-    await content.evaluate((el) => {
+    // CodeMirror's `Mod` resolves to metaKey on macOS (browser.mac via
+    // navigator.platform) and ctrlKey elsewhere, so we mirror that here based
+    // on the Node-side process.platform.
+    const isMac = process.platform === "darwin";
+    await content.evaluate((el, useMeta) => {
       el.dispatchEvent(
         new KeyboardEvent("keydown", {
           key: "Enter",
           code: "Enter",
           keyCode: 13,
-          metaKey: true,
+          metaKey: useMeta,
+          ctrlKey: !useMeta,
           bubbles: true,
           cancelable: true,
         })
       );
-    });
+    }, isMac);
 
     await expect(page.locator("table")).toBeVisible({ timeout: 15000 });
     await expect(page.locator("text=1 rows")).toBeVisible();
@@ -75,7 +76,7 @@ test.describe("SQL Editor", () => {
     // クエリ実行
     const content = page.locator(".cm-content");
     await content.click();
-    await page.keyboard.press("Meta+a");
+    await page.keyboard.press("ControlOrMeta+a");
     await page.keyboard.type("SELECT action FROM streaming.linear_events LIMIT 1");
     await page.click("button:has-text('Run')");
 
@@ -90,7 +91,7 @@ test.describe("SQL Editor", () => {
   test("エラー時にエラーパネルが表示される", async ({ page }) => {
     const content = page.locator(".cm-content");
     await content.click();
-    await page.keyboard.press("Meta+a");
+    await page.keyboard.press("ControlOrMeta+a");
     await page.keyboard.type("INVALID SQL QUERY");
     await page.click("button:has-text('Run')");
 
@@ -116,7 +117,7 @@ test.describe("SQL Editor", () => {
   test("空結果時に適切なメッセージが表示される", async ({ page }) => {
     const content = page.locator(".cm-content");
     await content.click();
-    await page.keyboard.press("Meta+a");
+    await page.keyboard.press("ControlOrMeta+a");
     await page.keyboard.type(
       "SELECT action FROM streaming.linear_events WHERE action = 'nonexistent_action_xyz' LIMIT 1"
     );

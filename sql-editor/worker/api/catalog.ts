@@ -22,9 +22,16 @@ async function executeR2Sql(token: string, sql: string): Promise<R2SqlResponse> 
 
 const IDENTIFIER_PATTERN = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
 
+class InvalidIdentifierError extends Error {
+  constructor(id: string) {
+    super(`Invalid identifier: ${id}`);
+    this.name = "InvalidIdentifierError";
+  }
+}
+
 function assertIdentifier(id: string): string {
   if (!IDENTIFIER_PATTERN.test(id)) {
-    throw new Error(`Invalid identifier: ${id}`);
+    throw new InvalidIdentifierError(id);
   }
   return id;
 }
@@ -35,22 +42,29 @@ catalog.get("/tables", async (c) => {
     return c.json({ error: "R2 SQL token not configured" }, 500);
   }
 
-  const namespaces = await executeR2Sql(token, "SHOW NAMESPACES");
+  try {
+    const namespaces = await executeR2Sql(token, "SHOW NAMESPACES");
 
-  const tables = (
-    await Promise.all(
-      (namespaces.result?.rows ?? []).map(async (ns) => {
-        const nsName = Object.values(ns)[0] as string;
-        const tblResult = await executeR2Sql(token, `SHOW TABLES IN ${assertIdentifier(nsName)}`);
-        return (tblResult.result?.rows ?? []).map((tbl) => ({
-          namespace: nsName,
-          table: Object.values(tbl)[0] as string,
-        }));
-      })
-    )
-  ).flat();
+    const tables = (
+      await Promise.all(
+        (namespaces.result?.rows ?? []).map(async (ns) => {
+          const nsName = Object.values(ns)[0] as string;
+          const tblResult = await executeR2Sql(token, `SHOW TABLES IN ${assertIdentifier(nsName)}`);
+          return (tblResult.result?.rows ?? []).map((tbl) => ({
+            namespace: nsName,
+            table: Object.values(tbl)[0] as string,
+          }));
+        })
+      )
+    ).flat();
 
-  return c.json({ tables });
+    return c.json({ tables });
+  } catch (err) {
+    if (err instanceof InvalidIdentifierError) {
+      return c.json({ error: err.message }, 400);
+    }
+    throw err;
+  }
 });
 
 catalog.get("/describe/:namespace/:table", async (c) => {
@@ -67,7 +81,7 @@ catalog.get("/describe/:namespace/:table", async (c) => {
     );
     return c.json({ data: raw.result?.rows ?? [] });
   } catch (err) {
-    if (err instanceof Error && err.message.startsWith("Invalid identifier")) {
+    if (err instanceof InvalidIdentifierError) {
       return c.json({ error: err.message }, 400);
     }
     throw err;
