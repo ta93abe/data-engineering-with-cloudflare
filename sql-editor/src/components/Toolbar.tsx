@@ -11,8 +11,8 @@ export default function Toolbar({ loading, onRun, result }: ToolbarProps) {
     <div
       style={{
         padding: "6px 16px",
-        borderTop: "1px solid #e5e7eb",
-        borderBottom: "1px solid #e5e7eb",
+        borderTop: "1px solid light-dark(#e5e7eb, #27272a)",
+        borderBottom: "1px solid light-dark(#e5e7eb, #27272a)",
         display: "flex",
         alignItems: "center",
         gap: 12,
@@ -24,7 +24,7 @@ export default function Toolbar({ loading, onRun, result }: ToolbarProps) {
         disabled={loading}
         style={{
           padding: "4px 16px",
-          background: loading ? "#9ca3af" : "#2563eb",
+          background: loading ? "light-dark(#9ca3af, #52525b)" : "light-dark(#2563eb, #3b82f6)",
           color: "white",
           border: "none",
           borderRadius: 4,
@@ -35,9 +35,17 @@ export default function Toolbar({ loading, onRun, result }: ToolbarProps) {
       >
         {loading ? "Running..." : "Run (R2 SQL)"}
       </button>
-      <span style={{ fontSize: 12, color: "#888" }}>Cmd+Enter</span>
+      <span style={{ fontSize: 12, color: "light-dark(#888, #a1a1aa)" }}>Cmd+Enter</span>
       {result?.elapsed && (
-        <span style={{ fontSize: 12, color: "#888", marginLeft: "auto" }}>{result.elapsed}ms</span>
+        <span
+          style={{
+            fontSize: 12,
+            color: "light-dark(#888, #a1a1aa)",
+            marginLeft: "auto",
+          }}
+        >
+          {result.elapsed}ms
+        </span>
       )}
     </div>
   );

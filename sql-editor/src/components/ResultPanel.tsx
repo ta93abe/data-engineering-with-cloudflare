@@ -5,14 +5,24 @@ interface ResultPanelProps {
   loading: boolean;
 }
 
+const MUTED_COLOR = "light-dark(#888, #a1a1aa)";
+const SUCCESS_COLOR = "light-dark(#16a34a, #22c55e)";
+const BORDER_COLOR = "light-dark(#e5e7eb, #27272a)";
+const ROW_BORDER = "light-dark(#f3f4f6, #1f1f23)";
+const HEADER_BG = "light-dark(#ffffff, #0f0f10)";
+const TEXT_HEADER = "light-dark(#374151, #d4d4d8)";
+const TEXT_MUTED = "light-dark(#9ca3af, #71717a)";
+
 export default function ResultPanel({ result, loading }: ResultPanelProps) {
   if (loading) {
-    return <div style={{ padding: 16, color: "#888" }}>クエリを実行中...</div>;
+    return <div style={{ padding: 16, color: MUTED_COLOR }}>クエリを実行中...</div>;
   }
 
   if (!result) {
     return (
-      <div style={{ padding: 16, color: "#888" }}>Cmd+Enter または Run ボタンでクエリを実行</div>
+      <div style={{ padding: 16, color: MUTED_COLOR }}>
+        Cmd+Enter または Run ボタンでクエリを実行
+      </div>
     );
   }
 
@@ -21,13 +31,19 @@ export default function ResultPanel({ result, loading }: ResultPanelProps) {
       <div style={{ padding: 16 }}>
         <div
           style={{
-            background: "#fef2f2",
-            border: "1px solid #fecaca",
+            background: "light-dark(#fef2f2, #450a0a)",
+            border: "1px solid light-dark(#fecaca, #7f1d1d)",
             borderRadius: 6,
             padding: 12,
           }}
         >
-          <div style={{ fontWeight: 600, color: "#dc2626", marginBottom: 4 }}>
+          <div
+            style={{
+              fontWeight: 600,
+              color: "light-dark(#dc2626, #f87171)",
+              marginBottom: 4,
+            }}
+          >
             Query Error {result.engine ? `· ${result.engine}` : ""}
           </div>
           <pre
@@ -35,7 +51,7 @@ export default function ResultPanel({ result, loading }: ResultPanelProps) {
               margin: 0,
               whiteSpace: "pre-wrap",
               fontSize: 13,
-              color: "#991b1b",
+              color: "light-dark(#991b1b, #fca5a5)",
             }}
           >
             {result.error}
@@ -49,10 +65,10 @@ export default function ResultPanel({ result, loading }: ResultPanelProps) {
   if (rows.length === 0) {
     return (
       <div style={{ padding: 16 }}>
-        <div style={{ color: "#16a34a", fontWeight: 600, marginBottom: 8 }}>
+        <div style={{ color: SUCCESS_COLOR, fontWeight: 600, marginBottom: 8 }}>
           0 rows · {result.elapsed}ms · {result.engine}
         </div>
-        <div style={{ color: "#888" }}>クエリは成功しましたが、結果は0件です。</div>
+        <div style={{ color: MUTED_COLOR }}>クエリは成功しましたが、結果は0件です。</div>
       </div>
     );
   }
@@ -64,7 +80,7 @@ export default function ResultPanel({ result, loading }: ResultPanelProps) {
       <div
         style={{
           marginBottom: 8,
-          color: "#16a34a",
+          color: SUCCESS_COLOR,
           fontWeight: 600,
           fontSize: 13,
         }}
@@ -84,13 +100,13 @@ export default function ResultPanel({ result, loading }: ResultPanelProps) {
               <th
                 style={{
                   padding: "6px 12px",
-                  borderBottom: "2px solid #e5e7eb",
+                  borderBottom: `2px solid ${BORDER_COLOR}`,
                   textAlign: "left",
                   fontWeight: 600,
-                  color: "#374151",
+                  color: TEXT_HEADER,
                   position: "sticky",
                   top: 0,
-                  background: "white",
+                  background: HEADER_BG,
                 }}
               >
                 #
@@ -100,13 +116,13 @@ export default function ResultPanel({ result, loading }: ResultPanelProps) {
                   key={col}
                   style={{
                     padding: "6px 12px",
-                    borderBottom: "2px solid #e5e7eb",
+                    borderBottom: `2px solid ${BORDER_COLOR}`,
                     textAlign: "left",
                     fontWeight: 600,
-                    color: "#374151",
+                    color: TEXT_HEADER,
                     position: "sticky",
                     top: 0,
-                    background: "white",
+                    background: HEADER_BG,
                   }}
                 >
                   {col}
@@ -117,11 +133,11 @@ export default function ResultPanel({ result, loading }: ResultPanelProps) {
           <tbody>
             {rows.map((row, i) => (
               // biome-ignore lint/suspicious/noArrayIndexKey: SQL result rows have no stable unique key
-              <tr key={i} style={{ borderBottom: "1px solid #f3f4f6" }}>
+              <tr key={i} style={{ borderBottom: `1px solid ${ROW_BORDER}` }}>
                 <td
                   style={{
                     padding: "6px 12px",
-                    color: "#9ca3af",
+                    color: TEXT_MUTED,
                   }}
                 >
                   {i + 1}

@@ -1,6 +1,7 @@
 import { acceptCompletion, completionStatus } from "@codemirror/autocomplete";
 import { sql } from "@codemirror/lang-sql";
 import { Compartment, EditorState, Prec } from "@codemirror/state";
+import { oneDark } from "@codemirror/theme-one-dark";
 import { EditorView, keymap } from "@codemirror/view";
 import { basicSetup } from "codemirror";
 import { useEffect, useRef } from "react";
@@ -13,10 +14,16 @@ interface EditorProps {
   schema?: SqlSchema;
 }
 
+function getThemeExtension() {
+  const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+  return isDark ? oneDark : [];
+}
+
 export default function Editor({ value, onChange, onRun, schema }: EditorProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
   const sqlCompartment = useRef(new Compartment());
+  const themeCompartment = useRef(new Compartment());
   const onChangeRef = useRef(onChange);
   const onRunRef = useRef(onRun);
 
@@ -33,6 +40,7 @@ export default function Editor({ value, onChange, onRun, schema }: EditorProps) 
         extensions: [
           basicSetup,
           sqlCompartment.current.of(sql()),
+          themeCompartment.current.of(getThemeExtension()),
           Prec.highest(
             keymap.of([
               {
@@ -91,6 +99,21 @@ export default function Editor({ value, onChange, onRun, schema }: EditorProps) 
       });
     }
   }, [schema]);
+
+  // React to OS color-scheme changes
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    const handler = () => {
+      const view = viewRef.current;
+      if (view) {
+        view.dispatch({
+          effects: themeCompartment.current.reconfigure(getThemeExtension()),
+        });
+      }
+    };
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
 
   return <div ref={containerRef} style={{ height: "100%", overflow: "auto" }} />;
 }
