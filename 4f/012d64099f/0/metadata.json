@@ -1,0 +1,59 @@
+{
+  "cli_version": "0.5.4",
+  "checkpoint_id": "4f012d64099f",
+  "session_id": "f85da9ce-0556-424b-8cf3-eb6c964e5564",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-14T15:36:08.535014Z",
+  "branch": "chore/flatten-fusion-seeds",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "modeling/profiles.yml"
+  ],
+  "agent": "Claude Code",
+  "model": "",
+  "turn_id": "c16864a76797",
+  "token_usage": {
+    "input_tokens": 4395,
+    "cache_creation_tokens": 843832,
+    "cache_read_tokens": 107778228,
+    "output_tokens": 288555,
+    "api_call_count": 351
+  },
+  "session_metrics": {
+    "turn_count": 43
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-14T15:36:06.808237Z",
+    "agent_lines": 27,
+    "agent_removed": 0,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 27,
+    "total_lines_changed": 27,
+    "agent_percentage": 100,
+    "metric_version": 2
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 2,
+      "user_lines_added": 325,
+      "user_lines_removed": 0,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0,
+      "user_added_per_file": {
+        ".claude/settings.local.json": 325
+      }
+    },
+    {
+      "checkpoint_number": 3,
+      "user_lines_added": 325,
+      "user_lines_removed": 0,
+      "agent_lines_added": 27,
+      "agent_lines_removed": 0,
+      "user_added_per_file": {
+        ".claude/settings.local.json": 325
+      }
+    }
+  ]
+}
