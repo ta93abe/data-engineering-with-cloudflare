@@ -1,0 +1,29 @@
+{
+  "cli_version": "0.5.4",
+  "checkpoint_id": "1c4f2275df31",
+  "strategy": "manual-commit",
+  "branch": "chore/flatten-fusion-seeds",
+  "checkpoints_count": 12,
+  "files_touched": [
+    ".serena/project.yml",
+    "modeling/.user.yml",
+    "modeling/profiles.yml",
+    "modeling/pyproject.toml",
+    "modeling/uv.lock"
+  ],
+  "sessions": [
+    {
+      "metadata": "/1c/4f2275df31/0/metadata.json",
+      "transcript": "/1c/4f2275df31/0/full.jsonl",
+      "content_hash": "/1c/4f2275df31/0/content_hash.txt",
+      "prompt": "/1c/4f2275df31/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 2965,
+    "cache_creation_tokens": 516482,
+    "cache_read_tokens": 21545772,
+    "output_tokens": 92412,
+    "api_call_count": 136
+  }
+}
