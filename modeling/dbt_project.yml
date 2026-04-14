@@ -9,6 +9,16 @@ clean-targets:
   - "target"
   - "dbt_packages"
 
+vars:
+  # datavault4dbt global configuration (see https://www.datavault4dbt.com/documentation/global-variables/)
+  datavault4dbt.hash: 'MD5'
+  datavault4dbt.hashkey_input_case_sensitive: false
+  datavault4dbt.hashdiff_input_case_sensitive: false
+  datavault4dbt.hashdiff_use_trim: true
+  datavault4dbt.ldts_alias: 'ldts'
+  datavault4dbt.rsrc_alias: 'rsrc'
+  datavault4dbt.stg_alias: 'stg'
+
 seeds:
   # Builds seeds into '<your_schema_name>_raw'
   modeling:
@@ -16,8 +26,24 @@ seeds:
 
 models:
   modeling:
-    # Materialize staging models as views, and marts as tables
+    # Jaffle shop starter (unchanged)
     staging:
       +materialized: view
+      datavault:
+        +schema: staging
+        +materialized: view
+        +tags: ['datavault', 'staging']
     marts:
       +materialized: table
+      datavault:
+        +schema: marts
+        +materialized: table
+        +tags: ['datavault', 'marts']
+    raw_vault:
+      +schema: raw_vault
+      +materialized: incremental
+      +tags: ['datavault', 'raw_vault']
+    business_vault:
+      +schema: business_vault
+      +materialized: table
+      +tags: ['datavault', 'business_vault']
