@@ -7,12 +7,12 @@
 -- simple equi-join.
 
 WITH as_of_dates AS (
-    SELECT {{ datavault4dbt.ldts_alias() }} AS as_of_date
+    SELECT ldts AS as_of_date
     FROM {{ ref('hub_patient') }}
 
     UNION
 
-    SELECT {{ datavault4dbt.ldts_alias() }} AS as_of_date
+    SELECT ldts AS as_of_date
     FROM {{ ref('sat_patient_details') }}
 ),
 
@@ -33,11 +33,11 @@ sat_patient_lookup AS (
     SELECT
         hp.hk_patient_h,
         hp.as_of_date,
-        MAX(spd.{{ datavault4dbt.ldts_alias() }}) AS sat_patient_details_ldts
+        MAX(spd.ldts) AS sat_patient_details_ldts
     FROM hub_pit hp
     LEFT JOIN {{ ref('sat_patient_details') }} spd
         ON hp.hk_patient_h = spd.hk_patient_h
-        AND spd.{{ datavault4dbt.ldts_alias() }} <= hp.as_of_date
+        AND spd.ldts <= hp.as_of_date
     GROUP BY hp.hk_patient_h, hp.as_of_date
 )
 

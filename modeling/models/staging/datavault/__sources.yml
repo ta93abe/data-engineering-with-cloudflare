@@ -10,12 +10,15 @@ sources:
     schema: seeds
     tables:
       - name: raw_patients
-        description: Patient master data
+        description: >
+          Patient master data. The source legitimately carries
+          multiple rows per patient_id (change history), so only
+          not_null is enforced here -- the Data Vault satellite
+          handles uniqueness via (hk_patient_h, ldts).
         columns:
           - name: patient_id
-            description: Business key
+            description: Business key (may repeat across load batches)
             tests:
-              - unique
               - not_null
       - name: raw_doctors
         description: Doctor master data

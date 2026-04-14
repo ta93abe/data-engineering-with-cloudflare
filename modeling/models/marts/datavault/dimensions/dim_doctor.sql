@@ -4,7 +4,7 @@ WITH hub AS (
     SELECT
         hk_doctor_h,
         doctor_id,
-        {{ datavault4dbt.ldts_alias() }} AS hub_ldts
+        ldts AS hub_ldts
     FROM {{ ref('hub_doctor') }}
 ),
 
@@ -15,10 +15,10 @@ sat_latest AS (
         last_name,
         specialty,
         license_number,
-        {{ datavault4dbt.ldts_alias() }} AS sat_ldts,
+        ldts AS sat_ldts,
         ROW_NUMBER() OVER (
             PARTITION BY hk_doctor_h
-            ORDER BY {{ datavault4dbt.ldts_alias() }} DESC
+            ORDER BY ldts DESC
         ) AS rn
     FROM {{ ref('sat_doctor_details') }}
 )

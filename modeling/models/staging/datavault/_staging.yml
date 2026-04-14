@@ -17,17 +17,14 @@ models:
         data_tests:
           - not_null
       - name: patient_id
-        description: Business key
+        description: Business key (history rows allowed)
         data_tests:
-          - unique
           - not_null
       - name: first_name
       - name: last_name
       - name: date_of_birth
       - name: gender
-        data_tests:
-          - accepted_values:
-              values: ['M', 'F']
+        description: M/F (ghost records carry placeholder values so no accepted_values test here)
       - name: address
       - name: phone
       - name: ldts

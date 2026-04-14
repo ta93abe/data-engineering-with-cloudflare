@@ -9,7 +9,7 @@ WITH prescription_link AS (
         hk_prescription_l,
         hk_visit_h,
         hk_medication_h,
-        {{ datavault4dbt.ldts_alias() }} AS link_ldts
+        ldts AS link_ldts
     FROM {{ ref('link_prescription') }}
 ),
 
@@ -22,7 +22,7 @@ prescription_sat AS (
         CAST(duration_days AS INT) AS duration_days,
         ROW_NUMBER() OVER (
             PARTITION BY hk_prescription_l
-            ORDER BY {{ datavault4dbt.ldts_alias() }} DESC
+            ORDER BY ldts DESC
         ) AS rn
     FROM {{ ref('sat_prescription_details') }}
 ),
@@ -42,7 +42,7 @@ medication_sat AS (
         CAST(unit_price AS DECIMAL(10, 2)) AS unit_price,
         ROW_NUMBER() OVER (
             PARTITION BY hk_medication_h
-            ORDER BY {{ datavault4dbt.ldts_alias() }} DESC
+            ORDER BY ldts DESC
         ) AS rn
     FROM {{ ref('sat_medication_details') }}
 ),
@@ -53,7 +53,7 @@ visit_sat AS (
         visit_date,
         ROW_NUMBER() OVER (
             PARTITION BY hk_visit_h
-            ORDER BY {{ datavault4dbt.ldts_alias() }} DESC
+            ORDER BY ldts DESC
         ) AS rn
     FROM {{ ref('sat_visit_details') }}
 )

@@ -9,7 +9,7 @@ modeling:
       private_key_passphrase: "{{ env_var('SNOWFLAKE_PRIVATE_KEY_PASSPHRASE', '') }}"
       role: "{{ env_var('SNOWFLAKE_ROLE', 'ACCOUNTADMIN') }}"
       warehouse: "{{ env_var('SNOWFLAKE_WAREHOUSE', 'COMPUTE_WH') }}"
-      database: "{{ env_var('SNOWFLAKE_DATABASE', 'USER$TA93ABE') }}"
+      database: "{{ env_var('SNOWFLAKE_DATABASE', 'DEVELOPMENT') }}"
       schema: "{{ env_var('SNOWFLAKE_SCHEMA', 'PUBLIC') }}"
       threads: 8
       client_session_keep_alive: false

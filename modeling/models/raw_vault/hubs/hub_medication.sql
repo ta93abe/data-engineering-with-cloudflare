@@ -5,8 +5,8 @@ hashkey: 'hk_medication_h'
 business_keys:
   - 'medication_id'
 source_models:
-  - stg_medications
-  - stg_prescriptions
+  - name: stg_medications
+  - name: stg_prescriptions
 {%- endset -%}
 
 {{ datavault4dbt.hub(yaml_metadata=yaml_metadata) }}

@@ -429,6 +429,18 @@ wheels = [
 ]
 
 [[package]]
+name = "dbtective"
+version = "0.3.2"
+source = { registry = "https://pypi.org/simple" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/cc/5a/ced3f6a140b413ed9342ac27005d2da0dc30b35e47bcd5e655419954a7a6/dbtective-0.3.2-py3-none-macosx_10_12_x86_64.whl", hash = "sha256:696c661dd3001438974f01bca6145bca16bbc4b071461fe6491bdb7fd0746c91", size = 2354111, upload-time = "2026-04-06T06:49:12.886Z" },
+    { url = "https://files.pythonhosted.org/packages/27/fd/d222a9f50e1042f4b65b1c0b6bc27442cd73dc6fd0620be69bc5b90925d3/dbtective-0.3.2-py3-none-macosx_11_0_arm64.whl", hash = "sha256:f4fec7f1d228e6241d7880c9034bfb96631b82cc71f8f2620506d8d0e48f8ea2", size = 2232189, upload-time = "2026-04-06T06:49:10.381Z" },
+    { url = "https://files.pythonhosted.org/packages/25/2e/8108d399b9acd85a10f01c3f82cab15b49b95d9122d2ecfb2f9a99a6b914/dbtective-0.3.2-py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:3d869843b503375d8054e628bdd419377ae35d85f589ae16d0c76b1dd412dbc1", size = 2270277, upload-time = "2026-04-06T06:49:14.423Z" },
+    { url = "https://files.pythonhosted.org/packages/58/70/38af629ee9506f6f6f18e510b32b75e54df83c6dcba85338f40d3c74ab7c/dbtective-0.3.2-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:6e3a1f2ebc0fccd2c73e63bb0e5d79f6b01935f613185749823321b419d11421", size = 2441898, upload-time = "2026-04-06T06:49:09.128Z" },
+    { url = "https://files.pythonhosted.org/packages/52/b5/b8ff988947cd7b8b5158e00f0001652f8511f894e811f0e4207a90d4ed6d/dbtective-0.3.2-py3-none-win_amd64.whl", hash = "sha256:dbb4ddf451db52d1511810145d63231edd0f270a6cc3f0585fba25f518cded40", size = 2378789, upload-time = "2026-04-06T06:49:11.494Z" },
+]
+
+[[package]]
 name = "deepdiff"
 version = "8.6.2"
 source = { registry = "https://pypi.org/simple" }
@@ -657,6 +669,7 @@ dependencies = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "dbtective" },
     { name = "shandy-sqlfmt", extra = ["jinjafmt"] },
     { name = "sqruff" },
 ]
@@ -669,6 +682,7 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "dbtective", specifier = ">=0.3.2" },
     { name = "shandy-sqlfmt", extras = ["jinjafmt"], specifier = ">=0.24.0" },
     { name = "sqruff", specifier = ">=0.24.0" },
 ]

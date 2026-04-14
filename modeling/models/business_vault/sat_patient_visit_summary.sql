@@ -14,7 +14,7 @@ WITH visit_facts AS (
         svd.treatment_cost,
         ROW_NUMBER() OVER (
             PARTITION BY lv.hk_visit_h
-            ORDER BY svd.{{ datavault4dbt.ldts_alias() }} DESC
+            ORDER BY svd.ldts DESC
         ) AS rn
     FROM {{ ref('link_visit') }} lv
     INNER JOIN {{ ref('sat_visit_details') }} svd

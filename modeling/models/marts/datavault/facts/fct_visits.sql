@@ -21,7 +21,7 @@ visit_sat AS (
         treatment_cost,
         ROW_NUMBER() OVER (
             PARTITION BY hk_visit_h
-            ORDER BY {{ datavault4dbt.ldts_alias() }} DESC
+            ORDER BY ldts DESC
         ) AS rn
     FROM {{ ref('sat_visit_details') }}
 )

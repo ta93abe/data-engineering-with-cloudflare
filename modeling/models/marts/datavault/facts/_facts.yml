@@ -105,16 +105,16 @@ unit_tests:
           - {hk_prescription_l: 'LP1', hk_visit_h: 'V1', hk_medication_h: 'M1', ldts: '2026-01-05', rsrc: 'r2'}
       - input: ref('sat_prescription_details')
         rows:
-          - {hk_prescription_l: 'LP1', hashdiff: 'HDP1', prescription_id: 'PRE-001', dosage: '500mg', frequency: '1日3回', duration_days: 5, ldts: '2026-01-05', rsrc: 'r2'}
+          - {hk_prescription_l: 'LP1', hd_prescription_s: 'HDP1', prescription_id: 'PRE-001', dosage: '500mg', frequency: '1日3回', duration_days: 5, ldts: '2026-01-05', rsrc: 'r2'}
       - input: ref('bridge_patient_medication')
         rows:
           - {hk_patient_h: 'P1', hk_visit_l: 'VL1', hk_visit_h: 'V1', hk_prescription_l: 'LP1', hk_medication_h: 'M1'}
       - input: ref('sat_medication_details')
         rows:
-          - {hk_medication_h: 'M1', hashdiff: 'HDM1', medication_name: 'ロキソ', type: '内服', manufacturer: 'X', unit_price: 15.80, ldts: '2026-01-01', rsrc: 'r2'}
+          - {hk_medication_h: 'M1', hd_medication_s: 'HDM1', medication_name: 'ロキソ', type: '内服', manufacturer: 'X', unit_price: 15.80, ldts: '2026-01-01', rsrc: 'r2'}
       - input: ref('sat_visit_details')
         rows:
-          - {hk_visit_h: 'V1', hashdiff: 'HDV1', visit_date: '2026-01-05', diagnosis_code: 'J06.9', diagnosis_name: '風邪', notes: '', treatment_cost: 3500, ldts: '2026-01-05', rsrc: 'r2'}
+          - {hk_visit_h: 'V1', hd_visit_s: 'HDV1', visit_date: '2026-01-05', diagnosis_code: 'J06.9', diagnosis_name: '風邪', notes: '', treatment_cost: 3500, ldts: '2026-01-05', rsrc: 'r2'}
     expect:
       rows:
         - {prescription_id: 'PRE-001', duration_days: 5, unit_price: 15.80, estimated_cost: 79.00}

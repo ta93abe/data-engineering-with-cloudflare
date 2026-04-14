@@ -8,7 +8,7 @@ WITH hub AS (
     SELECT
         hk_patient_h,
         patient_id,
-        {{ datavault4dbt.ldts_alias() }} AS hub_ldts
+        ldts AS hub_ldts
     FROM {{ ref('hub_patient') }}
 ),
 
@@ -21,10 +21,10 @@ sat_latest AS (
         gender,
         address,
         phone,
-        {{ datavault4dbt.ldts_alias() }} AS sat_ldts,
+        ldts AS sat_ldts,
         ROW_NUMBER() OVER (
             PARTITION BY hk_patient_h
-            ORDER BY {{ datavault4dbt.ldts_alias() }} DESC
+            ORDER BY ldts DESC
         ) AS rn
     FROM {{ ref('sat_patient_details') }}
 ),

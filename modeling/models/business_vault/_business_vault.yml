@@ -114,8 +114,8 @@ unit_tests:
           - {hk_visit_l: 'VL2', hk_visit_h: 'V2', hk_patient_h: 'P1', hk_doctor_h: 'D2', ldts: '2026-01-02', rsrc: 'r2'}
       - input: ref('sat_visit_details')
         rows:
-          - {hk_visit_h: 'V1', hashdiff: 'H1', visit_date: '2026-01-05', diagnosis_code: 'A', diagnosis_name: 'x', notes: '', treatment_cost: 1000, ldts: '2026-01-05', rsrc: 'r2'}
-          - {hk_visit_h: 'V2', hashdiff: 'H2', visit_date: '2026-01-12', diagnosis_code: 'B', diagnosis_name: 'y', notes: '', treatment_cost: 2500, ldts: '2026-01-12', rsrc: 'r2'}
+          - {hk_visit_h: 'V1', hd_visit_s: 'H1', visit_date: '2026-01-05', diagnosis_code: 'A', diagnosis_name: 'x', notes: '', treatment_cost: 1000, ldts: '2026-01-05', rsrc: 'r2'}
+          - {hk_visit_h: 'V2', hd_visit_s: 'H2', visit_date: '2026-01-12', diagnosis_code: 'B', diagnosis_name: 'y', notes: '', treatment_cost: 2500, ldts: '2026-01-12', rsrc: 'r2'}
       - input: ref('bridge_patient_medication')
         rows:
           - {hk_patient_h: 'P1', hk_visit_l: 'VL1', hk_visit_h: 'V1', hk_prescription_l: 'LP1', hk_medication_h: 'M1'}
@@ -136,9 +136,9 @@ unit_tests:
           - {hk_patient_h: 'P1', patient_id: 'PAT-001', ldts: '2026-01-01', rsrc: 'r2'}
       - input: ref('sat_patient_details')
         rows:
-          - {hk_patient_h: 'P1', hashdiff: 'H1', first_name: 'a', last_name: 'b', date_of_birth: '1985-03-15', gender: 'M', address: 'x', phone: '1', ldts: '2026-01-01', rsrc: 'r2'}
-          - {hk_patient_h: 'P1', hashdiff: 'H2', first_name: 'a', last_name: 'b', date_of_birth: '1985-03-15', gender: 'M', address: 'y', phone: '1', ldts: '2026-01-10', rsrc: 'r2'}
-          - {hk_patient_h: 'P1', hashdiff: 'H3', first_name: 'a', last_name: 'b', date_of_birth: '1985-03-15', gender: 'M', address: 'z', phone: '1', ldts: '2026-01-20', rsrc: 'r2'}
+          - {hk_patient_h: 'P1', hd_patient_s: 'H1', first_name: 'a', last_name: 'b', date_of_birth: '1985-03-15', gender: 'M', address: 'x', phone: '1', ldts: '2026-01-01', rsrc: 'r2'}
+          - {hk_patient_h: 'P1', hd_patient_s: 'H2', first_name: 'a', last_name: 'b', date_of_birth: '1985-03-15', gender: 'M', address: 'y', phone: '1', ldts: '2026-01-10', rsrc: 'r2'}
+          - {hk_patient_h: 'P1', hd_patient_s: 'H3', first_name: 'a', last_name: 'b', date_of_birth: '1985-03-15', gender: 'M', address: 'z', phone: '1', ldts: '2026-01-20', rsrc: 'r2'}
     expect:
       rows:
         - {hk_patient_h: 'P1', as_of_date: '2026-01-01', sat_patient_details_ldts: '2026-01-01'}

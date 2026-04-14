@@ -1,6 +1,19 @@
 version: 2
 
 models:
+  - name: metricflow_time_spine
+    description: >
+      Daily time spine for the dbt semantic layer. Required by
+      MetricFlow so metrics can aggregate along a canonical calendar.
+    time_spine:
+      standard_granularity_column: date_day
+    columns:
+      - name: date_day
+        granularity: day
+        data_tests:
+          - unique
+          - not_null
+
   - name: dim_patient
     description: >
       Conformed patient dimension. One row per patient with the
@@ -26,10 +39,11 @@ models:
       - name: date_of_birth
         description: Birth date (source string, not parsed)
       - name: gender
-        description: Gender code (M/F)
-        data_tests:
-          - accepted_values:
-              values: ['M', 'F']
+        description: >
+          Gender code (M/F). Ghost records propagated from the raw
+          vault may carry placeholder values, so no accepted_values
+          test is declared here -- apply one downstream if you filter
+          them out explicitly.
       - name: address
         description: Current address
       - name: phone
@@ -141,10 +155,10 @@ unit_tests:
     given:
       - input: ref('hub_patient')
         rows:
-          - {hk_patient_h: 'HK1', patient_id: 'PAT-001', ldts: '2026-01-01', rsrc: 'r2', stg: 'stg_patients'}
+          - {hk_patient_h: 'HK1', patient_id: 'PAT-001', ldts: '2026-01-01', rsrc: 'r2'}
       - input: ref('sat_patient_details')
         rows:
-          - {hk_patient_h: 'HK1', hashdiff: 'HD1', first_name: '太郎', last_name: '田中', date_of_birth: '1985-03-15', gender: 'M', address: '東京', phone: '03-0000', ldts: '2026-01-01', rsrc: 'r2'}
+          - {hk_patient_h: 'HK1', hd_patient_s: 'HD1', first_name: '太郎', last_name: '田中', date_of_birth: '1985-03-15', gender: 'M', address: '東京', phone: '03-0000', ldts: '2026-01-01', rsrc: 'r2'}
       - input: ref('sat_patient_visit_summary')
         rows: []
     expect:

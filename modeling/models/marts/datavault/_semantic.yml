@@ -4,6 +4,8 @@ semantic_models:
   - name: visits
     description: Semantic model for hospital visits
     model: ref('fct_visits')
+    defaults:
+      agg_time_dimension: visit_date
     entities:
       - name: visit
         type: primary
@@ -40,6 +42,8 @@ semantic_models:
   - name: prescriptions
     description: Semantic model for prescriptions
     model: ref('fct_prescriptions')
+    defaults:
+      agg_time_dimension: prescription_date
     entities:
       - name: prescription
         type: primary
