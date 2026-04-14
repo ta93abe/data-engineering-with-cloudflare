@@ -1,0 +1,166 @@
+version: 2
+
+models:
+  - name: metricflow_time_spine
+    description: >
+      Daily time spine for the dbt semantic layer. Required by
+      MetricFlow so metrics can aggregate along a canonical calendar.
+    time_spine:
+      standard_granularity_column: date_day
+    columns:
+      - name: date_day
+        granularity: day
+        data_tests:
+          - unique
+          - not_null
+
+  - name: dim_patient
+    description: >
+      Conformed patient dimension. One row per patient with the
+      latest demographics from sat_patient_details plus the aggregated
+      visit metrics from sat_patient_visit_summary.
+    columns:
+      - name: hk_patient_h
+        description: Patient hub hashkey (MD5 of patient_id)
+        data_tests:
+          - unique
+          - not_null
+      - name: patient_id
+        description: Business key (e.g. PAT-001)
+        data_tests:
+          - unique
+          - not_null
+      - name: first_name
+        description: Given name, current value
+      - name: last_name
+        description: Family name, current value
+      - name: full_name
+        description: Concatenation of first_name and last_name
+      - name: date_of_birth
+        description: Birth date (source string, not parsed)
+      - name: gender
+        description: >
+          Gender code (M/F). Ghost records propagated from the raw
+          vault may carry placeholder values, so no accepted_values
+          test is declared here -- apply one downstream if you filter
+          them out explicitly.
+      - name: address
+        description: Current address
+      - name: phone
+        description: Current phone number
+      - name: total_visits
+        description: Distinct visit count from sat_patient_visit_summary
+        data_tests:
+          - not_null
+      - name: distinct_doctors
+        description: Distinct doctors seen by this patient
+        data_tests:
+          - not_null
+      - name: total_treatment_cost
+        description: Sum of treatment_cost across all visits
+        data_tests:
+          - not_null
+      - name: first_visit_date
+        description: Earliest visit date on record
+      - name: last_visit_date
+        description: Latest visit date on record
+      - name: distinct_medications
+        description: Count of distinct medications prescribed to this patient
+        data_tests:
+          - not_null
+      - name: hub_ldts
+        description: Load datetime from hub_patient
+      - name: sat_ldts
+        description: Load datetime of the latest sat_patient_details record
+
+  - name: dim_doctor
+    description: Conformed doctor dimension, one row per doctor.
+    columns:
+      - name: hk_doctor_h
+        data_tests:
+          - unique
+          - not_null
+      - name: doctor_id
+        description: Business key (e.g. DOC-001)
+        data_tests:
+          - unique
+          - not_null
+      - name: first_name
+      - name: last_name
+      - name: full_name
+      - name: specialty
+        description: Medical specialty label (free text)
+      - name: license_number
+        description: Medical license number
+        data_tests:
+          - unique
+      - name: hub_ldts
+      - name: sat_ldts
+
+  - name: dim_medication
+    description: Conformed medication dimension, one row per medication SKU.
+    columns:
+      - name: hk_medication_h
+        data_tests:
+          - unique
+          - not_null
+      - name: medication_id
+        description: Business key (e.g. MED-001)
+        data_tests:
+          - unique
+          - not_null
+      - name: medication_name
+        description: Commercial name
+      - name: medication_type
+        description: Dosage form (e.g. 内服, 外用)
+      - name: manufacturer
+        description: Manufacturer name
+      - name: unit_price
+        description: Unit price at the most recent sat revision
+        data_tests:
+          - not_null
+      - name: hub_ldts
+      - name: sat_ldts
+
+  - name: dim_date
+    description: >
+      Generated date dimension covering 2020-01-01 through 2030-12-31.
+      Produced via dbt_utils.date_spine.
+    columns:
+      - name: date_key
+        description: Primary key (DATE type)
+        data_tests:
+          - unique
+          - not_null
+      - name: full_date
+        data_tests:
+          - not_null
+      - name: year
+      - name: quarter
+      - name: month
+      - name: day_of_month
+      - name: day_of_week
+      - name: week_of_year
+      - name: year_month
+      - name: day_name_short
+      - name: month_name_short
+      - name: is_weekend
+        data_tests:
+          - not_null
+
+unit_tests:
+  - name: dim_patient_full_name_concatenation
+    description: full_name should concatenate first and last name with a space
+    model: dim_patient
+    given:
+      - input: ref('hub_patient')
+        rows:
+          - {hk_patient_h: 'HK1', patient_id: 'PAT-001', ldts: '2026-01-01', rsrc: 'r2'}
+      - input: ref('sat_patient_details')
+        rows:
+          - {hk_patient_h: 'HK1', hd_patient_s: 'HD1', first_name: '太郎', last_name: '田中', date_of_birth: '1985-03-15', gender: 'M', address: '東京', phone: '03-0000', ldts: '2026-01-01', rsrc: 'r2'}
+      - input: ref('sat_patient_visit_summary')
+        rows: []
+    expect:
+      rows:
+        - {patient_id: 'PAT-001', full_name: '太郎 田中', total_visits: 0, distinct_doctors: 0, total_treatment_cost: 0, distinct_medications: 0}

@@ -1,0 +1,19 @@
+{
+  "name": "modeling",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc --noEmit"
+  },
+  "packageManager": "pnpm@10.29.2",
+  "dependencies": {
+    "@cloudflare/containers": "^0.2.1"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260331.1",
+    "typescript": "^6.0.2",
+    "wrangler": "^4.79.0"
+  }
+}

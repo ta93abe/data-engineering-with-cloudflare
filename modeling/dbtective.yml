@@ -1,0 +1,178 @@
+# dbtective configuration file
+# Documentation: https://feliblo.github.io/dbtective/docs/config
+# Rules: https://feliblo.github.io/dbtective/docs/rules/
+#
+# Aligned to the current modeling/ layout:
+#   models/staging/                           (jaffle)
+#   models/staging/datavault/                 (datavault stg_*)
+#   models/raw_vault/hubs/                    (hub_*)
+#   models/raw_vault/links/                   (link_*)
+#   models/raw_vault/satellites/              (sat_*)
+#   models/business_vault/                    (pit_*, bridge_*, sat_* derived)
+#   models/marts/datavault/dimensions/        (dim_*)
+#   models/marts/datavault/facts/             (fct_*)
+#   models/marts/                             (jaffle customers/orders/...)
+
+config:
+  auto_parse_command: "uv run dbt parse"
+
+manifest_tests:
+  ###################
+  ## documentation ##
+  ###################
+  - name: "has_description"
+    type: "has_description"
+
+  ############
+  ## naming ##
+  ############
+  - name: "naming_convention"
+    type: "name_convention"
+    pattern: "snake_case"
+
+  ################
+  ## governance ##
+  ################
+  - name: "code_contains_refs"
+    type: "code_contains_refs"
+
+  - name: "refs_must_be_used"
+    type: "has_refs"
+
+  #############
+  ## testing ##
+  #############
+  - name: "has_unique_test"
+    type: "has_unique_test"
+    description: "Every model should have a uniqueness test somewhere in its columns"
+
+  ###############
+  ## structure ##
+  ###############
+  - name: "is_not_orphaned"
+    type: "is_not_orphaned"
+
+  - name: "max_downstream_dependencies"
+    description: "Reduce model fanout complexity"
+    type: "max_downstream_dependencies"
+    max_downstream: 8
+    applies_to: ["models"]
+
+  - name: "source_max_downstream_dependencies"
+    description: "Sources should not be referenced by more than 3 staging models"
+    type: "max_downstream_dependencies"
+    max_downstream: 3
+    applies_to: ["sources"]
+
+  - name: "max_upstream_dependencies"
+    description: "Models should not select from too many ref() and source() calls"
+    type: "max_upstream_dependencies"
+    max_upstream: 8
+
+  - name: "property_file_colocation"
+    type: "property_file_colocation"
+
+  #################
+  ## performance ##
+  #################
+  - name: "code_forbidden_patterns"
+    type: "code_forbidden_patterns"
+    forbidden_patterns: ["SELECT *"]
+
+  - name: "code_max_joins"
+    description: "Reduce model complexity"
+    type: "code_max_joins"
+    max_joins: 8
+
+  - name: "code_no_hardcoded_refs"
+    description: "Detect hardcoded table references (schema.table) in SQL code"
+    type: "code_no_hardcoded_refs"
+
+  ##################################
+  ## Data Model/Layering Specific ##
+  ##################################
+  - name: "raw_vault_subfolders"
+    type: "allowed_subfolders"
+    allowed_subfolders: ["hubs", "links", "satellites"]
+    includes: ["models/raw_vault"]
+    description: "The raw vault layer must contain Data Vault components"
+
+  - name: "marts_datavault_subfolders"
+    type: "allowed_subfolders"
+    allowed_subfolders: ["dimensions", "facts"]
+    includes: ["models/marts/datavault"]
+    description: "marts/datavault splits dimensions and facts into their own schemas"
+
+  - name: "hub_naming"
+    type: "name_convention"
+    pattern: "^hub_"
+    includes: ["models/raw_vault/hubs"]
+    description: "Hub models must start with hub_"
+
+  - name: "link_naming"
+    type: "name_convention"
+    pattern: "^link_"
+    includes: ["models/raw_vault/links"]
+    description: "Link models must start with link_"
+
+  - name: "satellite_naming"
+    type: "name_convention"
+    pattern: "^(sat_|eff_sat_)"
+    includes: ["models/raw_vault/satellites"]
+    description: "Satellite models must start with sat_ or eff_sat_"
+
+  - name: "business_vault_naming"
+    type: "name_convention"
+    pattern: "^(pit_|bridge_|sat_)"
+    includes: ["models/business_vault"]
+    description: "Business vault models are PIT tables, bridges, or derived satellites"
+
+  - name: "hub_unique_keys"
+    type: "has_unique_test"
+    includes: ["models/raw_vault/hubs"]
+    description: "All hubs must have a uniqueness test on the hash key"
+
+  - name: "link_unique_keys"
+    type: "has_unique_test"
+    includes: ["models/raw_vault/links"]
+    description: "All links must have a uniqueness test on the hash key"
+
+  - name: "datavault_dim_naming"
+    type: "name_convention"
+    pattern: "^dim_"
+    includes: ["models/marts/datavault/dimensions"]
+    description: "Dimension models must start with dim_"
+
+  - name: "datavault_fact_naming"
+    type: "name_convention"
+    pattern: "^fct_"
+    includes: ["models/marts/datavault/facts"]
+    description: "Fact models must start with fct_"
+
+  - name: "staging_datavault_naming"
+    type: "name_convention"
+    pattern: "^stg_"
+    includes: ["models/staging/datavault"]
+    description: "Staging models must start with stg_"
+
+catalog_tests:
+  ###################
+  ## documentation ##
+  ###################
+  - name: "all_columns_documented"
+    type: "columns_all_documented"
+    description: "All columns must exist in the documentation."
+    severity: "warning"
+
+  - name: "all_columns_described"
+    type: "columns_have_description"
+    description: "All columns must have a description."
+    severity: "warning"
+
+  ############
+  ## naming ##
+  ############
+  - name: "column_names_snake_case"
+    type: "columns_name_convention"
+    description: "All column names must be snake_case."
+    pattern: "snake_case"

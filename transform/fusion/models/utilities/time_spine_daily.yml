@@ -1,9 +1,0 @@
-models:
-  - name: time_spine_daily
-    description: Semantic Layer 用の日次タイムスパインモデル。2010-01-01 から 2029-12-31 までの日付を生成。
-    time_spine:
-      standard_granularity_column: date_day
-    columns:
-      - name: date_day
-        description: 日付カラム（日次粒度）。
-        granularity: day

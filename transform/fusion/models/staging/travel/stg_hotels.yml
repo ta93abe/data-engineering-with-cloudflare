@@ -1,9 +1,0 @@
-models:
-  - name: stg_hotels
-    description: Hotel data with basic cleaning applied, one row per hotel.
-    columns:
-      - name: hotel_id
-        description: The unique key for each hotel.
-        data_tests:
-          - not_null
-          - unique

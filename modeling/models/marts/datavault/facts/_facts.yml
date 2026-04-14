@@ -1,0 +1,120 @@
+version: 2
+
+models:
+  - name: fct_visits
+    description: >
+      Visit fact table. One row per hospital visit with references to
+      patient, doctor and the treatment cost. Grain = one visit.
+    columns:
+      - name: hk_visit_l
+        description: Link hashkey (visit-patient-doctor)
+        data_tests:
+          - unique
+          - not_null
+      - name: hk_visit_h
+        description: FK to dim_patient? no — to hub_visit (via raw_vault)
+        data_tests:
+          - not_null
+      - name: hk_patient_h
+        description: FK to dim_patient
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('dim_patient')
+              field: hk_patient_h
+      - name: hk_doctor_h
+        description: FK to dim_doctor
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('dim_doctor')
+              field: hk_doctor_h
+      - name: visit_date
+        description: Date the visit occurred
+        data_tests:
+          - not_null
+      - name: diagnosis_code
+        description: ICD-10 diagnosis code
+      - name: diagnosis_name
+        description: Human-readable diagnosis label
+      - name: notes
+        description: Free-text clinical notes
+      - name: treatment_cost
+        description: Cost of treatment for this visit (JPY)
+        data_tests:
+          - not_null
+
+  - name: fct_prescriptions
+    description: >
+      Prescription fact table. One row per prescription with the
+      derived estimated cost (duration_days * unit_price).
+    columns:
+      - name: hk_prescription_l
+        description: Link hashkey (visit-medication)
+        data_tests:
+          - unique
+          - not_null
+      - name: prescription_id
+        description: Business key retained as a secondary identifier
+        data_tests:
+          - unique
+          - not_null
+      - name: hk_patient_h
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('dim_patient')
+              field: hk_patient_h
+      - name: hk_visit_h
+        data_tests:
+          - not_null
+      - name: hk_medication_h
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('dim_medication')
+              field: hk_medication_h
+      - name: prescription_date
+        description: Derived from the visit_date of the linked visit
+        data_tests:
+          - not_null
+      - name: dosage
+        description: Dosage string (e.g. '500mg')
+      - name: frequency
+        description: Frequency string (e.g. '1日3回')
+      - name: duration_days
+        description: Duration of the prescription in days
+        data_tests:
+          - not_null
+      - name: unit_price
+        description: Unit price of the medication at prescription time
+        data_tests:
+          - not_null
+      - name: estimated_cost
+        description: duration_days * unit_price
+        data_tests:
+          - not_null
+
+unit_tests:
+  - name: fct_prescriptions_estimated_cost_calculation
+    description: estimated_cost should equal duration_days * unit_price
+    model: fct_prescriptions
+    given:
+      - input: ref('link_prescription')
+        rows:
+          - {hk_prescription_l: 'LP1', hk_visit_h: 'V1', hk_medication_h: 'M1', ldts: '2026-01-05', rsrc: 'r2'}
+      - input: ref('sat_prescription_details')
+        rows:
+          - {hk_prescription_l: 'LP1', hd_prescription_s: 'HDP1', prescription_id: 'PRE-001', dosage: '500mg', frequency: '1日3回', duration_days: 5, ldts: '2026-01-05', rsrc: 'r2'}
+      - input: ref('bridge_patient_medication')
+        rows:
+          - {hk_patient_h: 'P1', hk_visit_l: 'VL1', hk_visit_h: 'V1', hk_prescription_l: 'LP1', hk_medication_h: 'M1'}
+      - input: ref('sat_medication_details')
+        rows:
+          - {hk_medication_h: 'M1', hd_medication_s: 'HDM1', medication_name: 'ロキソ', type: '内服', manufacturer: 'X', unit_price: 15.80, ldts: '2026-01-01', rsrc: 'r2'}
+      - input: ref('sat_visit_details')
+        rows:
+          - {hk_visit_h: 'V1', hd_visit_s: 'HDV1', visit_date: '2026-01-05', diagnosis_code: 'J06.9', diagnosis_name: '風邪', notes: '', treatment_cost: 3500, ldts: '2026-01-05', rsrc: 'r2'}
+    expect:
+      rows:
+        - {prescription_id: 'PRE-001', duration_days: 5, unit_price: 15.80, estimated_cost: 79.00}

@@ -1,0 +1,258 @@
+version: 2
+
+models:
+  - name: stg_patients
+    description: >
+      Staging view for raw_patients. Adds the patient hub hashkey
+      (hk_patient_h = MD5(patient_id)) and a descriptive-column
+      hashdiff (hd_patient_s) so the downstream sat_patient_details
+      can detect changes without scanning payload columns.
+    columns:
+      - name: hk_patient_h
+        description: Hub hashkey (MD5 of patient_id)
+        data_tests:
+          - not_null
+      - name: hd_patient_s
+        description: Hashdiff over {first_name, last_name, date_of_birth, gender, address, phone}
+        data_tests:
+          - not_null
+      - name: patient_id
+        description: Business key (history rows allowed)
+        data_tests:
+          - not_null
+      - name: first_name
+      - name: last_name
+      - name: date_of_birth
+      - name: gender
+        description: M/F (ghost records carry placeholder values so no accepted_values test here)
+      - name: address
+      - name: phone
+      - name: ldts
+        description: Load datetime carried from raw_patients.load_date
+        data_tests:
+          - not_null
+      - name: rsrc
+        description: Record source literal
+        data_tests:
+          - not_null
+
+  - name: stg_doctors
+    description: Staging view for raw_doctors with hk_doctor_h + hd_doctor_s.
+    columns:
+      - name: hk_doctor_h
+        data_tests:
+          - not_null
+      - name: hd_doctor_s
+        data_tests:
+          - not_null
+      - name: doctor_id
+        data_tests:
+          - unique
+          - not_null
+      - name: first_name
+      - name: last_name
+      - name: specialty
+      - name: license_number
+        data_tests:
+          - unique
+      - name: ldts
+        data_tests:
+          - not_null
+      - name: rsrc
+        data_tests:
+          - not_null
+
+  - name: stg_departments
+    description: Staging view for raw_departments with hk_department_h + hd_department_s.
+    columns:
+      - name: hk_department_h
+        data_tests:
+          - not_null
+      - name: hd_department_s
+        data_tests:
+          - not_null
+      - name: department_id
+        data_tests:
+          - unique
+          - not_null
+      - name: department_name
+      - name: floor
+      - name: phone_extension
+      - name: ldts
+        data_tests:
+          - not_null
+      - name: rsrc
+        data_tests:
+          - not_null
+
+  - name: stg_medications
+    description: Staging view for raw_medications with hk_medication_h + hd_medication_s.
+    columns:
+      - name: hk_medication_h
+        data_tests:
+          - not_null
+      - name: hd_medication_s
+        data_tests:
+          - not_null
+      - name: medication_id
+        data_tests:
+          - unique
+          - not_null
+      - name: medication_name
+      - name: type
+      - name: manufacturer
+      - name: unit_price
+        data_tests:
+          - not_null
+      - name: ldts
+        data_tests:
+          - not_null
+      - name: rsrc
+        data_tests:
+          - not_null
+
+  - name: stg_visits
+    description: >
+      Staging view for raw_visits. Emits the visit hub hashkey plus
+      the two-entity hk_visit_l link hashkey (visit-patient-doctor)
+      so the visit hub, visit link, and patient/doctor hubs can all
+      derive from this one model.
+    columns:
+      - name: hk_visit_h
+        data_tests:
+          - not_null
+      - name: hk_patient_h
+        data_tests:
+          - not_null
+      - name: hk_doctor_h
+        data_tests:
+          - not_null
+      - name: hk_visit_l
+        description: Link hashkey over (visit_id, patient_id, doctor_id)
+        data_tests:
+          - not_null
+      - name: hk_patient_doctor_l
+        description: Reserved for a future patient-doctor link
+      - name: hd_visit_s
+        data_tests:
+          - not_null
+      - name: visit_id
+        data_tests:
+          - unique
+          - not_null
+      - name: patient_id
+        data_tests:
+          - not_null
+      - name: doctor_id
+        data_tests:
+          - not_null
+      - name: visit_date
+      - name: diagnosis_code
+      - name: diagnosis_name
+      - name: notes
+      - name: treatment_cost
+      - name: ldts
+        data_tests:
+          - not_null
+      - name: rsrc
+        data_tests:
+          - not_null
+
+  - name: stg_prescriptions
+    description: >
+      Staging view for raw_prescriptions, emitting hk_prescription_l
+      (visit-medication) for the prescription link.
+    columns:
+      - name: hk_prescription_h
+      - name: hk_visit_h
+        data_tests:
+          - not_null
+      - name: hk_medication_h
+        data_tests:
+          - not_null
+      - name: hk_prescription_l
+        description: Link hashkey over (visit_id, medication_id)
+        data_tests:
+          - not_null
+      - name: hd_prescription_s
+        data_tests:
+          - not_null
+      - name: prescription_id
+        data_tests:
+          - unique
+          - not_null
+      - name: visit_id
+        data_tests:
+          - not_null
+      - name: medication_id
+        data_tests:
+          - not_null
+      - name: dosage
+      - name: frequency
+      - name: duration_days
+      - name: ldts
+        data_tests:
+          - not_null
+      - name: rsrc
+        data_tests:
+          - not_null
+
+  - name: stg_patient_insurance
+    description: >
+      Staging view for raw_patient_insurance, emitting the
+      patient-insurance link hashkey. Payload keeps policy_number,
+      start_date, end_date for the link sat to track validity.
+    columns:
+      - name: hk_patient_h
+        data_tests:
+          - not_null
+      - name: hk_insurance_h
+        data_tests:
+          - not_null
+      - name: hk_patient_insurance_l
+        description: Link hashkey over (patient_id, insurance_id)
+        data_tests:
+          - not_null
+      - name: hd_patient_insurance_s
+        data_tests:
+          - not_null
+      - name: patient_id
+        data_tests:
+          - not_null
+      - name: insurance_id
+        data_tests:
+          - not_null
+      - name: policy_number
+        data_tests:
+          - unique
+          - not_null
+      - name: start_date
+      - name: end_date
+      - name: ldts
+        data_tests:
+          - not_null
+      - name: rsrc
+        data_tests:
+          - not_null
+
+  - name: stg_insurance_companies
+    description: Staging view for raw_insurance_companies.
+    columns:
+      - name: hk_insurance_h
+        data_tests:
+          - not_null
+      - name: hd_insurance_s
+        data_tests:
+          - not_null
+      - name: insurance_id
+        data_tests:
+          - unique
+          - not_null
+      - name: company_name
+      - name: plan_type
+      - name: ldts
+        data_tests:
+          - not_null
+      - name: rsrc
+        data_tests:
+          - not_null

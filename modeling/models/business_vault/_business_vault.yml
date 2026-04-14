@@ -1,0 +1,146 @@
+version: 2
+
+models:
+  - name: pit_patient
+    description: >
+      Point-In-Time table for hub_patient. For every observed load
+      timestamp, records the latest sat_patient_details.ldts that
+      applied at that moment. Enables efficient temporal joins
+      without window functions in downstream marts.
+    columns:
+      - name: hk_patient_h
+        description: Patient hub hashkey
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('hub_patient')
+              field: hk_patient_h
+      - name: as_of_date
+        description: Observed load timestamp
+        data_tests:
+          - not_null
+      - name: sat_patient_details_ldts
+        description: Latest sat_patient_details ldts on or before as_of_date
+        data_tests:
+          - not_null
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - hk_patient_h
+            - as_of_date
+
+  - name: bridge_patient_medication
+    description: >
+      Pre-computed two-hop traversal
+      patient -> visit -> prescription -> medication.
+      Cached so marts can treat patient<->medication as a direct
+      relationship without re-joining link_visit and link_prescription.
+    columns:
+      - name: hk_patient_h
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('hub_patient')
+              field: hk_patient_h
+      - name: hk_visit_l
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('link_visit')
+              field: hk_visit_l
+      - name: hk_visit_h
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('hub_visit')
+              field: hk_visit_h
+      - name: hk_prescription_l
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('link_prescription')
+              field: hk_prescription_l
+      - name: hk_medication_h
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('hub_medication')
+              field: hk_medication_h
+
+  - name: sat_patient_visit_summary
+    description: >
+      Computed (derived) satellite summarizing per-patient visit
+      activity: counts, distinct doctors and medications, total
+      treatment cost, first/last visit dates. Kept separate from
+      sat_patient_details so raw vault stays immutable while
+      derived metrics can be recomputed independently.
+    columns:
+      - name: hk_patient_h
+        data_tests:
+          - unique
+          - not_null
+          - relationships:
+              to: ref('hub_patient')
+              field: hk_patient_h
+      - name: total_visits
+        description: Distinct visit count
+        data_tests:
+          - not_null
+      - name: distinct_doctors
+        data_tests:
+          - not_null
+      - name: total_treatment_cost
+        description: Sum of treatment_cost across all visits (latest sat only)
+        data_tests:
+          - not_null
+      - name: first_visit_date
+      - name: last_visit_date
+      - name: distinct_medications
+        description: Distinct medications prescribed (via bridge_patient_medication)
+        data_tests:
+          - not_null
+
+unit_tests:
+  - name: sat_patient_visit_summary_totals
+    description: >
+      Two visits with costs 1000 and 2500 should roll up to
+      total_visits=2, total_treatment_cost=3500, distinct_doctors
+      counted across distinct hk_doctor_h values.
+    model: sat_patient_visit_summary
+    given:
+      - input: ref('link_visit')
+        rows:
+          - {hk_visit_l: 'VL1', hk_visit_h: 'V1', hk_patient_h: 'P1', hk_doctor_h: 'D1', ldts: '2026-01-01', rsrc: 'r2'}
+          - {hk_visit_l: 'VL2', hk_visit_h: 'V2', hk_patient_h: 'P1', hk_doctor_h: 'D2', ldts: '2026-01-02', rsrc: 'r2'}
+      - input: ref('sat_visit_details')
+        rows:
+          - {hk_visit_h: 'V1', hd_visit_s: 'H1', visit_date: '2026-01-05', diagnosis_code: 'A', diagnosis_name: 'x', notes: '', treatment_cost: 1000, ldts: '2026-01-05', rsrc: 'r2'}
+          - {hk_visit_h: 'V2', hd_visit_s: 'H2', visit_date: '2026-01-12', diagnosis_code: 'B', diagnosis_name: 'y', notes: '', treatment_cost: 2500, ldts: '2026-01-12', rsrc: 'r2'}
+      - input: ref('bridge_patient_medication')
+        rows:
+          - {hk_patient_h: 'P1', hk_visit_l: 'VL1', hk_visit_h: 'V1', hk_prescription_l: 'LP1', hk_medication_h: 'M1'}
+          - {hk_patient_h: 'P1', hk_visit_l: 'VL2', hk_visit_h: 'V2', hk_prescription_l: 'LP2', hk_medication_h: 'M2'}
+    expect:
+      rows:
+        - {hk_patient_h: 'P1', total_visits: 2, distinct_doctors: 2, total_treatment_cost: 3500, first_visit_date: '2026-01-05', last_visit_date: '2026-01-12', distinct_medications: 2}
+
+  - name: pit_patient_latest_sat_lookup
+    description: >
+      For a patient with two sat revisions, as_of_date 2026-01-15
+      should point at the 2026-01-10 ldts (not the 2026-01-20 one
+      that is still in the future).
+    model: pit_patient
+    given:
+      - input: ref('hub_patient')
+        rows:
+          - {hk_patient_h: 'P1', patient_id: 'PAT-001', ldts: '2026-01-01', rsrc: 'r2'}
+      - input: ref('sat_patient_details')
+        rows:
+          - {hk_patient_h: 'P1', hd_patient_s: 'H1', first_name: 'a', last_name: 'b', date_of_birth: '1985-03-15', gender: 'M', address: 'x', phone: '1', ldts: '2026-01-01', rsrc: 'r2'}
+          - {hk_patient_h: 'P1', hd_patient_s: 'H2', first_name: 'a', last_name: 'b', date_of_birth: '1985-03-15', gender: 'M', address: 'y', phone: '1', ldts: '2026-01-10', rsrc: 'r2'}
+          - {hk_patient_h: 'P1', hd_patient_s: 'H3', first_name: 'a', last_name: 'b', date_of_birth: '1985-03-15', gender: 'M', address: 'z', phone: '1', ldts: '2026-01-20', rsrc: 'r2'}
+    expect:
+      rows:
+        - {hk_patient_h: 'P1', as_of_date: '2026-01-01', sat_patient_details_ldts: '2026-01-01'}
+        - {hk_patient_h: 'P1', as_of_date: '2026-01-10', sat_patient_details_ldts: '2026-01-10'}
+        - {hk_patient_h: 'P1', as_of_date: '2026-01-20', sat_patient_details_ldts: '2026-01-20'}

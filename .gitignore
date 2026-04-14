@@ -53,3 +53,14 @@ dashboard/voting/build/
 dashboard/voting/node_modules/
 dashboard/voting/static/data/
 dashboard/voting/.env
+
+# Local environment files
+.env
+.env.local
+
+dev.duckdb
+.user.yml
+dbt_packages/
+target/
+logs/
+dbt_internal_packages/

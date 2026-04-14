@@ -1,0 +1,62 @@
+name: modeling
+
+profile: modeling
+
+model-paths: ["models"]
+macro-paths: ["macros"]
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+vars:
+  # datavault4dbt global configuration (see https://www.datavault4dbt.com/documentation/global-variables/)
+  datavault4dbt.hash: 'MD5'
+  datavault4dbt.hashkey_input_case_sensitive: false
+  datavault4dbt.hashdiff_input_case_sensitive: false
+  datavault4dbt.hashdiff_use_trim: true
+  datavault4dbt.ldts_alias: 'ldts'
+  datavault4dbt.rsrc_alias: 'rsrc'
+  datavault4dbt.stg_alias: 'stg'
+
+# Database / schema layout:
+#   dev (local)  -> everything lands in the developer's personal DB
+#                    (see macros/generate_database_name.sql)
+#   prod         -> each layer goes to its own DB as declared below,
+#                    with one schema per DV 2.0 object type.
+models:
+  modeling:
+    # Jaffle shop starter (unchanged, keeps the default personal DB + schema)
+    staging:
+      +materialized: view
+      datavault:
+        +database: staging
+        +schema: healthcare
+        +materialized: view
+        +tags: ['datavault', 'staging']
+
+    raw_vault:
+      +database: raw_vault
+      +materialized: incremental
+      +tags: ['datavault', 'raw_vault']
+      hubs:
+        +schema: hub
+      links:
+        +schema: link
+      satellites:
+        +schema: satellite
+
+    business_vault:
+      +database: business_vault
+      +schema: main
+      +materialized: table
+      +tags: ['datavault', 'business_vault']
+
+    marts:
+      +materialized: table
+      datavault:
+        +database: marts
+        +tags: ['datavault', 'marts']
+        dimensions:
+          +schema: dimension
+        facts:
+          +schema: fact

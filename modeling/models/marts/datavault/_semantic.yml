@@ -1,0 +1,122 @@
+version: 2
+
+semantic_models:
+  - name: visits
+    description: Semantic model for hospital visits
+    model: ref('fct_visits')
+    defaults:
+      agg_time_dimension: visit_date
+    entities:
+      - name: visit
+        type: primary
+        expr: hk_visit_l
+      - name: patient
+        type: foreign
+        expr: hk_patient_h
+      - name: doctor
+        type: foreign
+        expr: hk_doctor_h
+    dimensions:
+      - name: visit_date
+        type: time
+        type_params:
+          time_granularity: day
+      - name: diagnosis_code
+        type: categorical
+      - name: diagnosis_name
+        type: categorical
+    measures:
+      - name: visit_count
+        description: Count of distinct visits
+        agg: count
+        expr: hk_visit_l
+      - name: total_treatment_cost
+        description: Sum of treatment_cost across visits
+        agg: sum
+        expr: treatment_cost
+      - name: avg_treatment_cost
+        description: Average treatment_cost per visit
+        agg: average
+        expr: treatment_cost
+
+  - name: prescriptions
+    description: Semantic model for prescriptions
+    model: ref('fct_prescriptions')
+    defaults:
+      agg_time_dimension: prescription_date
+    entities:
+      - name: prescription
+        type: primary
+        expr: hk_prescription_l
+      - name: patient
+        type: foreign
+        expr: hk_patient_h
+      - name: medication
+        type: foreign
+        expr: hk_medication_h
+      - name: visit
+        type: foreign
+        expr: hk_visit_h
+    dimensions:
+      - name: prescription_date
+        type: time
+        type_params:
+          time_granularity: day
+      - name: dosage
+        type: categorical
+      - name: frequency
+        type: categorical
+    measures:
+      - name: prescription_count
+        agg: count
+        expr: hk_prescription_l
+      - name: total_estimated_cost
+        agg: sum
+        expr: estimated_cost
+      - name: total_prescribed_days
+        agg: sum
+        expr: duration_days
+
+metrics:
+  # Simple metrics — thin wrappers around single measures
+  - name: visit_count
+    label: Visit count
+    description: Total hospital visits
+    type: simple
+    type_params:
+      measure: visit_count
+
+  - name: total_treatment_cost
+    label: Total treatment cost
+    description: Sum of treatment cost across all visits (JPY)
+    type: simple
+    type_params:
+      measure: total_treatment_cost
+
+  - name: avg_treatment_cost
+    label: Average treatment cost per visit
+    type: simple
+    type_params:
+      measure: avg_treatment_cost
+
+  - name: prescription_count
+    label: Prescription count
+    type: simple
+    type_params:
+      measure: prescription_count
+
+  - name: total_prescription_cost
+    label: Total prescription cost
+    description: Sum of estimated_cost across all prescriptions (JPY)
+    type: simple
+    type_params:
+      measure: total_estimated_cost
+
+  # Derived — cost per visit
+  - name: prescription_cost_per_visit
+    label: Prescription cost per visit
+    description: Average prescription spend divided by number of visits
+    type: ratio
+    type_params:
+      numerator: total_prescription_cost
+      denominator: visit_count

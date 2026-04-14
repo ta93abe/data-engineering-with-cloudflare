@@ -1,9 +1,0 @@
-models:
-  - name: stg_hotel_rate_history
-    description: Hotel rate history with basic cleaning applied, one row per rate change.
-    columns:
-      - name: rate_id
-        description: The unique key for each rate record.
-        data_tests:
-          - not_null
-          - unique
