@@ -1,0 +1,47 @@
+{
+  "cli_version": "0.5.4",
+  "checkpoint_id": "5e137b0d7d3e",
+  "session_id": "f85da9ce-0556-424b-8cf3-eb6c964e5564",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-14T14:18:55.889357Z",
+  "branch": "chore/flatten-fusion-seeds",
+  "checkpoints_count": 0,
+  "files_touched": [
+    "modeling/models/staging/datavault/__sources.yml",
+    "modeling/models/staging/datavault/stg_patients.sql",
+    "modeling/models/staging/datavault/stg_doctors.sql",
+    "modeling/models/staging/datavault/stg_departments.sql",
+    "modeling/models/staging/datavault/stg_medications.sql",
+    "modeling/models/staging/datavault/stg_visits.sql",
+    "modeling/models/staging/datavault/stg_prescriptions.sql",
+    "modeling/models/staging/datavault/stg_patient_insurance.sql",
+    "modeling/models/staging/datavault/stg_insurance_companies.sql"
+  ],
+  "agent": "Claude Code",
+  "model": "",
+  "turn_id": "c28c8fb0f4cd",
+  "checkpoint_transcript_start": 657,
+  "transcript_lines_at_start": 657,
+  "token_usage": {
+    "input_tokens": 7,
+    "cache_creation_tokens": 9390,
+    "cache_read_tokens": 1922354,
+    "output_tokens": 6567,
+    "api_call_count": 7
+  },
+  "session_metrics": {
+    "turn_count": 32
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-14T14:18:55.107357Z",
+    "agent_lines": 189,
+    "agent_removed": 2,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 189,
+    "total_lines_changed": 191,
+    "agent_percentage": 100,
+    "metric_version": 2
+  }
+}

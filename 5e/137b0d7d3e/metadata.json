@@ -1,0 +1,33 @@
+{
+  "cli_version": "0.5.4",
+  "checkpoint_id": "5e137b0d7d3e",
+  "strategy": "manual-commit",
+  "branch": "chore/flatten-fusion-seeds",
+  "checkpoints_count": 0,
+  "files_touched": [
+    "modeling/models/staging/datavault/__sources.yml",
+    "modeling/models/staging/datavault/stg_departments.sql",
+    "modeling/models/staging/datavault/stg_doctors.sql",
+    "modeling/models/staging/datavault/stg_insurance_companies.sql",
+    "modeling/models/staging/datavault/stg_medications.sql",
+    "modeling/models/staging/datavault/stg_patient_insurance.sql",
+    "modeling/models/staging/datavault/stg_patients.sql",
+    "modeling/models/staging/datavault/stg_prescriptions.sql",
+    "modeling/models/staging/datavault/stg_visits.sql"
+  ],
+  "sessions": [
+    {
+      "metadata": "/5e/137b0d7d3e/0/metadata.json",
+      "transcript": "/5e/137b0d7d3e/0/full.jsonl",
+      "content_hash": "/5e/137b0d7d3e/0/content_hash.txt",
+      "prompt": ""
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 7,
+    "cache_creation_tokens": 9390,
+    "cache_read_tokens": 1922354,
+    "output_tokens": 6567,
+    "api_call_count": 7
+  }
+}
