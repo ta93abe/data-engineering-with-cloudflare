@@ -57,3 +57,10 @@ dashboard/voting/.env
 # Local environment files
 .env
 .env.local
+
+dev.duckdb
+.user.yml
+dbt_packages/
+target/
+logs/
+dbt_internal_packages/
