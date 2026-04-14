@@ -55,14 +55,20 @@ sources:
       - name: raw_patient_insurance
         description: Patient <-> insurance company coverage with validity dates
         columns:
-          - name: patient_insurance_id
+          - name: patient_id
+            tests:
+              - not_null
+          - name: insurance_id
+            tests:
+              - not_null
+          - name: policy_number
             tests:
               - unique
               - not_null
       - name: raw_insurance_companies
         description: Insurance company master
         columns:
-          - name: insurance_company_id
+          - name: insurance_id
             tests:
               - unique
               - not_null
