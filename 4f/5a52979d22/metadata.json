@@ -1,0 +1,27 @@
+{
+  "cli_version": "0.5.4",
+  "checkpoint_id": "4f5a52979d22",
+  "strategy": "manual-commit",
+  "branch": "chore/flatten-fusion-seeds",
+  "checkpoints_count": 0,
+  "files_touched": [
+    "modeling/models/business_vault/bridge_patient_medication.sql",
+    "modeling/models/business_vault/pit_patient.sql",
+    "modeling/models/business_vault/sat_patient_visit_summary.sql"
+  ],
+  "sessions": [
+    {
+      "metadata": "/4f/5a52979d22/0/metadata.json",
+      "transcript": "/4f/5a52979d22/0/full.jsonl",
+      "content_hash": "/4f/5a52979d22/0/content_hash.txt",
+      "prompt": ""
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 3,
+    "cache_creation_tokens": 4312,
+    "cache_read_tokens": 893895,
+    "output_tokens": 3588,
+    "api_call_count": 3
+  }
+}
