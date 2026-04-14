@@ -1,0 +1,95 @@
+version: 2
+
+models:
+  - name: link_visit
+    description: >
+      Visit link. One row per unit of work (visit, patient, doctor).
+      Acts as the bridge between hub_visit, hub_patient and
+      hub_doctor and is the basis of fct_visits.
+    columns:
+      - name: hk_visit_l
+        description: Link hashkey
+        data_tests:
+          - unique
+          - not_null
+      - name: hk_visit_h
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('hub_visit')
+              field: hk_visit_h
+      - name: hk_patient_h
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('hub_patient')
+              field: hk_patient_h
+      - name: hk_doctor_h
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('hub_doctor')
+              field: hk_doctor_h
+      - name: ldts
+        data_tests:
+          - not_null
+      - name: rsrc
+        data_tests:
+          - not_null
+
+  - name: link_prescription
+    description: >
+      Prescription link between hub_visit and hub_medication. The
+      prescription id itself lives in sat_prescription_details as
+      a business-key-in-sat.
+    columns:
+      - name: hk_prescription_l
+        data_tests:
+          - unique
+          - not_null
+      - name: hk_visit_h
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('hub_visit')
+              field: hk_visit_h
+      - name: hk_medication_h
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('hub_medication')
+              field: hk_medication_h
+      - name: ldts
+        data_tests:
+          - not_null
+      - name: rsrc
+        data_tests:
+          - not_null
+
+  - name: link_patient_insurance
+    description: >
+      Patient to insurance coverage link. Validity dates live on
+      sat_patient_insurance_details (standard sat, not eff sat).
+    columns:
+      - name: hk_patient_insurance_l
+        data_tests:
+          - unique
+          - not_null
+      - name: hk_patient_h
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('hub_patient')
+              field: hk_patient_h
+      - name: hk_insurance_h
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('hub_insurance_company')
+              field: hk_insurance_h
+      - name: ldts
+        data_tests:
+          - not_null
+      - name: rsrc
+        data_tests:
+          - not_null
