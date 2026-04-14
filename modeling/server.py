@@ -66,6 +66,8 @@ class DbtHandler(BaseHTTPRequestHandler):
             self._run_dbt(self.path.lstrip("/"))
         elif self.path == "/docs":
             self._run_docs_generate()
+        elif self.path == "/build-docs":
+            self._run_build_and_docs()
         else:
             self._json_response(404, {"error": "not found"})
 
@@ -140,6 +142,99 @@ class DbtHandler(BaseHTTPRequestHandler):
                 "returncode": result.returncode,
                 "stdout": result.stdout,
                 "stderr": result.stderr,
+                "artifacts_saved": artifacts_saved,
+            },
+        )
+
+    def _run_build_and_docs(self):
+        """Run `dbt build` then `dbt docs generate` in one shot.
+
+        On build failure, docs generate is skipped and the combined
+        response returns HTTP 500 with the build stdout/stderr.
+        On build success, docs generate runs and ARTIFACT_FILES
+        (manifest/run_results/catalog/sources + index.html) are
+        uploaded to R2.
+        """
+        body = self._parse_body()
+        if body is None:
+            return
+
+        target = body.get("target", "dev")
+        if not self._validate_target(target):
+            return
+
+        select = body.get("select", None)
+        if select and not self._validate_select(select):
+            return
+
+        full_refresh = body.get("full_refresh", False)
+
+        build_cmd = [
+            "uv", "run", "dbt", "build",
+            "--target", target, "--profiles-dir", ".",
+        ]
+        if select:
+            build_cmd.extend(["--select", select])
+        if full_refresh:
+            build_cmd.append("--full-refresh")
+
+        try:
+            build_result = subprocess.run(
+                build_cmd, capture_output=True, text=True, cwd="/app", timeout=DBT_TIMEOUT
+            )
+        except subprocess.TimeoutExpired:
+            self._json_response(504, {"error": "dbt build timed out"})
+            return
+
+        if build_result.returncode != 0:
+            self._json_response(
+                500,
+                {
+                    "command": "build-docs",
+                    "stage": "build",
+                    "build": {
+                        "returncode": build_result.returncode,
+                        "stdout": build_result.stdout,
+                        "stderr": build_result.stderr,
+                    },
+                    "docs": None,
+                    "artifacts_saved": [],
+                },
+            )
+            return
+
+        docs_cmd = [
+            "uv", "run", "dbt", "docs", "generate",
+            "--target", target, "--profiles-dir", ".",
+        ]
+
+        try:
+            docs_result = subprocess.run(
+                docs_cmd, capture_output=True, text=True, cwd="/app", timeout=DBT_TIMEOUT
+            )
+        except subprocess.TimeoutExpired:
+            self._json_response(504, {"error": "dbt docs generate timed out"})
+            return
+
+        artifacts_saved: list[str] = []
+        if docs_result.returncode == 0:
+            artifacts_saved = self._upload_artifacts(ARTIFACT_FILES)
+
+        self._json_response(
+            200 if docs_result.returncode == 0 else 500,
+            {
+                "command": "build-docs",
+                "stage": "docs" if docs_result.returncode != 0 else "complete",
+                "build": {
+                    "returncode": build_result.returncode,
+                    "stdout": build_result.stdout,
+                    "stderr": build_result.stderr,
+                },
+                "docs": {
+                    "returncode": docs_result.returncode,
+                    "stdout": docs_result.stdout,
+                    "stderr": docs_result.stderr,
+                },
                 "artifacts_saved": artifacts_saved,
             },
         )

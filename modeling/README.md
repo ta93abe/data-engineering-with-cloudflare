@@ -86,6 +86,16 @@ curl -X POST https://<your-worker>.workers.dev/run \
   -d '{"target": "prod", "select": "tag:datavault"}'
 
 # /test, /build, /docs follow the same shape.
+
+# Combined: dbt build -> dbt docs generate in one request.
+# On build failure, docs is skipped and the response returns 500
+# with the build stdout/stderr. On success, docs is generated and
+# all artifacts (manifest/run_results/catalog/sources/index.html)
+# are uploaded to R2.
+curl -X POST https://<your-worker>.workers.dev/build-docs \
+  -H "Authorization: Bearer $API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"target": "prod"}'
 ```
 
 ### Security notes

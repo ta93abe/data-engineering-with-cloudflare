@@ -115,10 +115,10 @@ export default {
 
     const container = getContainer(env.DBT_CONTAINER, "dbt-runner-main");
 
-    // dbt commands: POST /run, /seed, /test, /build, /docs
+    // dbt commands: POST /run, /seed, /test, /build, /docs, /build-docs
     if (
       request.method === "POST" &&
-      ["/run", "/seed", "/test", "/build", "/docs"].includes(path)
+      ["/run", "/seed", "/test", "/build", "/docs", "/build-docs"].includes(path)
     ) {
       let body: Record<string, unknown>;
       try {
