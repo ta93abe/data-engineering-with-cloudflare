@@ -1,0 +1,17 @@
+続けて
+
+---
+
+uv run dbt build が通るか確認して。
+
+---
+
+環境変数は設定済みだからuv run dbt build 実行してみて。
+
+---
+
+snowcli で development データベース作って。
+
+---
+
+DEVELOPMENTデータベース作ったから使って。
