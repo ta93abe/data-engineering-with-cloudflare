@@ -1,0 +1,54 @@
+{
+  "cli_version": "0.5.4",
+  "checkpoint_id": "7d46f90a5828",
+  "strategy": "manual-commit",
+  "branch": "chore/flatten-fusion-seeds",
+  "checkpoints_count": 15,
+  "files_touched": [
+    "transform/fusion/seeds/datavault/raw_departments.csv",
+    "transform/fusion/seeds/datavault/raw_doctors.csv",
+    "transform/fusion/seeds/datavault/raw_insurance_companies.csv",
+    "transform/fusion/seeds/datavault/raw_medications.csv",
+    "transform/fusion/seeds/datavault/raw_patient_insurance.csv",
+    "transform/fusion/seeds/datavault/raw_patients.csv",
+    "transform/fusion/seeds/datavault/raw_prescriptions.csv",
+    "transform/fusion/seeds/datavault/raw_visits.csv",
+    "transform/fusion/seeds/raw_airlines.csv",
+    "transform/fusion/seeds/raw_departments.csv",
+    "transform/fusion/seeds/raw_destinations.csv",
+    "transform/fusion/seeds/raw_doctors.csv",
+    "transform/fusion/seeds/raw_flight_bookings.csv",
+    "transform/fusion/seeds/raw_hotel_bookings.csv",
+    "transform/fusion/seeds/raw_hotel_rate_history.csv",
+    "transform/fusion/seeds/raw_hotels.csv",
+    "transform/fusion/seeds/raw_insurance_companies.csv",
+    "transform/fusion/seeds/raw_medications.csv",
+    "transform/fusion/seeds/raw_patient_insurance.csv",
+    "transform/fusion/seeds/raw_patients.csv",
+    "transform/fusion/seeds/raw_prescriptions.csv",
+    "transform/fusion/seeds/raw_travelers.csv",
+    "transform/fusion/seeds/raw_visits.csv",
+    "transform/fusion/seeds/travel/raw_airlines.csv",
+    "transform/fusion/seeds/travel/raw_destinations.csv",
+    "transform/fusion/seeds/travel/raw_flight_bookings.csv",
+    "transform/fusion/seeds/travel/raw_hotel_bookings.csv",
+    "transform/fusion/seeds/travel/raw_hotel_rate_history.csv",
+    "transform/fusion/seeds/travel/raw_hotels.csv",
+    "transform/fusion/seeds/travel/raw_travelers.csv"
+  ],
+  "sessions": [
+    {
+      "metadata": "/7d/46f90a5828/0/metadata.json",
+      "transcript": "/7d/46f90a5828/0/full.jsonl",
+      "content_hash": "/7d/46f90a5828/0/content_hash.txt",
+      "prompt": "/7d/46f90a5828/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 2803,
+    "cache_creation_tokens": 218511,
+    "cache_read_tokens": 6088205,
+    "output_tokens": 37263,
+    "api_call_count": 54
+  }
+}

@@ -1,0 +1,68 @@
+~/zettelkasten に Snowflake で R2 Data Catalogにクエリをする方法書いていない？
+
+---
+
+実装手順だけ抜粋
+
+---
+
+SnowflakeのIcebergテーブルって勝手に追加された分を登録してくれる機能なかったっけ？
+
+---
+
+何からやればいい？
+
+---
+
+最新仕様を確認して
+
+---
+
+修正して
+
+---
+
+-- 1. External Volume（書き込みしたいなら ALLOW_WRITES=TRUE）
+ここから設定したい。パラメータの細かい指定の仕方を教えて。
+
+---
+
+できた。次
+
+---
+
+SQL Execution Error: Not authorized to access the REST endpoint of catalog integration R2_DATA_CATALOG_LAKE due to error: Not authorized: Unauthorized: Insufficient permission for R2 Data Catalog Warehouse.
+
+---
+
+権限あげてエラー解消した。
+Catalog-Linked DBでいく
+
+---
+
+volume を readonly と write の2つを作ったんだけど？
+
+---
+
+クエリできた。
+
+---
+
+R2の方を小文字にしてしまったからSnowflakeでダブルクオーテーションつけないといけなくなった。
+
+---
+
+できた。
+
+---
+
+transform/fusion/seeds
+CSV確認できる？
+
+---
+
+すべてをフラットに配置して。サブディレクトリはなくす。
+
+---
+
+git mv de
