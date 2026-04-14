@@ -1,0 +1,53 @@
+{
+  "cli_version": "0.5.4",
+  "checkpoint_id": "461a4cab4cbe",
+  "strategy": "manual-commit",
+  "branch": "chore/flatten-fusion-seeds",
+  "checkpoints_count": 0,
+  "files_touched": [
+    "modeling/dbtective.yml",
+    "modeling/models/business_vault/_business_vault.yml",
+    "modeling/models/business_vault/pit_patient.sql",
+    "modeling/models/business_vault/sat_patient_visit_summary.sql",
+    "modeling/models/marts/datavault/_semantic.yml",
+    "modeling/models/marts/datavault/dimensions/_dimensions.yml",
+    "modeling/models/marts/datavault/dimensions/dim_doctor.sql",
+    "modeling/models/marts/datavault/dimensions/dim_medication.sql",
+    "modeling/models/marts/datavault/dimensions/dim_patient.sql",
+    "modeling/models/marts/datavault/dimensions/metricflow_time_spine.sql",
+    "modeling/models/marts/datavault/facts/_facts.yml",
+    "modeling/models/marts/datavault/facts/fct_prescriptions.sql",
+    "modeling/models/marts/datavault/facts/fct_visits.sql",
+    "modeling/models/raw_vault/hubs/hub_doctor.sql",
+    "modeling/models/raw_vault/hubs/hub_insurance_company.sql",
+    "modeling/models/raw_vault/hubs/hub_medication.sql",
+    "modeling/models/raw_vault/hubs/hub_patient.sql",
+    "modeling/models/raw_vault/satellites/_satellites.yml",
+    "modeling/models/staging/datavault/__sources.yml",
+    "modeling/models/staging/datavault/_staging.yml",
+    "modeling/models/staging/stg_locations.sql",
+    "modeling/models/staging/stg_locations.yml",
+    "modeling/models/staging/stg_order_items.sql",
+    "modeling/models/staging/stg_products.sql",
+    "modeling/models/staging/stg_supplies.sql",
+    "modeling/package-lock.yml",
+    "modeling/profiles.yml",
+    "modeling/pyproject.toml",
+    "modeling/uv.lock"
+  ],
+  "sessions": [
+    {
+      "metadata": "/46/1a4cab4cbe/0/metadata.json",
+      "transcript": "/46/1a4cab4cbe/0/full.jsonl",
+      "content_hash": "/46/1a4cab4cbe/0/content_hash.txt",
+      "prompt": "/46/1a4cab4cbe/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 2,
+    "cache_creation_tokens": 9163,
+    "cache_read_tokens": 1042790,
+    "output_tokens": 1570,
+    "api_call_count": 2
+  }
+}
