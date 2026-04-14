@@ -1,0 +1,46 @@
+{
+  "cli_version": "0.5.4",
+  "checkpoint_id": "c99a785d06b3",
+  "session_id": "f85da9ce-0556-424b-8cf3-eb6c964e5564",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-14T14:22:29.343939Z",
+  "branch": "chore/flatten-fusion-seeds",
+  "checkpoints_count": 0,
+  "files_touched": [
+    "modeling/models/raw_vault/satellites/sat_patient_details.sql",
+    "modeling/models/raw_vault/satellites/sat_doctor_details.sql",
+    "modeling/models/raw_vault/satellites/sat_department_details.sql",
+    "modeling/models/raw_vault/satellites/sat_medication_details.sql",
+    "modeling/models/raw_vault/satellites/sat_visit_details.sql",
+    "modeling/models/raw_vault/satellites/sat_prescription_details.sql",
+    "modeling/models/raw_vault/satellites/sat_insurance_details.sql",
+    "modeling/models/raw_vault/satellites/sat_patient_insurance_details.sql"
+  ],
+  "agent": "Claude Code",
+  "model": "",
+  "turn_id": "c28c8fb0f4cd",
+  "checkpoint_transcript_start": 751,
+  "transcript_lines_at_start": 751,
+  "token_usage": {
+    "input_tokens": 7,
+    "cache_creation_tokens": 10968,
+    "cache_read_tokens": 2024151,
+    "output_tokens": 5874,
+    "api_call_count": 7
+  },
+  "session_metrics": {
+    "turn_count": 32
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-14T14:22:28.486109Z",
+    "agent_lines": 111,
+    "agent_removed": 0,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 111,
+    "total_lines_changed": 111,
+    "agent_percentage": 100,
+    "metric_version": 2
+  }
+}
