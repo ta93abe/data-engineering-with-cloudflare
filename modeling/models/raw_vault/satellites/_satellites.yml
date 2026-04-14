@@ -1,0 +1,235 @@
+version: 2
+
+models:
+  - name: sat_patient_details
+    description: Patient attribute history attached to hub_patient.
+    columns:
+      - name: hk_patient_h
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('hub_patient')
+              field: hk_patient_h
+      - name: hashdiff
+        data_tests:
+          - not_null
+      - name: ldts
+        data_tests:
+          - not_null
+      - name: rsrc
+        data_tests:
+          - not_null
+      - name: first_name
+      - name: last_name
+      - name: date_of_birth
+      - name: gender
+        data_tests:
+          - accepted_values:
+              values: ['M', 'F']
+      - name: address
+      - name: phone
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - hk_patient_h
+            - ldts
+
+  - name: sat_doctor_details
+    description: Doctor attribute history attached to hub_doctor.
+    columns:
+      - name: hk_doctor_h
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('hub_doctor')
+              field: hk_doctor_h
+      - name: hashdiff
+        data_tests:
+          - not_null
+      - name: ldts
+        data_tests:
+          - not_null
+      - name: rsrc
+        data_tests:
+          - not_null
+      - name: first_name
+      - name: last_name
+      - name: specialty
+      - name: license_number
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - hk_doctor_h
+            - ldts
+
+  - name: sat_department_details
+    description: Department attribute history attached to hub_department.
+    columns:
+      - name: hk_department_h
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('hub_department')
+              field: hk_department_h
+      - name: hashdiff
+        data_tests:
+          - not_null
+      - name: ldts
+        data_tests:
+          - not_null
+      - name: rsrc
+        data_tests:
+          - not_null
+      - name: department_name
+      - name: floor
+      - name: phone_extension
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - hk_department_h
+            - ldts
+
+  - name: sat_medication_details
+    description: Medication attribute history attached to hub_medication.
+    columns:
+      - name: hk_medication_h
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('hub_medication')
+              field: hk_medication_h
+      - name: hashdiff
+        data_tests:
+          - not_null
+      - name: ldts
+        data_tests:
+          - not_null
+      - name: rsrc
+        data_tests:
+          - not_null
+      - name: medication_name
+      - name: type
+      - name: manufacturer
+      - name: unit_price
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - hk_medication_h
+            - ldts
+
+  - name: sat_visit_details
+    description: Visit attribute history attached to hub_visit.
+    columns:
+      - name: hk_visit_h
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('hub_visit')
+              field: hk_visit_h
+      - name: hashdiff
+        data_tests:
+          - not_null
+      - name: ldts
+        data_tests:
+          - not_null
+      - name: rsrc
+        data_tests:
+          - not_null
+      - name: visit_date
+      - name: diagnosis_code
+      - name: diagnosis_name
+      - name: notes
+      - name: treatment_cost
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - hk_visit_h
+            - ldts
+
+  - name: sat_prescription_details
+    description: >
+      Prescription attribute history attached to link_prescription
+      (link-level sat). Keeps prescription_id in the payload as a
+      business-key-in-sat pattern.
+    columns:
+      - name: hk_prescription_l
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('link_prescription')
+              field: hk_prescription_l
+      - name: hashdiff
+        data_tests:
+          - not_null
+      - name: ldts
+        data_tests:
+          - not_null
+      - name: rsrc
+        data_tests:
+          - not_null
+      - name: prescription_id
+      - name: dosage
+      - name: frequency
+      - name: duration_days
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - hk_prescription_l
+            - ldts
+
+  - name: sat_insurance_details
+    description: Insurance company attribute history attached to hub_insurance_company.
+    columns:
+      - name: hk_insurance_h
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('hub_insurance_company')
+              field: hk_insurance_h
+      - name: hashdiff
+        data_tests:
+          - not_null
+      - name: ldts
+        data_tests:
+          - not_null
+      - name: rsrc
+        data_tests:
+          - not_null
+      - name: company_name
+      - name: plan_type
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - hk_insurance_h
+            - ldts
+
+  - name: sat_patient_insurance_details
+    description: >
+      Patient insurance coverage history attached to
+      link_patient_insurance. Carries the explicit validity dates
+      (start_date / end_date) from the source rather than deriving
+      them through an effectivity satellite.
+    columns:
+      - name: hk_patient_insurance_l
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('link_patient_insurance')
+              field: hk_patient_insurance_l
+      - name: hashdiff
+        data_tests:
+          - not_null
+      - name: ldts
+        data_tests:
+          - not_null
+      - name: rsrc
+        data_tests:
+          - not_null
+      - name: policy_number
+      - name: start_date
+      - name: end_date
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - hk_patient_insurance_l
+            - ldts
