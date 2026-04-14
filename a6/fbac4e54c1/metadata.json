@@ -1,0 +1,25 @@
+{
+  "cli_version": "0.5.4",
+  "checkpoint_id": "a6fbac4e54c1",
+  "strategy": "manual-commit",
+  "branch": "chore/flatten-fusion-seeds",
+  "checkpoints_count": 0,
+  "files_touched": [
+    "modeling/models/raw_vault/hubs/_hubs.yml"
+  ],
+  "sessions": [
+    {
+      "metadata": "/a6/fbac4e54c1/0/metadata.json",
+      "transcript": "/a6/fbac4e54c1/0/full.jsonl",
+      "content_hash": "/a6/fbac4e54c1/0/content_hash.txt",
+      "prompt": ""
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 2,
+    "cache_creation_tokens": 1611,
+    "cache_read_tokens": 688152,
+    "output_tokens": 1405,
+    "api_call_count": 2
+  }
+}
