@@ -17,8 +17,36 @@ clean-targets:
 seeds:
   fusion:
     +schema: raw
-    travel:
+    raw_airlines:
       +tags: ['travel']
+    raw_destinations:
+      +tags: ['travel']
+    raw_flight_bookings:
+      +tags: ['travel']
+    raw_hotel_bookings:
+      +tags: ['travel']
+    raw_hotel_rate_history:
+      +tags: ['travel']
+    raw_hotels:
+      +tags: ['travel']
+    raw_travelers:
+      +tags: ['travel']
+    raw_departments:
+      +tags: ['datavault']
+    raw_doctors:
+      +tags: ['datavault']
+    raw_insurance_companies:
+      +tags: ['datavault']
+    raw_medications:
+      +tags: ['datavault']
+    raw_patient_insurance:
+      +tags: ['datavault']
+    raw_patients:
+      +tags: ['datavault']
+    raw_prescriptions:
+      +tags: ['datavault']
+    raw_visits:
+      +tags: ['datavault']
 
 models:
   fusion:
