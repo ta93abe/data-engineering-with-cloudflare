@@ -1,0 +1,17 @@
+.venv/
+dbt_packages/
+dbt_internal_packages/
+target/
+logs/
+node_modules/
+.env
+*.p8
+.git/
+target/
+README.md
+tsconfig.json
+package.json
+package-lock.json
+pnpm-lock.yaml
+src/
+wrangler.jsonc
