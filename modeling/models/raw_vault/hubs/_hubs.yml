@@ -1,0 +1,117 @@
+version: 2
+
+models:
+  - name: hub_patient
+    description: >
+      Patient hub. Single source of truth for the patient business
+      key across stg_patients, stg_visits, stg_patient_insurance.
+      One row per distinct patient_id encountered in any feed.
+    columns:
+      - name: hk_patient_h
+        description: Hub hashkey (MD5 of patient_id)
+        data_tests:
+          - unique
+          - not_null
+      - name: patient_id
+        description: Business key
+        data_tests:
+          - unique
+          - not_null
+      - name: ldts
+        description: First-seen load datetime
+        data_tests:
+          - not_null
+      - name: rsrc
+        description: First record source
+        data_tests:
+          - not_null
+
+  - name: hub_doctor
+    description: Doctor hub, fed by stg_doctors + stg_visits.
+    columns:
+      - name: hk_doctor_h
+        data_tests:
+          - unique
+          - not_null
+      - name: doctor_id
+        data_tests:
+          - unique
+          - not_null
+      - name: ldts
+        data_tests:
+          - not_null
+      - name: rsrc
+        data_tests:
+          - not_null
+
+  - name: hub_department
+    description: Department hub. Single source (stg_departments) for now.
+    columns:
+      - name: hk_department_h
+        data_tests:
+          - unique
+          - not_null
+      - name: department_id
+        data_tests:
+          - unique
+          - not_null
+      - name: ldts
+        data_tests:
+          - not_null
+      - name: rsrc
+        data_tests:
+          - not_null
+
+  - name: hub_medication
+    description: Medication hub, fed by stg_medications + stg_prescriptions.
+    columns:
+      - name: hk_medication_h
+        data_tests:
+          - unique
+          - not_null
+      - name: medication_id
+        data_tests:
+          - unique
+          - not_null
+      - name: ldts
+        data_tests:
+          - not_null
+      - name: rsrc
+        data_tests:
+          - not_null
+
+  - name: hub_visit
+    description: Visit hub, fed by stg_visits + stg_prescriptions.
+    columns:
+      - name: hk_visit_h
+        data_tests:
+          - unique
+          - not_null
+      - name: visit_id
+        data_tests:
+          - unique
+          - not_null
+      - name: ldts
+        data_tests:
+          - not_null
+      - name: rsrc
+        data_tests:
+          - not_null
+
+  - name: hub_insurance_company
+    description: Insurance company hub, fed by stg_insurance_companies + stg_patient_insurance.
+    columns:
+      - name: hk_insurance_h
+        data_tests:
+          - unique
+          - not_null
+      - name: insurance_id
+        data_tests:
+          - unique
+          - not_null
+      - name: ldts
+        data_tests:
+          - not_null
+      - name: rsrc
+        data_tests:
+          - not_null
