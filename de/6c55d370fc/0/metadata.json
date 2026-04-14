@@ -1,0 +1,39 @@
+{
+  "cli_version": "0.5.4",
+  "checkpoint_id": "de6c55d370fc",
+  "session_id": "f85da9ce-0556-424b-8cf3-eb6c964e5564",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-14T14:34:12.28638Z",
+  "branch": "chore/flatten-fusion-seeds",
+  "checkpoints_count": 0,
+  "files_touched": [
+    "modeling/models/raw_vault/satellites/_satellites.yml"
+  ],
+  "agent": "Claude Code",
+  "model": "",
+  "turn_id": "4e2754ff85c8",
+  "checkpoint_transcript_start": 994,
+  "transcript_lines_at_start": 994,
+  "token_usage": {
+    "input_tokens": 2,
+    "cache_creation_tokens": 3262,
+    "cache_read_tokens": 694312,
+    "output_tokens": 2682,
+    "api_call_count": 2
+  },
+  "session_metrics": {
+    "turn_count": 33
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-14T14:34:11.256246Z",
+    "agent_lines": 235,
+    "agent_removed": 0,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 235,
+    "total_lines_changed": 235,
+    "agent_percentage": 100,
+    "metric_version": 2
+  }
+}
