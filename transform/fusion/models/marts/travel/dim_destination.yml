@@ -1,9 +1,0 @@
-models:
-  - name: dim_destination
-    description: Destination dimension, one row per destination city.
-    columns:
-      - name: destination_id
-        description: Primary key for each destination.
-        data_tests:
-          - not_null
-          - unique

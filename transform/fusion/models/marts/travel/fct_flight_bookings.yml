@@ -1,9 +1,0 @@
-models:
-  - name: fct_flight_bookings
-    description: Flight booking fact table, one row per flight booking.
-    columns:
-      - name: flight_booking_id
-        description: Primary key for each flight booking.
-        data_tests:
-          - not_null
-          - unique

@@ -1,7 +1,0 @@
-insurance_id,company_name,plan_type,load_date,record_source
-INS-001,全国健康保険協会,社保,2026-01-01,HOSPITAL_SYSTEM
-INS-002,東京都国民健康保険,国保,2026-01-01,HOSPITAL_SYSTEM
-INS-003,国家公務員共済組合,共済,2026-01-01,HOSPITAL_SYSTEM
-INS-004,関東ITソフトウェア健保組合,社保,2026-01-01,HOSPITAL_SYSTEM
-INS-005,神奈川県国民健康保険,国保,2026-01-01,HOSPITAL_SYSTEM
-INS-006,地方公務員共済組合,共済,2026-01-01,HOSPITAL_SYSTEM

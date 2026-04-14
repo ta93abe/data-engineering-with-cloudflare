@@ -1,9 +1,0 @@
-models:
-  - name: dim_hotel
-    description: Hotel dimension enriched with destination city, one row per hotel.
-    columns:
-      - name: hotel_id
-        description: Primary key for each hotel.
-        data_tests:
-          - not_null
-          - unique
