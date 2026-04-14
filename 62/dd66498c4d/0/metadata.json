@@ -1,0 +1,58 @@
+{
+  "cli_version": "0.5.4",
+  "checkpoint_id": "62dd66498c4d",
+  "session_id": "f85da9ce-0556-424b-8cf3-eb6c964e5564",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-14T14:31:48.233359Z",
+  "branch": "chore/flatten-fusion-seeds",
+  "checkpoints_count": 0,
+  "files_touched": [
+    "modeling/models/staging/__sources.yml",
+    "modeling/models/staging/stg_customers.sql",
+    "modeling/models/staging/stg_locations.sql",
+    "modeling/models/staging/stg_order_items.sql",
+    "modeling/models/staging/stg_orders.sql",
+    "modeling/models/staging/stg_products.sql",
+    "modeling/models/staging/stg_supplies.sql",
+    "modeling/dbt_project.yml"
+  ],
+  "agent": "Claude Code",
+  "model": "",
+  "turn_id": "4e2754ff85c8",
+  "checkpoint_transcript_start": 892,
+  "transcript_lines_at_start": 892,
+  "token_usage": {
+    "input_tokens": 15,
+    "cache_creation_tokens": 13624,
+    "cache_read_tokens": 3325749,
+    "output_tokens": 8201,
+    "api_call_count": 10
+  },
+  "session_metrics": {
+    "turn_count": 33
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-14T14:31:47.26501Z",
+    "agent_lines": 40,
+    "agent_removed": 22,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 40,
+    "total_lines_changed": 1960,
+    "agent_percentage": 3.1632653061224487,
+    "metric_version": 2
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 1,
+      "user_lines_added": 317,
+      "user_lines_removed": 0,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0,
+      "user_added_per_file": {
+        ".claude/settings.local.json": 317
+      }
+    }
+  ]
+}
