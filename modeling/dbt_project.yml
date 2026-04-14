@@ -2,7 +2,6 @@ name: modeling
 
 profile: modeling
 
-seed-paths: ["seeds"]
 model-paths: ["models"]
 macro-paths: ["macros"]
 clean-targets:
@@ -24,11 +23,6 @@ vars:
 #                    (see macros/generate_database_name.sql)
 #   prod         -> each layer goes to its own DB as declared below,
 #                    with one schema per DV 2.0 object type.
-seeds:
-  modeling:
-    +database: staging
-    +schema: raw
-
 models:
   modeling:
     # Jaffle shop starter (unchanged, keeps the default personal DB + schema)
