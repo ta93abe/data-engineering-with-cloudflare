@@ -1,0 +1,11 @@
+これらのデータをmodelingプロジェクトではdatavault4dbtパッケージでData Vault 2.0実装したい。
+
+---
+
+automateDVとどちらが一般的？
+
+---
+
+fusion 側将来捨てるからきにしないで。
+datavault4dbtこっちで行こう。
+レイヤーごとにコミットしていって。run,buildはしないで。
