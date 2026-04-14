@@ -1,0 +1,25 @@
+{
+  "cli_version": "0.5.4",
+  "checkpoint_id": "bbf49dc4bc10",
+  "strategy": "manual-commit",
+  "branch": "chore/flatten-fusion-seeds",
+  "checkpoints_count": 0,
+  "files_touched": [
+    "modeling/models/staging/datavault/_staging.yml"
+  ],
+  "sessions": [
+    {
+      "metadata": "/bb/f49dc4bc10/0/metadata.json",
+      "transcript": "/bb/f49dc4bc10/0/full.jsonl",
+      "content_hash": "/bb/f49dc4bc10/0/content_hash.txt",
+      "prompt": ""
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 3,
+    "cache_creation_tokens": 3633,
+    "cache_read_tokens": 1022418,
+    "output_tokens": 3060,
+    "api_call_count": 3
+  }
+}
