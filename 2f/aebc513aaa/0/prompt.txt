@@ -27,3 +27,7 @@ docs generate したら R2にdbt artifactsを保存するようにしている�
 ---
 
 build+docs のコマンドを用意して。
+
+---
+
+コミットして。
