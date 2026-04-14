@@ -1,0 +1,23 @@
+{
+  "cli_version": "0.5.4",
+  "checkpoint_id": "2a1d19396e00",
+  "session_id": "f85da9ce-0556-424b-8cf3-eb6c964e5564",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-14T15:20:14.27342Z",
+  "branch": "chore/flatten-fusion-seeds",
+  "checkpoints_count": 1,
+  "files_touched": [],
+  "agent": "Claude Code",
+  "model": "",
+  "turn_id": "1a7054f81434",
+  "token_usage": {
+    "input_tokens": 4340,
+    "cache_creation_tokens": 811615,
+    "cache_read_tokens": 93682333,
+    "output_tokens": 263539,
+    "api_call_count": 325
+  },
+  "session_metrics": {
+    "turn_count": 37
+  }
+}
