@@ -19,31 +19,50 @@ vars:
   datavault4dbt.rsrc_alias: 'rsrc'
   datavault4dbt.stg_alias: 'stg'
 
+# Database / schema layout:
+#   dev (local)  -> everything lands in the developer's personal DB
+#                    (see macros/generate_database_name.sql)
+#   prod         -> each layer goes to its own DB as declared below,
+#                    with one schema per DV 2.0 object type.
 seeds:
-  # Builds seeds into '<your_schema_name>_raw'
   modeling:
+    +database: staging
     +schema: raw
 
 models:
   modeling:
-    # Jaffle shop starter (unchanged)
+    # Jaffle shop starter (unchanged, keeps the default personal DB + schema)
     staging:
       +materialized: view
       datavault:
-        +schema: staging
+        +database: staging
+        +schema: healthcare
         +materialized: view
         +tags: ['datavault', 'staging']
+
+    raw_vault:
+      +database: raw_vault
+      +materialized: incremental
+      +tags: ['datavault', 'raw_vault']
+      hubs:
+        +schema: hub
+      links:
+        +schema: link
+      satellites:
+        +schema: satellite
+
+    business_vault:
+      +database: business_vault
+      +schema: main
+      +materialized: table
+      +tags: ['datavault', 'business_vault']
+
     marts:
       +materialized: table
       datavault:
-        +schema: marts
-        +materialized: table
+        +database: marts
         +tags: ['datavault', 'marts']
-    raw_vault:
-      +schema: raw_vault
-      +materialized: incremental
-      +tags: ['datavault', 'raw_vault']
-    business_vault:
-      +schema: business_vault
-      +materialized: table
-      +tags: ['datavault', 'business_vault']
+        dimensions:
+          +schema: dimension
+        facts:
+          +schema: fact
