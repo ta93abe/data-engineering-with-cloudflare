@@ -1,0 +1,27 @@
+{
+  "cli_version": "0.5.4",
+  "checkpoint_id": "96fea7777773",
+  "strategy": "manual-commit",
+  "branch": "chore/flatten-fusion-seeds",
+  "checkpoints_count": 0,
+  "files_touched": [
+    "modeling/models/raw_vault/links/link_patient_insurance.sql",
+    "modeling/models/raw_vault/links/link_prescription.sql",
+    "modeling/models/raw_vault/links/link_visit.sql"
+  ],
+  "sessions": [
+    {
+      "metadata": "/96/fea7777773/0/metadata.json",
+      "transcript": "/96/fea7777773/0/full.jsonl",
+      "content_hash": "/96/fea7777773/0/content_hash.txt",
+      "prompt": ""
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 3,
+    "cache_creation_tokens": 2602,
+    "cache_read_tokens": 855862,
+    "output_tokens": 2024,
+    "api_call_count": 3
+  }
+}
