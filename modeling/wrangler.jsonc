@@ -7,7 +7,9 @@
     {
       "class_name": "DbtContainer",
       "image": "./Dockerfile",
-      "max_instances": 1
+      "max_instances": 1,
+      "instance_type": "basic",
+      "rollout_active_grace_period": 600
     }
   ],
 

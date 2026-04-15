@@ -28,7 +28,10 @@ interface Env {
 
 export class DbtContainer extends Container<Env> {
   defaultPort = 8080;
-  sleepAfter = "5m";
+  // Stay alive for an hour after the last request so daily cron +
+  // ad-hoc webhook trigger don't pay the 1-7 minute cold start each
+  // time. Build invocations themselves keep the container active.
+  sleepAfter = "60m";
 
   constructor(ctx: DurableObjectState<{}>, env: Env) {
     super(ctx, env);
