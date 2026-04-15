@@ -1,0 +1,27 @@
+{
+  "cli_version": "0.5.5",
+  "checkpoint_id": "dfe3bab39321",
+  "strategy": "manual-commit",
+  "branch": "fix/modeling-container-stability",
+  "checkpoints_count": 0,
+  "files_touched": [
+    "modeling/Dockerfile",
+    "modeling/src/index.ts",
+    "modeling/wrangler.jsonc"
+  ],
+  "sessions": [
+    {
+      "metadata": "/df/e3bab39321/0/metadata.json",
+      "transcript": "/df/e3bab39321/0/full.jsonl",
+      "content_hash": "/df/e3bab39321/0/content_hash.txt",
+      "prompt": "/df/e3bab39321/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 85,
+    "cache_creation_tokens": 772709,
+    "cache_read_tokens": 17557932,
+    "output_tokens": 32884,
+    "api_call_count": 25
+  }
+}

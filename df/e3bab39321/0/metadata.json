@@ -1,0 +1,53 @@
+{
+  "cli_version": "0.5.5",
+  "checkpoint_id": "dfe3bab39321",
+  "session_id": "f85da9ce-0556-424b-8cf3-eb6c964e5564",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-15T11:27:02.659094Z",
+  "branch": "fix/modeling-container-stability",
+  "checkpoints_count": 0,
+  "files_touched": [
+    "modeling/wrangler.jsonc",
+    "modeling/src/index.ts",
+    "modeling/Dockerfile"
+  ],
+  "agent": "Claude Code",
+  "model": "",
+  "turn_id": "4bab9f45dd29",
+  "checkpoint_transcript_start": 2047,
+  "transcript_lines_at_start": 2047,
+  "token_usage": {
+    "input_tokens": 85,
+    "cache_creation_tokens": 772709,
+    "cache_read_tokens": 17557932,
+    "output_tokens": 32884,
+    "api_call_count": 25
+  },
+  "session_metrics": {
+    "turn_count": 59
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-15T11:27:02.571714Z",
+    "agent_lines": 18,
+    "agent_removed": 2,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 18,
+    "total_lines_changed": 20,
+    "agent_percentage": 100,
+    "metric_version": 2
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 1,
+      "user_lines_added": 326,
+      "user_lines_removed": 0,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0,
+      "user_added_per_file": {
+        ".claude/settings.local.json": 326
+      }
+    }
+  ]
+}
