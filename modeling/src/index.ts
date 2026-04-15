@@ -6,14 +6,10 @@ export { ContainerProxy };
 interface Env {
   DBT_CONTAINER: DurableObjectNamespace<DbtContainer>;
   DBT_ARTIFACTS: R2Bucket;
+  // Required secrets
   SNOWFLAKE_ACCOUNT: string;
   SNOWFLAKE_USER: string;
   SNOWFLAKE_PRIVATE_KEY: string;
-  SNOWFLAKE_PRIVATE_KEY_PASSPHRASE: string;
-  SNOWFLAKE_ROLE: string;
-  SNOWFLAKE_WAREHOUSE: string;
-  SNOWFLAKE_DATABASE: string;
-  SNOWFLAKE_SCHEMA: string;
   API_KEY: string;
 }
 
@@ -21,16 +17,20 @@ export class DbtContainer extends Container<Env> {
   defaultPort = 8080;
   sleepAfter = "5m";
 
-  envVars = {
-    SNOWFLAKE_ACCOUNT: this.env.SNOWFLAKE_ACCOUNT,
-    SNOWFLAKE_USER: this.env.SNOWFLAKE_USER,
-    SNOWFLAKE_PRIVATE_KEY: this.env.SNOWFLAKE_PRIVATE_KEY,
-    SNOWFLAKE_PRIVATE_KEY_PASSPHRASE: this.env.SNOWFLAKE_PRIVATE_KEY_PASSPHRASE,
-    SNOWFLAKE_ROLE: this.env.SNOWFLAKE_ROLE,
-    SNOWFLAKE_WAREHOUSE: this.env.SNOWFLAKE_WAREHOUSE,
-    SNOWFLAKE_DATABASE: this.env.SNOWFLAKE_DATABASE,
-    SNOWFLAKE_SCHEMA: this.env.SNOWFLAKE_SCHEMA,
-  };
+  constructor(ctx: DurableObjectState, env: Env) {
+    super(ctx, env);
+    // Populate envVars in the constructor rather than as a class
+    // field. The Container base class initializes `envVars = {}`
+    // which can race with subclass field initializers in some
+    // Workers runtime builds, so we assign after super() to be
+    // sure our values stick. Only required secrets are listed;
+    // optional ones resolve via profiles.yml env_var() defaults.
+    this.envVars = {
+      SNOWFLAKE_ACCOUNT: env.SNOWFLAKE_ACCOUNT,
+      SNOWFLAKE_USER: env.SNOWFLAKE_USER,
+      SNOWFLAKE_PRIVATE_KEY: env.SNOWFLAKE_PRIVATE_KEY,
+    };
+  }
 
   override onStart() {
     console.log("dbt-runner container started (modeling / Snowflake)");
@@ -109,11 +109,42 @@ export default {
       }
     }
 
+    // /debug-env: show which SNOWFLAKE_* env vars the container
+    // can actually see. Values are length-masked so nothing leaks.
+    if (path === "/debug-env") {
+      const container = getContainer(env.DBT_CONTAINER, "dbt-runner-main");
+      try {
+        const res = await container.fetch("http://container/debug-env");
+        return new Response(res.body, {
+          status: res.status,
+          headers: { "Content-Type": "application/json" },
+        });
+      } catch (e) {
+        return Response.json(
+          { error: `debug-env failed: ${(e as Error).message}` },
+          { status: 503 }
+        );
+      }
+    }
+
     // POST endpoints require authentication
     const authError = authenticate(request, env);
     if (authError) return authError;
 
     const container = getContainer(env.DBT_CONTAINER, "dbt-runner-main");
+
+    // Force-kill the container to pick up new envVars / image.
+    if (request.method === "POST" && path === "/restart") {
+      try {
+        await container.destroy();
+        return Response.json({ status: "restarted" });
+      } catch (e) {
+        return Response.json(
+          { error: `restart failed: ${(e as Error).message}` },
+          { status: 500 }
+        );
+      }
+    }
 
     // dbt commands: POST /run, /seed, /test, /build, /docs, /build-docs
     if (

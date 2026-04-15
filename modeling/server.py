@@ -58,6 +58,15 @@ class DbtHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path == "/health":
             self._json_response(200, {"status": "ok"})
+        elif self.path == "/debug-env":
+            self._json_response(
+                200,
+                {
+                    key: f"len={len(value)}"
+                    for key, value in sorted(os.environ.items())
+                    if key.startswith("SNOWFLAKE_") or key == "API_KEY"
+                },
+            )
         else:
             self._json_response(404, {"error": "not found"})
 
@@ -326,8 +335,18 @@ class DbtHandler(BaseHTTPRequestHandler):
 
 
 if __name__ == "__main__":
+    # Debug: dump which SNOWFLAKE_* env vars are visible to the
+    # container. Values are masked to just their length so we can
+    # tell "set" from "missing" without leaking secrets.
+    print("=== container env (SNOWFLAKE_*/API_KEY) ===", flush=True)
+    for key in sorted(os.environ.keys()):
+        if key.startswith("SNOWFLAKE_") or key == "API_KEY":
+            value = os.environ[key]
+            print(f"  {key}: len={len(value)}", flush=True)
+    print("===========================================", flush=True)
+
     bootstrap_private_key()
     port = int(os.environ.get("PORT", "8080"))
     server = HTTPServer(("0.0.0.0", port), DbtHandler)
-    print(f"dbt-runner server listening on port {port}")
+    print(f"dbt-runner server listening on port {port}", flush=True)
     server.serve_forever()
