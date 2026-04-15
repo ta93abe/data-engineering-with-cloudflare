@@ -1,0 +1,9 @@
+/pr review
+
+---
+
+Slack通知のための準備をしたい。
+
+---
+
+claude-review は削除してほしい。

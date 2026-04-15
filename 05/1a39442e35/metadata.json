@@ -1,0 +1,25 @@
+{
+  "cli_version": "0.5.5",
+  "checkpoint_id": "051a39442e35",
+  "strategy": "manual-commit",
+  "branch": "feat/modeling-sandbox-migration",
+  "checkpoints_count": 0,
+  "files_touched": [
+    ".github/workflows/claude-code-review.yml"
+  ],
+  "sessions": [
+    {
+      "metadata": "/05/1a39442e35/0/metadata.json",
+      "transcript": "/05/1a39442e35/0/full.jsonl",
+      "content_hash": "/05/1a39442e35/0/content_hash.txt",
+      "prompt": "/05/1a39442e35/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 24,
+    "cache_creation_tokens": 9147,
+    "cache_read_tokens": 8384965,
+    "output_tokens": 5368,
+    "api_call_count": 9
+  }
+}
