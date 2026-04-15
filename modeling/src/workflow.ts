@@ -140,17 +140,23 @@ export class DbtBuildWorkflow extends WorkflowEntrypoint<
       }
     );
 
+    // "build-docs" is not a real dbt command -- it's a workflow
+    // convenience that means "run dbt build, then dbt docs
+    // generate on success". The retry loop below runs the
+    // primary command; docs generate happens once at the end.
+    const dbtPrimary = command === "build-docs" ? "build" : command;
+
     // Step 4: run dbt with 3-attempt retry loop
     let lastResult: DbtResult | null = null;
     for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-      const processId = `dbt-${command}-${event.instanceId}-${attempt}`;
+      const processId = `dbt-${dbtPrimary}-${event.instanceId}-${attempt}`;
 
       const started = await step.do(
         `dbt-start-attempt-${attempt}`,
         { retries: { limit: 3, delay: "15 seconds", backoff: "exponential" } },
         async () => {
           const sandbox = getSandbox(this.env.Sandbox, SANDBOX_ID);
-          const args = ["dbt", command, "--target", target, "--profiles-dir", "."];
+          const args = ["dbt", dbtPrimary, "--target", target, "--profiles-dir", "."];
           if (select) args.push("--select", select);
           if (full_refresh) args.push("--full-refresh");
           const cmdLine = `uv run ${args.map(shellQuote).join(" ")}`;
@@ -242,6 +248,37 @@ export class DbtBuildWorkflow extends WorkflowEntrypoint<
       };
 
       if (finalExitCode === 0) {
+        // If the caller asked for "build-docs", also run
+        // `dbt docs generate` on the freshly-built project.
+        // This is post-build; if it fails the overall build is
+        // still considered successful, but the Slack message
+        // calls out the docs failure so operators can retry.
+        let docsWarning = "";
+        if (command === "build-docs") {
+          const docsOutcome = await step.do(
+            "dbt-docs-generate",
+            { retries: { limit: 2, delay: "30 seconds", backoff: "exponential" } },
+            async () => {
+              const sandbox = getSandbox(this.env.Sandbox, SANDBOX_ID);
+              const docsCmd = `uv run dbt docs generate --target ${shellQuote(target)} --profiles-dir .`;
+              const result = await sandbox.exec(docsCmd, {
+                cwd: MODELING_DIR,
+                timeout: 1_800_000, // 30 min
+              });
+              return {
+                exitCode: result.exitCode,
+                stdout: result.stdout,
+                stderr: result.stderr,
+              };
+            }
+          );
+          if (docsOutcome.exitCode !== 0) {
+            docsWarning =
+              `\n:warning: docs generate failed: exit=${docsOutcome.exitCode}` +
+              `\n\`\`\`\n${tail(docsOutcome.stderr || docsOutcome.stdout, 800)}\n\`\`\``;
+          }
+        }
+
         await step.do(
           "notify-success",
           { retries: { limit: 3, delay: "15 seconds", backoff: "exponential" } },
@@ -251,7 +288,8 @@ export class DbtBuildWorkflow extends WorkflowEntrypoint<
                 (select ? ` (\`${select}\`)` : "") +
                 `\nattempt: ${attempt}/${MAX_ATTEMPTS}` +
                 `\nsource: ${source}` +
-                `\nref: ${ref}`
+                `\nref: ${ref}` +
+                docsWarning
             )
         );
         return lastResult;
