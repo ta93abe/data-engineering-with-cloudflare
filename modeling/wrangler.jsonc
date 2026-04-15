@@ -2,10 +2,11 @@
   "name": "modeling",
   "main": "src/index.ts",
   "compatibility_date": "2026-03-31",
+  "compatibility_flags": ["nodejs_compat"],
 
   "containers": [
     {
-      "class_name": "DbtContainer",
+      "class_name": "Sandbox",
       "image": "./Dockerfile",
       "max_instances": 1,
       "instance_type": "basic",
@@ -16,24 +17,19 @@
   "durable_objects": {
     "bindings": [
       {
-        "name": "DBT_CONTAINER",
-        "class_name": "DbtContainer"
-      },
-      {
-        "name": "JOB_REGISTRY",
-        "class_name": "JobRegistry"
+        "name": "Sandbox",
+        "class_name": "Sandbox"
       }
     ]
   },
 
   "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["DbtContainer"] },
+    { "tag": "v2", "new_sqlite_classes": ["JobRegistry"] },
     {
-      "tag": "v1",
-      "new_sqlite_classes": ["DbtContainer"]
-    },
-    {
-      "tag": "v2",
-      "new_sqlite_classes": ["JobRegistry"]
+      "tag": "v3",
+      "deleted_classes": ["DbtContainer", "JobRegistry"],
+      "new_sqlite_classes": ["Sandbox"]
     }
   ],
 

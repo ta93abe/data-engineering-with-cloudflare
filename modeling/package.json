@@ -9,7 +9,7 @@
   },
   "packageManager": "pnpm@10.29.2",
   "dependencies": {
-    "@cloudflare/containers": "^0.2.1"
+    "@cloudflare/sandbox": "^0.7.0"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260331.1",

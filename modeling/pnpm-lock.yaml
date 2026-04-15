@@ -8,9 +8,9 @@ importers:
 
   .:
     dependencies:
-      '@cloudflare/containers':
-        specifier: ^0.2.1
-        version: 0.2.4
+      '@cloudflare/sandbox':
+        specifier: ^0.7.0
+        version: 0.7.21
     devDependencies:
       '@cloudflare/workers-types':
         specifier: ^4.20260331.1
@@ -24,12 +24,26 @@ importers:
 
 packages:
 
-  '@cloudflare/containers@0.2.4':
-    resolution: {integrity: sha512-G/Wsl0EuLbSgXyr9zv7cetUO90NyinKIMZvXae/C5R5BY3XMl9ZUdplvcofylAwRZjBEUm+aUugWxIiiKQU0ZA==}
+  '@cloudflare/containers@0.1.1':
+    resolution: {integrity: sha512-YTdobRTnTlUOUPMFemufH367A9Z8pDfZ+UboYMLbGpO0VlvEXZDiioSmXPQMHld2vRtkL31mcRii3bcbQU6fdw==}
 
   '@cloudflare/kv-asset-handler@0.4.2':
     resolution: {integrity: sha512-SIOD2DxrRRwQ+jgzlXCqoEFiKOFqaPjhnNTGKXSRLvp1HiOvapLaFG2kEr9dYQTYe8rKrd9uvDUzmAITeNyaHQ==}
     engines: {node: '>=18.0.0'}
+
+  '@cloudflare/sandbox@0.7.21':
+    resolution: {integrity: sha512-BlfbhIWF83NkmixxGVpE9zrcR0Ix5fVgV+zzfJByxyRnXUS+g2aUeIXK2opBcnX8WWlk6v5+RYTKkSz1XKQ4eg==}
+    peerDependencies:
+      '@openai/agents': ^0.3.3
+      '@opencode-ai/sdk': ^1.1.40
+      '@xterm/xterm': '>=5.0.0'
+    peerDependenciesMeta:
+      '@openai/agents':
+        optional: true
+      '@opencode-ai/sdk':
+        optional: true
+      '@xterm/xterm':
+        optional: true
 
   '@cloudflare/unenv-preset@2.16.0':
     resolution: {integrity: sha512-8ovsRpwzPoEqPUzoErAYVv8l3FMZNeBVQfJTvtzP4AgLSRGZISRfuChFxHWUQd3n6cnrwkuTGxT+2cGo8EsyYg==}
@@ -415,6 +429,9 @@ packages:
   '@speed-highlight/core@1.2.15':
     resolution: {integrity: sha512-BMq1K3DsElxDWawkX6eLg9+CKJrTVGCBAWVuHXVUV2u0s2711qiChLSId6ikYPfxhdYocLNt3wWwSvDiTvFabw==}
 
+  aws4fetch@1.0.20:
+    resolution: {integrity: sha512-/djoAN709iY65ETD6LKCtyyEI04XIBP5xVvfmNxsEP0uJB5tyaGBztSryRr4HqMStr9R06PisQE7m9zDTXKu6g==}
+
   blake3-wasm@2.1.5:
     resolution: {integrity: sha512-F1+K8EbfOZE49dtoPtmxUQrpXaBIl3ICvasLh+nJta0xkz+9kF/7uet9fLnwKqhDrmj6g+6K3Tw9yQPUg2ka5g==}
 
@@ -517,9 +534,14 @@ packages:
 
 snapshots:
 
-  '@cloudflare/containers@0.2.4': {}
+  '@cloudflare/containers@0.1.1': {}
 
   '@cloudflare/kv-asset-handler@0.4.2': {}
+
+  '@cloudflare/sandbox@0.7.21':
+    dependencies:
+      '@cloudflare/containers': 0.1.1
+      aws4fetch: 1.0.20
 
   '@cloudflare/unenv-preset@2.16.0(unenv@2.0.0-rc.24)(workerd@1.20260410.1)':
     dependencies:
@@ -751,6 +773,8 @@ snapshots:
   '@sindresorhus/is@7.2.0': {}
 
   '@speed-highlight/core@1.2.15': {}
+
+  aws4fetch@1.0.20: {}
 
   blake3-wasm@2.1.5: {}
 
