@@ -42,8 +42,11 @@
   ],
 
   "triggers": {
-    // Sunday 18:00 UTC = Monday 03:00 JST (weekly cadence)
-    "crons": ["0 18 * * 0"]
+    // Sunday 18:00 UTC = Monday 03:00 JST (weekly cadence).
+    // Named day-of-week (SUN) because Cloudflare's cron parser
+    // rejects numeric 0 and uses 1-based indexing (1=SUN..7=SAT)
+    // which is easy to get wrong; the name is unambiguous.
+    "crons": ["0 18 * * SUN"]
   },
 
   "r2_buckets": [
