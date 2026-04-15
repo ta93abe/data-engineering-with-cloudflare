@@ -1,0 +1,27 @@
+{
+  "cli_version": "0.5.5",
+  "checkpoint_id": "de5930adde45",
+  "strategy": "manual-commit",
+  "branch": "main",
+  "checkpoints_count": 3,
+  "files_touched": [
+    "modeling/profiles.yml",
+    "modeling/server.py",
+    "modeling/src/index.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/de/5930adde45/0/metadata.json",
+      "transcript": "/de/5930adde45/0/full.jsonl",
+      "content_hash": "/de/5930adde45/0/content_hash.txt",
+      "prompt": "/de/5930adde45/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 110,
+    "cache_creation_tokens": 648747,
+    "cache_read_tokens": 45003633,
+    "output_tokens": 44468,
+    "api_call_count": 76
+  }
+}
