@@ -1,0 +1,28 @@
+{
+  "cli_version": "0.5.5",
+  "checkpoint_id": "e5f189141012",
+  "strategy": "manual-commit",
+  "branch": "feat/modeling-sandbox-migration",
+  "checkpoints_count": 0,
+  "files_touched": [
+    "modeling/Dockerfile",
+    "modeling/package.json",
+    "modeling/src/workflow.ts",
+    "modeling/wrangler.jsonc"
+  ],
+  "sessions": [
+    {
+      "metadata": "/e5/f189141012/0/metadata.json",
+      "transcript": "/e5/f189141012/0/full.jsonl",
+      "content_hash": "/e5/f189141012/0/content_hash.txt",
+      "prompt": "/e5/f189141012/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 742,
+    "cache_creation_tokens": 93254,
+    "cache_read_tokens": 29945384,
+    "output_tokens": 52299,
+    "api_call_count": 35
+  }
+}
