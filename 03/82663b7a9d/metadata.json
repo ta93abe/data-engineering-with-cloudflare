@@ -1,0 +1,25 @@
+{
+  "cli_version": "0.5.5",
+  "checkpoint_id": "0382663b7a9d",
+  "strategy": "manual-commit",
+  "branch": "fix/workflow-build-docs",
+  "checkpoints_count": 0,
+  "files_touched": [
+    "modeling/src/workflow.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/03/82663b7a9d/0/metadata.json",
+      "transcript": "/03/82663b7a9d/0/full.jsonl",
+      "content_hash": "/03/82663b7a9d/0/content_hash.txt",
+      "prompt": "/03/82663b7a9d/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 26,
+    "cache_creation_tokens": 10239,
+    "cache_read_tokens": 15299941,
+    "output_tokens": 7331,
+    "api_call_count": 18
+  }
+}

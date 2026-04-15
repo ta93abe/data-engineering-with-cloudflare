@@ -1,0 +1,51 @@
+{
+  "cli_version": "0.5.5",
+  "checkpoint_id": "0382663b7a9d",
+  "session_id": "f85da9ce-0556-424b-8cf3-eb6c964e5564",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-15T15:18:40.699667Z",
+  "branch": "fix/workflow-build-docs",
+  "checkpoints_count": 0,
+  "files_touched": [
+    "modeling/src/workflow.ts"
+  ],
+  "agent": "Claude Code",
+  "model": "",
+  "turn_id": "d2461060a4e7",
+  "checkpoint_transcript_start": 2695,
+  "transcript_lines_at_start": 2695,
+  "token_usage": {
+    "input_tokens": 26,
+    "cache_creation_tokens": 10239,
+    "cache_read_tokens": 15299941,
+    "output_tokens": 7331,
+    "api_call_count": 18
+  },
+  "session_metrics": {
+    "turn_count": 78
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-15T15:18:40.589545Z",
+    "agent_lines": 41,
+    "agent_removed": 3,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 41,
+    "total_lines_changed": 44,
+    "agent_percentage": 100,
+    "metric_version": 2
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 1,
+      "user_lines_added": 326,
+      "user_lines_removed": 0,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0,
+      "user_added_per_file": {
+        ".claude/settings.local.json": 326
+      }
+    }
+  ]
+}
