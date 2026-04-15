@@ -42,7 +42,8 @@
   ],
 
   "triggers": {
-    "crons": ["0 18 * * *"]
+    // Sunday 18:00 UTC = Monday 03:00 JST (weekly cadence)
+    "crons": ["0 18 * * 0"]
   },
 
   "r2_buckets": [
