@@ -23,14 +23,15 @@ COPY macros/ ./macros/
 # Install dbt packages
 RUN uv run dbt deps
 
-# Pre-compile any straggling .py files (dbt_packages, macros, models)
-# so the first request after a cold start doesn't take the
-# byte-compile penalty.
-RUN .venv/bin/python -m compileall -q .venv dbt_packages 2>/dev/null || true
+# Pre-compile the dbt_packages tree. UV_COMPILE_BYTECODE already
+# compiles everything inside .venv during `uv sync`, but the files
+# dropped by `dbt deps` into dbt_packages/ are outside that path
+# and would otherwise hit byte-compile on first import.
+RUN .venv/bin/python -m compileall -q dbt_packages
 
 # Copy HTTP server
 COPY server.py ./server.py
-RUN .venv/bin/python -m compileall -q server.py 2>/dev/null || true
+RUN .venv/bin/python -m compileall -q server.py
 
 # Non-root user
 RUN useradd -m -u 1000 appuser && \
