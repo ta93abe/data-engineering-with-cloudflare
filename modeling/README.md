@@ -98,6 +98,64 @@ curl -X POST https://<your-worker>.workers.dev/build-docs \
   -d '{"target": "prod"}'
 ```
 
+### Async jobs + Workflows (production)
+
+For long builds that exceed the Worker subrequest wall clock, use
+the async job API + `DbtBuildWorkflow` instead of the synchronous
+endpoints above.
+
+```bash
+# Kick off a workflow via webhook (recommended production path)
+curl -X POST https://<your-worker>.workers.dev/workflows/build \
+  -H "Authorization: Bearer $API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"command":"build-docs","target":"prod"}'
+# → {"workflow_id":"...","status":{...}}
+
+# Check workflow status
+curl https://<your-worker>.workers.dev/workflows/build/instances/<id> \
+  -H "Authorization: Bearer $API_KEY"
+
+# Lower-level: submit a single job directly (no retries, no Slack)
+curl -X POST https://<your-worker>.workers.dev/jobs \
+  -H "Authorization: Bearer $API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"command":"build","target":"prod","select":"tag:datavault"}'
+# → 202 Accepted, {"id":"<uuid>","state":"running",...}
+
+curl https://<your-worker>.workers.dev/jobs/<id> \
+  -H "Authorization: Bearer $API_KEY"
+# → {"state":"running"|"complete"|"failed"|"cancelled", ...}
+
+# Cancel the currently-running job
+curl -X POST https://<your-worker>.workers.dev/jobs/<id>/cancel \
+  -H "Authorization: Bearer $API_KEY"
+```
+
+Key properties of the workflow layer:
+
+- **Latest-wins scheduling**. JobRegistry (Durable Object) keeps at most
+  one job running. Submitting a new job cancels the current one via
+  `POST /jobs/<id>/cancel` (SIGTERM to the dbt subprocess) and starts
+  the new one immediately.
+- **3 automatic retries** on transient failures
+  (network / 5xx / `state=failed`). The workflow exits early when the
+  job is `cancelled` because that means a newer submission superseded it.
+- **Cron trigger** (`0 18 * * *` = 03:00 JST daily) runs
+  `{command:"build-docs",target:"prod"}` via the same workflow.
+- **Slack notifications** when `SLACK_WEBHOOK_URL` secret is set.
+  Sent on success, cancellation, per-attempt failure retry, and
+  final failure (with stdout tail).
+- **State persists in DO storage** so workflows can hibernate across
+  long `step.sleep()` calls without holding memory.
+
+Optional secrets for the workflow layer:
+
+```bash
+wrangler secret put SLACK_WEBHOOK_URL   # https://hooks.slack.com/...
+wrangler secret put WORKER_BASE_URL     # override if custom domain
+```
+
 ### Security notes
 
 - Non-root `appuser` inside the container.
