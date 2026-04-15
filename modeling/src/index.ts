@@ -293,6 +293,10 @@ function getRegistry(env: Env): DurableObjectStub<JobRegistry> {
 
 function authenticate(request: Request, env: Env): Response | null {
   if (request.method === "GET") return null;
+  return requireBearerToken(request, env);
+}
+
+function requireBearerToken(request: Request, env: Env): Response | null {
   const authHeader = request.headers.get("Authorization");
   if (!authHeader || authHeader !== `Bearer ${env.API_KEY}`) {
     return Response.json({ error: "unauthorized" }, { status: 401 });
@@ -307,6 +311,8 @@ export default {
     const container = getContainer(env.DBT_CONTAINER, "dbt-runner-main");
 
     // --- unauthenticated health probes --------------------------------
+    // /health is deliberately public -- uptime monitors and
+    // Cloudflare's own health checks need to hit it without a token.
     if (path === "/health") {
       try {
         const res = await container.fetch("http://container/health");
@@ -322,22 +328,29 @@ export default {
       }
     }
 
-    if (path === "/debug-env") {
+    // --- authenticated paths ------------------------------------------
+    // Ops-facing GET endpoints (/debug-env, /health/deep) leak
+    // information about the Snowflake configuration and connectivity,
+    // so they require the same bearer token as POST endpoints.
+    if (path === "/debug-env" || path === "/health/deep") {
+      const authError = requireBearerToken(request, env);
+      if (authError) return authError;
+      const containerPath =
+        path === "/debug-env" ? "/debug-env" : "/health/deep";
       try {
-        const res = await container.fetch("http://container/debug-env");
+        const res = await container.fetch(`http://container${containerPath}`);
         return new Response(res.body, {
           status: res.status,
           headers: { "Content-Type": "application/json" },
         });
       } catch (e) {
         return Response.json(
-          { error: `debug-env failed: ${(e as Error).message}` },
+          { error: `${path} failed: ${(e as Error).message}` },
           { status: 503 }
         );
       }
     }
 
-    // --- authenticated paths ------------------------------------------
     const authError = authenticate(request, env);
     if (authError) return authError;
 

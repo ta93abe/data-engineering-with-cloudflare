@@ -35,6 +35,7 @@ import subprocess
 import threading
 import time
 import uuid
+from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from typing import Any
 from urllib.request import Request, urlopen
@@ -68,6 +69,97 @@ def bootstrap_private_key() -> None:
         f.write(pem)
     os.chmod(PRIVATE_KEY_PATH, stat.S_IRUSR | stat.S_IWUSR)
     os.environ["SNOWFLAKE_PRIVATE_KEY_PATH"] = PRIVATE_KEY_PATH
+
+
+# ---------------------------------------------------------------------------
+# Structured JSON logging
+# ---------------------------------------------------------------------------
+#
+# Workers Observability ingests lines that look like valid JSON and exposes
+# them as structured events in the dashboard. Emitting one JSON line per
+# log call lets us filter / aggregate by event / job_id / state / ... from
+# the UI without parsing stdout.
+
+
+def log(level: str, event: str, **fields: Any) -> None:
+    """Emit a structured log line to stdout."""
+    payload: dict[str, Any] = {
+        "ts": datetime.now(timezone.utc).isoformat(timespec="milliseconds").replace("+00:00", "Z"),
+        "level": level,
+        "event": event,
+    }
+    payload.update(fields)
+    print(json.dumps(payload, ensure_ascii=False), flush=True)
+
+
+# ---------------------------------------------------------------------------
+# Snowflake lightweight connectivity check
+# ---------------------------------------------------------------------------
+#
+# Uses the snowflake-connector-python that's already pulled in as a
+# dependency of dbt-snowflake. Runs server-metadata functions only
+# (CURRENT_ACCOUNT / CURRENT_USER / CURRENT_VERSION) so the query is
+# served from Snowflake's cloud services layer and does NOT spin up a
+# warehouse. That means running this check is effectively free -- it
+# counts against the cloud-services free tier (10% of monthly credits)
+# which we are nowhere near.
+
+
+def check_snowflake_deep() -> tuple[bool, dict[str, Any]]:
+    try:
+        import snowflake.connector  # imported lazily so the rest of
+        # the server starts even if the dependency tree is broken.
+    except Exception as e:
+        return False, {"stage": "import", "error": str(e)}
+
+    account = os.environ.get("SNOWFLAKE_ACCOUNT")
+    user = os.environ.get("SNOWFLAKE_USER")
+    key_path = os.environ.get("SNOWFLAKE_PRIVATE_KEY_PATH") or PRIVATE_KEY_PATH
+
+    if not account or not user:
+        return False, {"stage": "config", "error": "missing SNOWFLAKE_ACCOUNT or SNOWFLAKE_USER"}
+    if not os.path.exists(key_path):
+        return False, {"stage": "config", "error": f"private key not found at {key_path}"}
+
+    started = time.monotonic()
+    try:
+        conn = snowflake.connector.connect(
+            account=account,
+            user=user,
+            private_key_file=key_path,
+            # No warehouse / database / schema: avoid any compute charge.
+            # The queries below only touch the cloud services layer.
+            client_session_keep_alive=False,
+            login_timeout=15,
+            network_timeout=15,
+        )
+    except Exception as e:
+        return False, {"stage": "connect", "error": str(e)}
+
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT CURRENT_ACCOUNT(), CURRENT_USER(), CURRENT_VERSION()")
+        row = cur.fetchone() or (None, None, None)
+        cur.close()
+    except Exception as e:
+        try:
+            conn.close()
+        except Exception:
+            pass
+        return False, {"stage": "query", "error": str(e)}
+    finally:
+        try:
+            conn.close()
+        except Exception:
+            pass
+
+    elapsed_ms = int((time.monotonic() - started) * 1000)
+    return True, {
+        "account": row[0],
+        "user": row[1],
+        "version": row[2],
+        "elapsed_ms": elapsed_ms,
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -187,7 +279,7 @@ def _put_r2(key: str, data: bytes, content_type: str) -> bool:
         urlopen(req, timeout=30)
         return True
     except Exception as e:
-        print(f"Failed to PUT {key} to R2: {e}", flush=True)
+        log("error", "r2_put_failed", key=key, error=str(e))
         return False
 
 
@@ -201,6 +293,9 @@ def _run_job_thread(job_id: str) -> None:
     target = job["target"]
     select = job["select"]
     full_refresh = job["full_refresh"]
+
+    started_at = time.monotonic()
+    log("info", "job_started", job_id=job_id, command=command, target=target, select=select)
 
     try:
         if command == "build-docs":
@@ -231,12 +326,29 @@ def _run_job_thread(job_id: str) -> None:
             returncode=rc,
             finished_at=_now(),
         )
+        log(
+            "info" if final_state == "complete" else "warning",
+            "job_finished",
+            job_id=job_id,
+            command=command,
+            state=final_state,
+            returncode=rc,
+            duration_ms=int((time.monotonic() - started_at) * 1000),
+        )
     except Exception as e:
         _update_job(
             job_id,
             state="error",
             finished_at=_now(),
             error=str(e),
+        )
+        log(
+            "error",
+            "job_errored",
+            job_id=job_id,
+            command=command,
+            error=str(e),
+            duration_ms=int((time.monotonic() - started_at) * 1000),
         )
 
 
@@ -315,6 +427,18 @@ class DbtHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path == "/health":
             self._json(200, {"status": "ok"})
+        elif self.path == "/health/deep":
+            ok, details = check_snowflake_deep()
+            log(
+                "info" if ok else "warning",
+                "health_deep",
+                ok=ok,
+                **details,
+            )
+            self._json(
+                200 if ok else 503,
+                {"status": "ok" if ok else "degraded", **details},
+            )
         elif self.path == "/debug-env":
             self._json(
                 200,
@@ -588,17 +712,19 @@ class ThreadingHTTPServer(HTTPServer):
 
 
 if __name__ == "__main__":
-    # Debug: dump which SNOWFLAKE_* env vars are visible to the
-    # container. Values are masked to just their length.
-    print("=== container env (SNOWFLAKE_*/API_KEY) ===", flush=True)
-    for key in sorted(os.environ.keys()):
-        if key.startswith("SNOWFLAKE_") or key == "API_KEY":
-            value = os.environ[key]
-            print(f"  {key}: len={len(value)}", flush=True)
-    print("===========================================", flush=True)
+    # Startup env dump is ops-sensitive (even when length-masked).
+    # Gate it behind DEBUG_ENV=1 so the default production image
+    # doesn't leak the SNOWFLAKE_* secret footprint into logs.
+    if os.environ.get("DEBUG_ENV") == "1":
+        env_snapshot = {
+            key: f"len={len(value)}"
+            for key, value in sorted(os.environ.items())
+            if key.startswith("SNOWFLAKE_") or key == "API_KEY"
+        }
+        log("info", "env_dump", **env_snapshot)
 
     bootstrap_private_key()
     port = int(os.environ.get("PORT", "8080"))
     server = ThreadingHTTPServer(("0.0.0.0", port), DbtHandler)
-    print(f"dbt-runner server listening on port {port}", flush=True)
+    log("info", "server_listening", port=port)
     server.serve_forever()

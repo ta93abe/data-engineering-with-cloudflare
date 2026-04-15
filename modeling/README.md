@@ -76,8 +76,27 @@ pnpm deploy    # wrangler deploy
 ### Invoke
 
 ```bash
-# Health (no auth)
+# Liveness probe (no auth) -- just verifies the container process
+# is responding. Safe to hit from uptime monitors.
 curl https://<your-worker>.workers.dev/health
+
+# Readiness probe (auth required). Runs a cloud-services-only
+# Snowflake query (no warehouse charge) to verify auth + network.
+# Returns 200 + {status:ok,...} or 503 + {status:degraded,error,...}.
+curl https://<your-worker>.workers.dev/health/deep \
+  -H "Authorization: Bearer $API_KEY"
+
+# Dump container env var footprint (auth required). Values are
+# length-masked, not leaked. Useful when debugging secret
+# propagation.
+curl https://<your-worker>.workers.dev/debug-env \
+  -H "Authorization: Bearer $API_KEY"
+
+# Force-restart the container (auth required). ⚠ This SIGKILLs
+# any in-flight dbt job and takes ~60 seconds to come back up.
+# Only use after a secret rotation or if the container is stuck.
+curl -X POST https://<your-worker>.workers.dev/restart \
+  -H "Authorization: Bearer $API_KEY"
 
 # dbt run (authenticated)
 curl -X POST https://<your-worker>.workers.dev/run \
