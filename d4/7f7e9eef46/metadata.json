@@ -1,0 +1,27 @@
+{
+  "cli_version": "0.5.5",
+  "checkpoint_id": "d47f7e9eef46",
+  "strategy": "manual-commit",
+  "branch": "feat/modeling-container-hardening",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "modeling/README.md",
+    "modeling/server.py",
+    "modeling/src/index.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/d4/7f7e9eef46/0/metadata.json",
+      "transcript": "/d4/7f7e9eef46/0/full.jsonl",
+      "content_hash": "/d4/7f7e9eef46/0/content_hash.txt",
+      "prompt": "/d4/7f7e9eef46/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 89,
+    "cache_creation_tokens": 61583,
+    "cache_read_tokens": 35449731,
+    "output_tokens": 40212,
+    "api_call_count": 45
+  }
+}
