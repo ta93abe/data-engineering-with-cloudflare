@@ -16,6 +16,10 @@
       {
         "name": "DBT_CONTAINER",
         "class_name": "DbtContainer"
+      },
+      {
+        "name": "JOB_REGISTRY",
+        "class_name": "JobRegistry"
       }
     ]
   },
@@ -24,8 +28,24 @@
     {
       "tag": "v1",
       "new_sqlite_classes": ["DbtContainer"]
+    },
+    {
+      "tag": "v2",
+      "new_sqlite_classes": ["JobRegistry"]
     }
   ],
+
+  "workflows": [
+    {
+      "binding": "DBT_BUILD_WORKFLOW",
+      "name": "dbt-build",
+      "class_name": "DbtBuildWorkflow"
+    }
+  ],
+
+  "triggers": {
+    "crons": ["0 18 * * *"]
+  },
 
   "r2_buckets": [
     {
