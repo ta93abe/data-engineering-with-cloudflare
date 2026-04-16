@@ -1,0 +1,25 @@
+---
+export const prerender = false;
+
+import Layout from "../../layouts/Layout.astro";
+import { AppSidebar } from "../../components/AppSidebar";
+import { ModelDetail } from "../../components/ModelDetail";
+import { loadModel } from "../../lib/artifacts";
+
+const { name } = Astro.params;
+if (!name) return Astro.redirect("/models");
+
+const bucket = Astro.locals.runtime.env.DBT_ARTIFACTS;
+const model = await loadModel(bucket, name);
+
+if (!model) {
+  return new Response("Model not found", { status: 404 });
+}
+---
+
+<Layout title={`${model.name} — Data Catalog`}>
+  <div class="flex min-h-screen">
+    <AppSidebar client:load />
+    <ModelDetail client:load model={model} />
+  </div>
+</Layout>
