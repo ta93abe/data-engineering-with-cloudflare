@@ -90,9 +90,9 @@ export function ModelList({ models }: ModelListProps) {
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        <span className="text-kumo-subtle text-sm whitespace-nowrap">
+        <Text variant="secondary" size="sm">
           {filtered.length} result{filtered.length !== 1 ? "s" : ""}
-        </span>
+        </Text>
       </div>
 
       <Surface className="overflow-hidden rounded-lg">
@@ -118,16 +118,16 @@ export function ModelList({ models }: ModelListProps) {
                     {model.name}
                   </a>
                   {model.description && (
-                    <div className="text-kumo-subtle text-xs mt-0.5">
+                    <Text variant="secondary" size="xs">
                       {model.description}
-                    </div>
+                    </Text>
                   )}
                 </Table.Cell>
                 <Table.Cell>
                   <LayerBadge layer={model.layer} />
                 </Table.Cell>
                 <Table.Cell>
-                  <span className="font-mono text-sm">{model.schema}</span>
+                  <Text variant="mono">{model.schema}</Text>
                 </Table.Cell>
                 <Table.Cell>
                   <Badge variant="outline">{model.materialization}</Badge>

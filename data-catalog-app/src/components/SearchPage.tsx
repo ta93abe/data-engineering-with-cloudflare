@@ -43,7 +43,6 @@ export function SearchPage() {
 
   return (
     <div className="flex flex-1 flex-col gap-6 p-6">
-      {/* Header */}
       <div className="flex flex-col gap-1">
         <Text variant="heading2">Search</Text>
         <Text variant="secondary">
@@ -51,7 +50,6 @@ export function SearchPage() {
         </Text>
       </div>
 
-      {/* Search form */}
       <form onSubmit={handleSubmit} className="flex items-center gap-2">
         <Input
           placeholder="e.g. What models are in the marts layer?"
@@ -71,29 +69,26 @@ export function SearchPage() {
         </Button>
       </form>
 
-      {/* Error */}
       {result?.error && (
         <Surface className="rounded-lg p-4">
           <Text variant="error">{result.error}</Text>
         </Surface>
       )}
 
-      {/* AI Answer */}
       {result?.response && (
         <Surface className="rounded-lg p-4 flex flex-col gap-2">
-          <span className="font-semibold">AI Answer</span>
+          <Text variant="heading3">AI Answer</Text>
           <Text>{result.response}</Text>
         </Surface>
       )}
 
-      {/* Source documents */}
       {result?.data && result.data.length > 0 && (
         <div className="flex flex-col gap-3">
-          <span className="font-semibold">Sources ({result.data.length})</span>
+          <Text variant="heading3">Sources ({result.data.length})</Text>
           {result.data.map((item, i) => (
             <Surface key={i} className="rounded-lg p-4 flex flex-col gap-2">
               <div className="flex items-center justify-between">
-                <span className="font-mono text-sm font-medium">{item.source}</span>
+                <Text variant="mono">{item.source}</Text>
                 <Text variant="secondary" size="xs">
                   Score: {item.score.toFixed(3)}
                 </Text>

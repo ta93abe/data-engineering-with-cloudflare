@@ -1,4 +1,4 @@
-import { Badge } from "@cloudflare/kumo";
+import { Badge, Text } from "@cloudflare/kumo";
 
 interface LineageBadgesProps {
   label: string;
@@ -15,7 +15,7 @@ export function LineageBadges({ label, nodeIds }: LineageBadgesProps) {
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <span className="text-kumo-subtle text-sm font-medium">{label}:</span>
+      <Text variant="secondary" size="sm">{label}:</Text>
       {nodeIds.map((id) => {
         const name = extractModelName(id);
         const isModel = id.startsWith("model.");

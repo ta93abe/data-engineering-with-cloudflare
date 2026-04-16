@@ -30,10 +30,10 @@ export function ColumnTable({ columns }: ColumnTableProps) {
             <Table.Row key={col.name}>
               <Table.Cell>{col.index}</Table.Cell>
               <Table.Cell>
-                <span className="font-mono font-medium">{col.name}</span>
+                <Text variant="mono">{col.name}</Text>
               </Table.Cell>
               <Table.Cell>
-                <span className="font-mono text-kumo-subtle">{col.type}</span>
+                <Text variant="mono-secondary">{col.type}</Text>
               </Table.Cell>
               <Table.Cell>{col.description || "—"}</Table.Cell>
             </Table.Row>
