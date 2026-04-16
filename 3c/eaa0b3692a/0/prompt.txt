@@ -1,0 +1,26 @@
+docs generate したい。
+
+---
+
+wrangler secret に登録したやつ使えない？
+
+---
+
+Continue polling workflow instance e276ddfc-ac47-4259-86fd-3cc1634a1199 for the build-docs run. Run: `pnpm wrangler workflows instances describe dbt-build e276ddfc-ac47-4259-86fd-3cc1634a1199` from /Users/ta93abe/Developer/github.com/ta93abe/data-engineering-with-cloudflare/modeling. If still running, reschedule; if complete, report to user.
+
+---
+
+Continue polling workflow instance e276ddfc-ac47-4259-86fd-3cc1634a1199 for the build-docs run. Run: `pnpm wrangler workflows instances describe dbt-build e276ddfc-ac47-4259-86fd-3cc1634a1199` from /Users/ta93abe/Developer/github.com/ta93abe/data-engineering-with-cloudflare/modeling. If still running, reschedule; if complete, report to user.
+
+---
+
+INDEX.HTML とcatalog.jsonはR2保存してある?
+
+---
+
+run_result.json も保存したい。
+sandbox 内でR2バインディングして保存してくれればいいよ。
+
+---
+
+ビルドはしないでdocs generate するだけのコマンドはないの？
