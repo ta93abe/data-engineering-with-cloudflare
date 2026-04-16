@@ -1,10 +1,9 @@
 import { Sidebar } from "@cloudflare/kumo";
 import {
-  Database,
-  Table as TableIcon,
-  MagnifyingGlass,
-  Gear,
-  House,
+  DatabaseIcon,
+  TableIcon,
+  MagnifyingGlassIcon,
+  BookIcon,
 } from "@phosphor-icons/react";
 
 export function AppSidebar() {
@@ -12,10 +11,10 @@ export function AppSidebar() {
     <Sidebar.Provider>
       <Sidebar>
         <Sidebar.Header>
-          <div className="flex items-center gap-2 px-2">
-            <Database size={24} weight="duotone" />
-            <span className="text-lg font-semibold">Flame</span>
-          </div>
+          <a href="/models" className="flex items-center gap-2 px-2">
+            <DatabaseIcon size={24} weight="duotone" />
+            <span className="text-lg font-semibold">Data Catalog</span>
+          </a>
         </Sidebar.Header>
 
         <Sidebar.Content>
@@ -23,38 +22,33 @@ export function AppSidebar() {
             <Sidebar.GroupContent>
               <Sidebar.Menu>
                 <Sidebar.MenuItem>
-                  <Sidebar.MenuButton>
-                    <House size={20} />
-                    Home
+                  <Sidebar.MenuButton asChild>
+                    <a href="/models">
+                      <TableIcon size={20} />
+                      Models
+                    </a>
                   </Sidebar.MenuButton>
                 </Sidebar.MenuItem>
                 <Sidebar.MenuItem>
-                  <Sidebar.MenuButton>
-                    <MagnifyingGlass size={20} />
-                    Search
+                  <Sidebar.MenuButton asChild>
+                    <a href="/search">
+                      <MagnifyingGlassIcon size={20} />
+                      Search
+                    </a>
                   </Sidebar.MenuButton>
                 </Sidebar.MenuItem>
                 <Sidebar.MenuItem>
-                  <Sidebar.MenuButton>
-                    <TableIcon size={20} />
-                    Datasets
+                  <Sidebar.MenuButton asChild>
+                    <a href="/glossary">
+                      <BookIcon size={20} />
+                      Glossary
+                    </a>
                   </Sidebar.MenuButton>
                 </Sidebar.MenuItem>
               </Sidebar.Menu>
             </Sidebar.GroupContent>
           </Sidebar.Group>
         </Sidebar.Content>
-
-        <Sidebar.Footer>
-          <Sidebar.Menu>
-            <Sidebar.MenuItem>
-              <Sidebar.MenuButton>
-                <Gear size={20} />
-                Settings
-              </Sidebar.MenuButton>
-            </Sidebar.MenuItem>
-          </Sidebar.Menu>
-        </Sidebar.Footer>
       </Sidebar>
     </Sidebar.Provider>
   );
