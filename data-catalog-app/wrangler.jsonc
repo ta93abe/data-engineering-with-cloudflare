@@ -22,6 +22,6 @@
 		"remote": true
 	},
 	"vars": {
-		"AI_SEARCH_API_URL": "https://search.ai.cloudflare.com/"
+		"AI_SEARCH_API_URL": "https://f36e9790-6644-4d7d-a660-8931e31e9188.search.ai.cloudflare.com"
 	}
 }

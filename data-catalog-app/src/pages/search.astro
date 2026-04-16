@@ -1,17 +1,11 @@
 ---
-export const prerender = false;
-
-import { env } from "cloudflare:workers";
 import Layout from "../layouts/Layout.astro";
 import { AppShell } from "../components/AppSidebar";
-
-const apiUrl = env.AI_SEARCH_API_URL ?? "https://search.ai.cloudflare.com/";
 ---
 
 <Layout title="Search — Data Catalog">
   <AppShell client:load>
-    <div id="search-container" data-api-url={apiUrl} style="height: calc(100vh - 3rem);">
-    </div>
+    <div id="search-container" style="height: calc(100vh - 3rem);"></div>
   </AppShell>
 </Layout>
 
@@ -20,9 +14,8 @@ const apiUrl = env.AI_SEARCH_API_URL ?? "https://search.ai.cloudflare.com/";
 
   const container = document.getElementById("search-container");
   if (container) {
-    const apiUrl = container.dataset.apiUrl ?? "";
     const snippet = document.createElement("chat-page-snippet");
-    snippet.setAttribute("api-url", apiUrl);
+    snippet.setAttribute("api-url", "https://f36e9790-6644-4d7d-a660-8931e31e9188.search.ai.cloudflare.com");
     snippet.setAttribute("placeholder", "データカタログについて質問してください...");
     snippet.setAttribute("theme", "auto");
     container.appendChild(snippet);
