@@ -13,10 +13,12 @@
 	"r2_buckets": [
 		{
 			"binding": "DBT_ARTIFACTS",
-			"bucket_name": "dbt-artifacts-modeling"
+			"bucket_name": "dbt-artifacts-modeling",
+			"remote": true
 		}
 	],
 	"ai": {
-		"binding": "AI"
+		"binding": "AI",
+		"remote": true
 	}
 }
