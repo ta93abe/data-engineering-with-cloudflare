@@ -1,0 +1,23 @@
+{
+  "cli_version": "0.5.5",
+  "checkpoint_id": "179c2e915cc7",
+  "session_id": "902fff02-6073-409b-b1c8-e92215c8f26f",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-16T05:06:51.66109Z",
+  "branch": "feat/data-catalog-astro-ui",
+  "checkpoints_count": 1,
+  "files_touched": [],
+  "agent": "Claude Code",
+  "model": "claude-haiku-4-5-20251001",
+  "turn_id": "8676d16ae26c",
+  "token_usage": {
+    "input_tokens": 396,
+    "cache_creation_tokens": 291699,
+    "cache_read_tokens": 2449626,
+    "output_tokens": 30933,
+    "api_call_count": 28
+  },
+  "session_metrics": {
+    "turn_count": 2
+  }
+}
