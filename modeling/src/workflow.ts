@@ -28,7 +28,14 @@ import { getSandbox, type Sandbox } from "@cloudflare/sandbox";
  */
 
 export interface DbtBuildWorkflowParams {
-  command?: "build" | "build-docs" | "run" | "test" | "seed" | "docs";
+  command?:
+    | "build"
+    | "build-docs"
+    | "run"
+    | "test"
+    | "seed"
+    | "docs"
+    | "docs-generate";
   target?: "dev" | "prod";
   select?: string;
   full_refresh?: boolean;
@@ -38,6 +45,7 @@ export interface DbtBuildWorkflowParams {
 
 interface WorkflowEnv {
   Sandbox: DurableObjectNamespace<Sandbox>;
+  DBT_ARTIFACTS: R2Bucket;
   API_KEY: string;
   SNOWFLAKE_ACCOUNT: string;
   SNOWFLAKE_USER: string;
@@ -139,6 +147,14 @@ export class DbtBuildWorkflow extends WorkflowEntrypoint<
         }
       }
     );
+
+    // "docs-generate" short-circuits the build retry loop and just
+    // runs `dbt docs generate` + R2 upload. Useful for
+    // regenerating docs against whatever is already in Snowflake
+    // without paying for a full model rebuild.
+    if (command === "docs-generate") {
+      return await this.runDocsGenerate(step, target, source, ref);
+    }
 
     // "build-docs" is not a real dbt command -- it's a workflow
     // convenience that means "run dbt build, then dbt docs
@@ -279,6 +295,47 @@ export class DbtBuildWorkflow extends WorkflowEntrypoint<
           }
         }
 
+        // Persist dbt artifacts to R2 so /docs and /artifacts/* can
+        // serve them after the sandbox is destroyed. run_results.json
+        // and manifest.json come from `dbt build`; index.html and
+        // catalog.json come from `dbt docs generate`.
+        const uploadWarning = await step.do(
+          "upload-artifacts",
+          { retries: { limit: 2, delay: "15 seconds", backoff: "exponential" } },
+          async () => {
+            const sandbox = getSandbox(this.env.Sandbox, SANDBOX_ID);
+            const targets: Array<{ file: string; contentType: string }> = [
+              { file: "run_results.json", contentType: "application/json" },
+              { file: "manifest.json", contentType: "application/json" },
+            ];
+            if (command === "build-docs") {
+              targets.push(
+                { file: "index.html", contentType: "text/html; charset=utf-8" },
+                { file: "catalog.json", contentType: "application/json" }
+              );
+            }
+            const failures: string[] = [];
+            for (const { file, contentType } of targets) {
+              try {
+                const read = await sandbox.readFile(
+                  `${MODELING_DIR}/target/${file}`
+                );
+                await this.env.DBT_ARTIFACTS.put(file, read.content, {
+                  httpMetadata: { contentType },
+                });
+              } catch (e) {
+                failures.push(`${file}: ${(e as Error).message}`);
+              }
+            }
+            return failures;
+          }
+        );
+        let uploadNote = "";
+        if (uploadWarning.length > 0) {
+          uploadNote =
+            `\n:warning: artifact upload partial failure:\n\`\`\`\n${uploadWarning.join("\n")}\n\`\`\``;
+        }
+
         await step.do(
           "notify-success",
           { retries: { limit: 3, delay: "15 seconds", backoff: "exponential" } },
@@ -289,7 +346,8 @@ export class DbtBuildWorkflow extends WorkflowEntrypoint<
                 `\nattempt: ${attempt}/${MAX_ATTEMPTS}` +
                 `\nsource: ${source}` +
                 `\nref: ${ref}` +
-                docsWarning
+                docsWarning +
+                uploadNote
             )
         );
         return lastResult;
@@ -325,6 +383,85 @@ export class DbtBuildWorkflow extends WorkflowEntrypoint<
     throw new Error(
       `dbt ${command} on ${target} failed after ${MAX_ATTEMPTS} attempts`
     );
+  }
+
+  private async runDocsGenerate(
+    step: WorkflowStep,
+    target: string,
+    source: string,
+    ref: string
+  ): Promise<DbtResult> {
+    const started = Date.now();
+    const result = await step.do(
+      "dbt-docs-generate",
+      { retries: { limit: 2, delay: "30 seconds", backoff: "exponential" } },
+      async () => {
+        const sandbox = getSandbox(this.env.Sandbox, SANDBOX_ID);
+        const docsCmd = `uv run dbt docs generate --target ${shellQuote(target)} --profiles-dir .`;
+        const r = await sandbox.exec(docsCmd, {
+          cwd: MODELING_DIR,
+          timeout: 1_800_000,
+        });
+        return { exitCode: r.exitCode, stdout: r.stdout, stderr: r.stderr };
+      }
+    );
+
+    if (result.exitCode !== 0) {
+      await step.do("notify-docs-generate-failure", async () =>
+        this.notifySlack(
+          `:x: dbt *docs-generate* on \`${target}\` failed (exit ${result.exitCode})` +
+            `\n\`\`\`\n${tail(result.stderr || result.stdout, 1500)}\n\`\`\``
+        )
+      );
+      throw new Error(`dbt docs generate failed: exit=${result.exitCode}`);
+    }
+
+    const failures = await step.do(
+      "upload-artifacts-docs-generate",
+      { retries: { limit: 2, delay: "15 seconds", backoff: "exponential" } },
+      async () => {
+        const sandbox = getSandbox(this.env.Sandbox, SANDBOX_ID);
+        const targets: Array<{ file: string; contentType: string }> = [
+          { file: "index.html", contentType: "text/html; charset=utf-8" },
+          { file: "catalog.json", contentType: "application/json" },
+          { file: "manifest.json", contentType: "application/json" },
+        ];
+        const failed: string[] = [];
+        for (const { file, contentType } of targets) {
+          try {
+            const read = await sandbox.readFile(
+              `${MODELING_DIR}/target/${file}`
+            );
+            await this.env.DBT_ARTIFACTS.put(file, read.content, {
+              httpMetadata: { contentType },
+            });
+          } catch (e) {
+            failed.push(`${file}: ${(e as Error).message}`);
+          }
+        }
+        return failed;
+      }
+    );
+    const uploadNote =
+      failures.length > 0
+        ? `\n:warning: artifact upload partial failure:\n\`\`\`\n${failures.join("\n")}\n\`\`\``
+        : "";
+
+    await step.do("notify-docs-generate-success", async () =>
+      this.notifySlack(
+        `:white_check_mark: dbt *docs-generate* succeeded on \`${target}\`` +
+          `\nsource: ${source}` +
+          `\nref: ${ref}` +
+          uploadNote
+      )
+    );
+
+    return {
+      exitCode: 0,
+      stdout_tail: tail(result.stdout, 1500),
+      stderr_tail: "",
+      duration_ms: Date.now() - started,
+    };
   }
 
   private async notifySlack(text: string): Promise<void> {
