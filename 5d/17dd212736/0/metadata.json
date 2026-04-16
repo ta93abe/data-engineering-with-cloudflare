@@ -1,0 +1,57 @@
+{
+  "cli_version": "0.5.5",
+  "checkpoint_id": "5d17dd212736",
+  "session_id": "902fff02-6073-409b-b1c8-e92215c8f26f",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-16T06:05:24.796566Z",
+  "branch": "feat/data-catalog-astro-ui",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "data-catalog-app/manifest.json",
+    "data-catalog-app/src/pages/api/search.ts"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-haiku-4-5-20251001",
+  "turn_id": "a8472b9a7793",
+  "token_usage": {
+    "input_tokens": 606,
+    "cache_creation_tokens": 587102,
+    "cache_read_tokens": 36915466,
+    "output_tokens": 75376,
+    "api_call_count": 210
+  },
+  "session_metrics": {
+    "turn_count": 6
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-16T06:05:24.704308Z",
+    "agent_lines": 0,
+    "agent_removed": 0,
+    "human_added": 79,
+    "human_modified": 25,
+    "human_removed": 0,
+    "total_committed": 79,
+    "total_lines_changed": 200,
+    "agent_percentage": 0,
+    "metric_version": 2
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 2,
+      "user_lines_added": 0,
+      "user_lines_removed": 0,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0
+    },
+    {
+      "checkpoint_number": 3,
+      "user_lines_added": 340,
+      "user_lines_removed": 0,
+      "agent_lines_added": 1572,
+      "agent_lines_removed": 0,
+      "user_added_per_file": {
+        ".claude/settings.local.json": 340
+      }
+    }
+  ]
+}

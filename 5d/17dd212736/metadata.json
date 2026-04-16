@@ -1,0 +1,26 @@
+{
+  "cli_version": "0.5.5",
+  "checkpoint_id": "5d17dd212736",
+  "strategy": "manual-commit",
+  "branch": "feat/data-catalog-astro-ui",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "data-catalog-app/manifest.json",
+    "data-catalog-app/src/pages/api/search.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/5d/17dd212736/0/metadata.json",
+      "transcript": "/5d/17dd212736/0/full.jsonl",
+      "content_hash": "/5d/17dd212736/0/content_hash.txt",
+      "prompt": "/5d/17dd212736/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 606,
+    "cache_creation_tokens": 587102,
+    "cache_read_tokens": 36915466,
+    "output_tokens": 75376,
+    "api_call_count": 210
+  }
+}
