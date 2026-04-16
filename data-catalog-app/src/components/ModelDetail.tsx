@@ -20,46 +20,46 @@ export function ModelDetail({ model }: ModelDetailProps) {
           <ArrowLeftIcon size={16} />
           Back to Models
         </a>
-        <Text className="font-mono font-bold text-2xl">{model.name}</Text>
+        <span className="font-mono font-bold text-2xl">{model.name}</span>
         {model.description && (
-          <Text className="text-kumo-subtle">{model.description}</Text>
+          <Text variant="secondary">{model.description}</Text>
         )}
       </div>
 
       {/* Metadata cards */}
       <div className="grid grid-cols-4 gap-4">
         <Surface className="rounded-lg p-4">
-          <Text className="text-kumo-subtle text-xs uppercase tracking-wide mb-1">
+          <span className="text-kumo-subtle text-xs uppercase tracking-wide mb-1 block">
             Layer
-          </Text>
-          <Text className="font-medium">{model.layer}</Text>
+          </span>
+          <Text bold>{model.layer}</Text>
         </Surface>
         <Surface className="rounded-lg p-4">
-          <Text className="text-kumo-subtle text-xs uppercase tracking-wide mb-1">
+          <span className="text-kumo-subtle text-xs uppercase tracking-wide mb-1 block">
             Schema
-          </Text>
-          <Text className="font-mono font-medium">
+          </span>
+          <span className="font-mono font-medium">
             {model.database}.{model.schema}
-          </Text>
+          </span>
         </Surface>
         <Surface className="rounded-lg p-4">
-          <Text className="text-kumo-subtle text-xs uppercase tracking-wide mb-1">
+          <span className="text-kumo-subtle text-xs uppercase tracking-wide mb-1 block">
             Materialization
-          </Text>
-          <Text className="font-medium">{model.materialization}</Text>
+          </span>
+          <Text bold>{model.materialization}</Text>
         </Surface>
         <Surface className="rounded-lg p-4">
-          <Text className="text-kumo-subtle text-xs uppercase tracking-wide mb-1">
+          <span className="text-kumo-subtle text-xs uppercase tracking-wide mb-1 block">
             Columns
-          </Text>
-          <Text className="font-medium">{model.columns.length}</Text>
+          </span>
+          <Text bold>{model.columns.length}</Text>
         </Surface>
       </div>
 
       {/* Tags */}
       {model.tags.length > 0 && (
         <div className="flex flex-wrap items-center gap-2">
-          <Text className="text-kumo-subtle text-sm font-medium">Tags:</Text>
+          <span className="text-kumo-subtle text-sm font-medium">Tags:</span>
           {model.tags.map((tag) => (
             <Badge key={tag} variant="outline">
               {tag}
@@ -70,25 +70,25 @@ export function ModelDetail({ model }: ModelDetailProps) {
 
       {/* Lineage */}
       <div className="flex flex-col gap-3">
-        <Text className="font-semibold">Lineage</Text>
+        <span className="font-semibold">Lineage</span>
         <LineageBadges label="Depends on" nodeIds={model.dependsOn} />
         <LineageBadges label="Referenced by" nodeIds={model.referencedBy} />
         {model.dependsOn.length === 0 && model.referencedBy.length === 0 && (
-          <Text className="text-kumo-subtle text-sm">No lineage information available.</Text>
+          <Text variant="secondary" size="sm">No lineage information available.</Text>
         )}
       </div>
 
       {/* Columns */}
       <div className="flex flex-col gap-3">
-        <Text className="font-semibold">
+        <span className="font-semibold">
           Columns ({model.columns.length})
-        </Text>
+        </span>
         <ColumnTable columns={model.columns} />
       </div>
 
       {/* Source path */}
       <div>
-        <Text className="text-kumo-subtle text-xs font-mono">{model.path}</Text>
+        <span className="text-kumo-subtle text-xs font-mono">{model.path}</span>
       </div>
     </div>
   );

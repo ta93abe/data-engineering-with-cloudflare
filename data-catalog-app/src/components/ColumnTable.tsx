@@ -8,7 +8,7 @@ interface ColumnTableProps {
 export function ColumnTable({ columns }: ColumnTableProps) {
   if (columns.length === 0) {
     return (
-      <Text className="text-kumo-subtle text-sm">
+      <Text variant="secondary" size="sm">
         No column information available.
       </Text>
     );

@@ -68,8 +68,8 @@ export function ModelList({ models }: ModelListProps) {
   return (
     <div className="flex flex-1 flex-col gap-6 p-6">
       <div>
-        <Text className="text-2xl font-bold">Models</Text>
-        <Text className="text-kumo-subtle text-sm">
+        <Text variant="heading2">Models</Text>
+        <Text variant="secondary" size="sm">
           {models.length} model{models.length !== 1 ? "s" : ""} in this project
         </Text>
       </div>
@@ -90,9 +90,9 @@ export function ModelList({ models }: ModelListProps) {
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        <Text className="text-kumo-subtle text-sm whitespace-nowrap">
+        <span className="text-kumo-subtle text-sm whitespace-nowrap">
           {filtered.length} result{filtered.length !== 1 ? "s" : ""}
-        </Text>
+        </span>
       </div>
 
       <Surface className="overflow-hidden rounded-lg">

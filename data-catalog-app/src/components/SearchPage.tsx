@@ -45,8 +45,8 @@ export function SearchPage() {
     <div className="flex flex-1 flex-col gap-6 p-6">
       {/* Header */}
       <div className="flex flex-col gap-1">
-        <Text className="font-bold text-2xl">Search</Text>
-        <Text className="text-kumo-subtle">
+        <Text variant="heading2">Search</Text>
+        <Text variant="secondary">
           Ask questions about your data catalog in natural language.
         </Text>
       </div>
@@ -74,14 +74,14 @@ export function SearchPage() {
       {/* Error */}
       {result?.error && (
         <Surface className="rounded-lg p-4">
-          <Text className="text-red-500">{result.error}</Text>
+          <Text variant="error">{result.error}</Text>
         </Surface>
       )}
 
       {/* AI Answer */}
       {result?.response && (
         <Surface className="rounded-lg p-4 flex flex-col gap-2">
-          <Text className="font-semibold">AI Answer</Text>
+          <span className="font-semibold">AI Answer</span>
           <Text>{result.response}</Text>
         </Surface>
       )}
@@ -89,16 +89,16 @@ export function SearchPage() {
       {/* Source documents */}
       {result?.data && result.data.length > 0 && (
         <div className="flex flex-col gap-3">
-          <Text className="font-semibold">Sources ({result.data.length})</Text>
+          <span className="font-semibold">Sources ({result.data.length})</span>
           {result.data.map((item, i) => (
             <Surface key={i} className="rounded-lg p-4 flex flex-col gap-2">
               <div className="flex items-center justify-between">
-                <Text className="font-mono text-sm font-medium">{item.source}</Text>
-                <Text className="text-kumo-subtle text-xs">
+                <span className="font-mono text-sm font-medium">{item.source}</span>
+                <Text variant="secondary" size="xs">
                   Score: {item.score.toFixed(3)}
                 </Text>
               </div>
-              <Text className="text-kumo-subtle text-sm">{item.content}</Text>
+              <Text variant="secondary" size="sm">{item.content}</Text>
             </Surface>
           ))}
         </div>
