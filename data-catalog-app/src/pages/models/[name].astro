@@ -1,6 +1,7 @@
 ---
 export const prerender = false;
 
+import { env } from "cloudflare:workers";
 import Layout from "../../layouts/Layout.astro";
 import { AppSidebar } from "../../components/AppSidebar";
 import { ModelDetail } from "../../components/ModelDetail";
@@ -9,8 +10,7 @@ import { loadModel } from "../../lib/artifacts";
 const { name } = Astro.params;
 if (!name) return Astro.redirect("/models");
 
-const bucket = Astro.locals.runtime.env.DBT_ARTIFACTS;
-const model = await loadModel(bucket, name);
+const model = await loadModel(env.DBT_ARTIFACTS, name);
 
 if (!model) {
   return new Response("Model not found", { status: 404 });

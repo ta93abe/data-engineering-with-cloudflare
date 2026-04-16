@@ -1,13 +1,13 @@
 ---
 export const prerender = false;
 
+import { env } from "cloudflare:workers";
 import Layout from "../../layouts/Layout.astro";
 import { AppSidebar } from "../../components/AppSidebar";
 import { ModelList } from "../../components/ModelList";
 import { loadAllModels } from "../../lib/artifacts";
 
-const bucket = Astro.locals.runtime.env.DBT_ARTIFACTS;
-const models = await loadAllModels(bucket);
+const models = await loadAllModels(env.DBT_ARTIFACTS);
 ---
 
 <Layout>

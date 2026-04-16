@@ -1,6 +1,7 @@
 import type { APIRoute } from "astro";
+import { env } from "cloudflare:workers";
 
-export const POST: APIRoute = async ({ request, locals }) => {
+export const POST: APIRoute = async ({ request }) => {
   const { query } = await request.json();
   if (!query || typeof query !== "string") {
     return new Response(JSON.stringify({ error: "query is required" }), {
@@ -10,8 +11,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   }
 
   try {
-    const ai = locals.runtime.env.AI;
-    const result = await ai.autorag("data-catalog").aiSearch(query);
+    const result = await env.AI.autorag("data-catalog").aiSearch(query);
     return new Response(JSON.stringify(result), {
       headers: { "Content-Type": "application/json" },
     });
