@@ -27,3 +27,24 @@ manifest.json ファイルある？
 ---
 
 置き換えて
+
+---
+
+どのバケットに対してAI Search設定すればいい？
+
+---
+
+data-catalog バケットを新規作成
+
+---
+
+wrangler コマンドで一気にできない？
+
+---
+
+そこでいいよ。
+R2イベントドリブンでcatalog-generator Workerを動かす感じ？
+
+---
+
+実装して。
