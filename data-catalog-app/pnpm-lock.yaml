@@ -17,6 +17,9 @@ importers:
       '@astrojs/react':
         specifier: ^5.0.2
         version: 5.0.3(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(jiti@2.6.1)(lightningcss@1.32.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
+      '@cloudflare/ai-search-snippet':
+        specifier: ^0.0.35
+        version: 0.0.35
       '@cloudflare/kumo':
         specifier: ^1.18.0
         version: 1.18.0(@date-fns/tz@1.4.1)(@phosphor-icons/react@2.1.10(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(@types/react@19.2.14)(date-fns@4.1.0)(echarts@6.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(zod@4.3.6)
@@ -214,6 +217,10 @@ packages:
 
   '@clack/prompts@1.2.0':
     resolution: {integrity: sha512-4jmztR9fMqPMjz6H/UZXj0zEmE43ha1euENwkckKKel4XpSfokExPo5AiVStdHSAlHekz4d0CA/r45Ok1E4D3w==}
+
+  '@cloudflare/ai-search-snippet@0.0.35':
+    resolution: {integrity: sha512-+sKRtCqBHOgSJh8TaoCp02sepGuWok1qbmqTntpUBfKysptFEEx91NDBS3O7JUcINzzsBIFltdLuSN/HjbOKag==}
+    engines: {node: '>=16.0.0'}
 
   '@cloudflare/kumo@1.18.0':
     resolution: {integrity: sha512-D1OkzYe6rIPe2CqklE+DDt84YB8Q+gV5PH/Hjco8TO1NEHZkaookdl67YU+HHWCBME6TxSwQRzn72hp/cyOrCw==}
@@ -2827,6 +2834,8 @@ snapshots:
       fast-string-width: 1.1.0
       fast-wrap-ansi: 0.1.6
       sisteransi: 1.0.5
+
+  '@cloudflare/ai-search-snippet@0.0.35': {}
 
   '@cloudflare/kumo@1.18.0(@date-fns/tz@1.4.1)(@phosphor-icons/react@2.1.10(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(@types/react@19.2.14)(date-fns@4.1.0)(echarts@6.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(zod@4.3.6)':
     dependencies:

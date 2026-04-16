@@ -20,5 +20,8 @@
 	"ai": {
 		"binding": "AI",
 		"remote": true
+	},
+	"vars": {
+		"AI_SEARCH_API_URL": "https://search.ai.cloudflare.com/"
 	}
 }

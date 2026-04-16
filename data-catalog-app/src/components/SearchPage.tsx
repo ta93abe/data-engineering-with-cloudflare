@@ -1,103 +1,28 @@
-import { useState } from "react";
-import { Button, Input, Surface, Text } from "@cloudflare/kumo";
-import { MagnifyingGlassIcon } from "@phosphor-icons/react";
+import { useEffect, useRef } from "react";
+import type { ChatPageSnippet } from "@cloudflare/ai-search-snippet";
 
-interface SearchResultData {
-  source: string;
-  content: string;
-  score: number;
+interface SearchPageProps {
+  apiUrl: string;
 }
 
-interface SearchResult {
-  response?: string;
-  data?: SearchResultData[];
-  error?: string;
-}
+export function SearchPage({ apiUrl }: SearchPageProps) {
+  const ref = useRef<ChatPageSnippet>(null);
+  const registered = useRef(false);
 
-export function SearchPage() {
-  const [query, setQuery] = useState("");
-  const [result, setResult] = useState<SearchResult | null>(null);
-  const [loading, setLoading] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!query.trim()) return;
-
-    setLoading(true);
-    setResult(null);
-
-    try {
-      const res = await fetch("/api/search", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query }),
-      });
-      const data: SearchResult = await res.json();
-      setResult(data);
-    } catch (e) {
-      setResult({ error: e instanceof Error ? e.message : "Search failed" });
-    } finally {
-      setLoading(false);
-    }
-  };
+  useEffect(() => {
+    if (registered.current) return;
+    registered.current = true;
+    import("@cloudflare/ai-search-snippet");
+  }, []);
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-1">
-        <Text variant="heading2">Search</Text>
-        <Text variant="secondary">
-          Ask questions about your data catalog in natural language.
-        </Text>
-      </div>
-
-      <form onSubmit={handleSubmit} className="flex items-center gap-2">
-        <Input
-          placeholder="e.g. What models are in the marts layer?"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          className="flex-1"
-        />
-        <Button type="submit" disabled={loading || !query.trim()}>
-          {loading ? (
-            "Searching..."
-          ) : (
-            <>
-              <MagnifyingGlassIcon size={16} />
-              Search
-            </>
-          )}
-        </Button>
-      </form>
-
-      {result?.error && (
-        <Surface className="rounded-lg p-4">
-          <Text variant="error">{result.error}</Text>
-        </Surface>
-      )}
-
-      {result?.response && (
-        <Surface className="rounded-lg p-4 flex flex-col gap-2">
-          <Text variant="heading3">AI Answer</Text>
-          <Text>{result.response}</Text>
-        </Surface>
-      )}
-
-      {result?.data && result.data.length > 0 && (
-        <div className="flex flex-col gap-3">
-          <Text variant="heading3">Sources ({result.data.length})</Text>
-          {result.data.map((item, i) => (
-            <Surface key={i} className="rounded-lg p-4 flex flex-col gap-2">
-              <div className="flex items-center justify-between">
-                <Text variant="mono">{item.source}</Text>
-                <Text variant="secondary" size="xs">
-                  Score: {item.score.toFixed(3)}
-                </Text>
-              </div>
-              <Text variant="secondary" size="sm">{item.content}</Text>
-            </Surface>
-          ))}
-        </div>
-      )}
+    <div className="flex flex-col gap-6 h-[calc(100vh-3rem)]">
+      <chat-page-snippet
+        ref={ref}
+        api-url={apiUrl}
+        placeholder="データカタログについて質問してください..."
+        theme="auto"
+      />
     </div>
   );
 }
