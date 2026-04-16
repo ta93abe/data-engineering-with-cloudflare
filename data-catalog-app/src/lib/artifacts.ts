@@ -6,7 +6,7 @@ import type {
   DbtRunResult,
 } from "./types";
 
-// Layer ordering for sorting (more specific/upstream first)
+// Layer ordering for sorting (downstream/consumer-facing first)
 const LAYER_ORDER: CatalogModel["layer"][] = [
   "marts",
   "business_vault",

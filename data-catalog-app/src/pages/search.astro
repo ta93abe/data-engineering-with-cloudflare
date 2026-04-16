@@ -1,6 +1,11 @@
 ---
+export const prerender = false;
+
+import { env } from "cloudflare:workers";
 import Layout from "../layouts/Layout.astro";
 import { AppShell } from "../components/AppSidebar";
+
+const aiSearchApiUrl = env.AI_SEARCH_API_URL ?? "";
 ---
 
 <Layout title="Search — Data Catalog">
@@ -9,15 +14,15 @@ import { AppShell } from "../components/AppSidebar";
   </AppShell>
 </Layout>
 
-<script>
-  import "@cloudflare/ai-search-snippet";
-
-  const container = document.getElementById("search-container");
-  if (container) {
-    const snippet = document.createElement("chat-page-snippet");
-    snippet.setAttribute("api-url", "https://f36e9790-6644-4d7d-a660-8931e31e9188.search.ai.cloudflare.com");
-    snippet.setAttribute("placeholder", "データカタログについて質問してください...");
-    snippet.setAttribute("theme", "auto");
-    container.appendChild(snippet);
-  }
+<script define:vars={{ aiSearchApiUrl }}>
+  import("@cloudflare/ai-search-snippet").then(() => {
+    const container = document.getElementById("search-container");
+    if (container && aiSearchApiUrl) {
+      const snippet = document.createElement("chat-page-snippet");
+      snippet.setAttribute("api-url", aiSearchApiUrl);
+      snippet.setAttribute("placeholder", "データカタログについて質問してください...");
+      snippet.setAttribute("theme", "auto");
+      container.appendChild(snippet);
+    }
+  });
 </script>

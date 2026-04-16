@@ -20,11 +20,13 @@ interface R2EventMessage {
 
 export default {
   async queue(batch: MessageBatch<R2EventMessage>, env: Env): Promise<void> {
-    // Only process if manifest.json was updated
-    const hasManifestUpdate = batch.messages.some(
-      (msg) => msg.body.object.key === "manifest.json" && msg.body.action !== "DeleteObject"
+    // Only process if manifest.json or catalog.json was updated
+    const hasRelevantUpdate = batch.messages.some(
+      (msg) =>
+        (msg.body.object.key === "manifest.json" || msg.body.object.key === "catalog.json") &&
+        msg.body.action !== "DeleteObject"
     );
-    if (!hasManifestUpdate) return;
+    if (!hasRelevantUpdate) return;
 
     // 1. Read manifest.json + catalog.json from source bucket
     const [manifestObj, catalogObj] = await Promise.all([
@@ -40,23 +42,46 @@ export default {
     const manifest = (await manifestObj.json()) as DbtManifest;
     const catalog = catalogObj ? ((await catalogObj.json()) as DbtCatalog) : null;
 
-    // 2. Generate Markdown for each model and write to data-catalog bucket
-    const writes: Promise<R2Object>[] = [];
+    // 2. Generate Markdown for each model and write to data-catalog bucket in batches
+    const BATCH_SIZE = 50;
+    const entries: Array<{ path: string; md: string }> = [];
     for (const [key, node] of Object.entries(manifest.nodes)) {
       if (node.resource_type !== "model") continue;
-
       const md = generateModelMarkdown(node, catalog?.nodes?.[key]);
       const folder = inferFolder(node.fqn);
-      const path = `models/${folder}/${node.name}.md`;
+      entries.push({ path: `models/${folder}/${node.name}.md`, md });
+    }
 
-      writes.push(
-        env.DATA_CATALOG.put(path, md, {
-          httpMetadata: { contentType: "text/markdown" },
-        })
+    for (let i = 0; i < entries.length; i += BATCH_SIZE) {
+      const batch = entries.slice(i, i + BATCH_SIZE);
+      await Promise.all(
+        batch.map((entry) =>
+          env.DATA_CATALOG.put(entry.path, entry.md, {
+            httpMetadata: { contentType: "text/markdown" },
+          })
+        )
       );
     }
 
-    await Promise.all(writes);
-    console.log(`Generated ${writes.length} model documents`);
+    // Clean up removed models
+    const currentModelPaths = new Set(
+      Object.values(manifest.nodes)
+        .filter((node) => node.resource_type === "model")
+        .map((node) => `models/${inferFolder(node.fqn)}/${node.name}.md`)
+    );
+
+    const existingObjects = await env.DATA_CATALOG.list({ prefix: "models/" });
+    const deletes: Promise<void>[] = [];
+    for (const obj of existingObjects.objects) {
+      if (!currentModelPaths.has(obj.key)) {
+        deletes.push(env.DATA_CATALOG.delete(obj.key));
+      }
+    }
+    if (deletes.length > 0) {
+      await Promise.all(deletes);
+      console.log(`Deleted ${deletes.length} stale model documents`);
+    }
+
+    console.log(`Generated ${entries.length} model documents`);
   },
 };
