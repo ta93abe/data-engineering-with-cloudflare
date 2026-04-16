@@ -1,0 +1,17 @@
+{
+  "name": "catalog-generator",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "generate-types": "wrangler types"
+  },
+  "devDependencies": {
+    "vitest": "^4.1.0",
+    "wrangler": "^4.83.0",
+    "@cloudflare/workers-types": "^4.20250410.0"
+  }
+}

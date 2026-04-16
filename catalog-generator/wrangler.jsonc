@@ -1,0 +1,18 @@
+{
+  "name": "catalog-generator",
+  "compatibility_date": "2025-04-01",
+  "main": "src/index.ts",
+  "observability": {
+    "enabled": true
+  },
+  "r2_buckets": [
+    {
+      "binding": "DBT_ARTIFACTS",
+      "bucket_name": "dbt-artifacts-modeling"
+    },
+    {
+      "binding": "DATA_CATALOG",
+      "bucket_name": "data-catalog"
+    }
+  ]
+}
