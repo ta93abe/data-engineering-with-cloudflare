@@ -4,3 +4,8 @@ data-catalog-app 配下でね。
 ---
 
 そうね。Planしたい。
+
+---
+
+subagentで
+適宜Codexでもレビューしながら、動作確認はローカルエミュレートで。vitestとPlaywrightでテストは書いてね。
