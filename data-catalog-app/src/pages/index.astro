@@ -1,12 +1,3 @@
 ---
-import Layout from '../layouts/Layout.astro';
-import { AppSidebar } from '../components/AppSidebar';
-import { DataCatalog } from '../components/DataCatalog';
+return Astro.redirect("/models");
 ---
-
-<Layout>
-	<div class="flex min-h-screen">
-		<AppSidebar client:load />
-		<DataCatalog client:load />
-	</div>
-</Layout>

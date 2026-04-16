@@ -1,0 +1,53 @@
+---
+export const prerender = true;
+
+import Layout from "../../layouts/Layout.astro";
+import { AppShell } from "../../components/AppSidebar";
+import { getCollection } from "astro:content";
+
+const entries = await getCollection("glossary");
+const byCategory = entries.reduce(
+  (acc, entry) => {
+    const cat = entry.data.category;
+    if (!acc[cat]) acc[cat] = [];
+    acc[cat].push(entry);
+    return acc;
+  },
+  {} as Record<string, typeof entries>
+);
+---
+
+<Layout title="用語集 — Data Catalog">
+  <AppShell client:load>
+    <div class="flex flex-col gap-6">
+      <div>
+        <h1 class="text-2xl font-bold">用語集</h1>
+        <p class="text-kumo-subtle text-sm">
+          {entries.length} terms defined
+        </p>
+      </div>
+
+      {Object.entries(byCategory).map(([category, items]) => (
+        <div>
+          <h2 class="text-lg font-semibold mb-2">{category}</h2>
+          <div class="grid gap-2">
+            {items.map((entry) => (
+              <a
+                href={`/glossary/${entry.id}`}
+                class="block rounded-lg border border-kumo-border p-4 hover:bg-kumo-subtle transition-colors"
+              >
+                <span class="font-medium">{entry.data.term}</span>
+                <span class="text-kumo-subtle text-sm ml-2">({entry.data.termEn})</span>
+                {entry.data.relatedModels.length > 0 && (
+                  <span class="text-kumo-subtle text-xs ml-2">
+                    — {entry.data.relatedModels.join(", ")}
+                  </span>
+                )}
+              </a>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  </AppShell>
+</Layout>

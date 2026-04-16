@@ -1,0 +1,27 @@
+{
+  "name": "catalog-generator",
+  "compatibility_date": "2025-04-01",
+  "main": "src/index.ts",
+  "observability": {
+    "enabled": true
+  },
+  "queues": {
+    "consumers": [
+      {
+        "queue": "catalog-generator-queue",
+        "max_batch_size": 100,
+        "max_batch_timeout": 5
+      }
+    ]
+  },
+  "r2_buckets": [
+    {
+      "binding": "DBT_ARTIFACTS",
+      "bucket_name": "dbt-artifacts-modeling"
+    },
+    {
+      "binding": "DATA_CATALOG",
+      "bucket_name": "data-catalog"
+    }
+  ]
+}

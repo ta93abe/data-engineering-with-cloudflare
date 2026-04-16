@@ -1,0 +1,24 @@
+---
+term: 売上
+termEn: Revenue
+category: 財務
+relatedModels:
+  - fct_visits
+  - dim_patient
+owner: data-team
+lastReviewed: 2026-04-01
+---
+
+## 定義
+
+売上とは、患者の診察・処方から発生する医療収入の総額を指す。
+
+## 計算ロジック
+
+- `fct_visits` テーブルの各訪問レコードに紐づく診察料を集計
+- 保険適用分と自己負担分を含む
+
+## 注意点
+
+- 返金・キャンセル分は含まない
+- 月次集計時は診察日ベース（請求日ベースではない）

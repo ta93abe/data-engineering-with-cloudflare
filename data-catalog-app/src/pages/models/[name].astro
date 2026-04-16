@@ -1,0 +1,24 @@
+---
+export const prerender = false;
+
+import { env } from "cloudflare:workers";
+import Layout from "../../layouts/Layout.astro";
+import { AppShell } from "../../components/AppSidebar";
+import { ModelDetail } from "../../components/ModelDetail";
+import { loadModel } from "../../lib/artifacts";
+
+const { name } = Astro.params;
+if (!name) return Astro.redirect("/models");
+
+const model = await loadModel(env.DBT_ARTIFACTS, name);
+
+if (!model) {
+  return new Response("Model not found", { status: 404 });
+}
+---
+
+<Layout title={`${model.name} — Data Catalog`}>
+  <AppShell client:load>
+    <ModelDetail model={model} />
+  </AppShell>
+</Layout>

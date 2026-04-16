@@ -1,61 +1,42 @@
 import { Sidebar } from "@cloudflare/kumo";
 import {
-  Database,
-  Table as TableIcon,
-  MagnifyingGlass,
-  Gear,
-  House,
+  DatabaseIcon,
+  TableIcon,
+  MagnifyingGlassIcon,
+  BookIcon,
 } from "@phosphor-icons/react";
+import type { ReactNode } from "react";
 
-export function AppSidebar() {
+export function AppShell({ children }: { children: ReactNode }) {
   return (
     <Sidebar.Provider>
       <Sidebar>
         <Sidebar.Header>
-          <div className="flex items-center gap-2 px-2">
-            <Database size={24} weight="duotone" />
-            <span className="text-lg font-semibold">Flame</span>
-          </div>
+          <a href="/models" className="flex items-center gap-2 px-2">
+            <DatabaseIcon size={24} weight="duotone" />
+            <span className="text-lg font-semibold">Data Catalog</span>
+          </a>
         </Sidebar.Header>
 
         <Sidebar.Content>
           <Sidebar.Group>
             <Sidebar.GroupContent>
               <Sidebar.Menu>
-                <Sidebar.MenuItem>
-                  <Sidebar.MenuButton>
-                    <House size={20} />
-                    Home
-                  </Sidebar.MenuButton>
-                </Sidebar.MenuItem>
-                <Sidebar.MenuItem>
-                  <Sidebar.MenuButton>
-                    <MagnifyingGlass size={20} />
-                    Search
-                  </Sidebar.MenuButton>
-                </Sidebar.MenuItem>
-                <Sidebar.MenuItem>
-                  <Sidebar.MenuButton>
-                    <TableIcon size={20} />
-                    Datasets
-                  </Sidebar.MenuButton>
-                </Sidebar.MenuItem>
+                <Sidebar.MenuButton icon={TableIcon} href="/models">
+                  Models
+                </Sidebar.MenuButton>
+                <Sidebar.MenuButton icon={MagnifyingGlassIcon} href="/search">
+                  Search
+                </Sidebar.MenuButton>
+                <Sidebar.MenuButton icon={BookIcon} href="/glossary">
+                  Glossary
+                </Sidebar.MenuButton>
               </Sidebar.Menu>
             </Sidebar.GroupContent>
           </Sidebar.Group>
         </Sidebar.Content>
-
-        <Sidebar.Footer>
-          <Sidebar.Menu>
-            <Sidebar.MenuItem>
-              <Sidebar.MenuButton>
-                <Gear size={20} />
-                Settings
-              </Sidebar.MenuButton>
-            </Sidebar.MenuItem>
-          </Sidebar.Menu>
-        </Sidebar.Footer>
       </Sidebar>
+      <main className="flex-1 p-6">{children}</main>
     </Sidebar.Provider>
   );
 }

@@ -1,0 +1,28 @@
+---
+export const prerender = false;
+
+import { env } from "cloudflare:workers";
+import Layout from "../layouts/Layout.astro";
+import { AppShell } from "../components/AppSidebar";
+
+const aiSearchApiUrl = env.AI_SEARCH_API_URL ?? "";
+---
+
+<Layout title="Search — Data Catalog">
+  <AppShell client:load>
+    <div id="search-container" style="height: calc(100vh - 3rem);"></div>
+  </AppShell>
+</Layout>
+
+<script define:vars={{ aiSearchApiUrl }}>
+  import("@cloudflare/ai-search-snippet").then(() => {
+    const container = document.getElementById("search-container");
+    if (container && aiSearchApiUrl) {
+      const snippet = document.createElement("chat-page-snippet");
+      snippet.setAttribute("api-url", aiSearchApiUrl);
+      snippet.setAttribute("placeholder", "データカタログについて質問してください...");
+      snippet.setAttribute("theme", "auto");
+      container.appendChild(snippet);
+    }
+  });
+</script>

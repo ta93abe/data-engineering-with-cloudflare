@@ -1,0 +1,17 @@
+---
+export const prerender = false;
+
+import { env } from "cloudflare:workers";
+import Layout from "../../layouts/Layout.astro";
+import { AppShell } from "../../components/AppSidebar";
+import { ModelList } from "../../components/ModelList";
+import { loadAllModels } from "../../lib/artifacts";
+
+const models = await loadAllModels(env.DBT_ARTIFACTS);
+---
+
+<Layout>
+  <AppShell client:load>
+    <ModelList models={models} />
+  </AppShell>
+</Layout>

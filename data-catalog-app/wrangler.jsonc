@@ -1,7 +1,7 @@
 {
 	"compatibility_date": "2025-04-01",
 	"compatibility_flags": ["global_fetch_strictly_public"],
-	"name": "flame",
+	"name": "data-catalog",
 	"main": "@astrojs/cloudflare/entrypoints/server",
 	"assets": {
 		"directory": "./dist",
@@ -9,5 +9,19 @@
 	},
 	"observability": {
 		"enabled": true
+	},
+	"r2_buckets": [
+		{
+			"binding": "DBT_ARTIFACTS",
+			"bucket_name": "dbt-artifacts-modeling",
+			"remote": true
+		}
+	],
+	"ai": {
+		"binding": "AI",
+		"remote": true
+	},
+	"vars": {
+		"AI_SEARCH_API_URL": "https://f36e9790-6644-4d7d-a660-8931e31e9188.search.ai.cloudflare.com"
 	}
 }
