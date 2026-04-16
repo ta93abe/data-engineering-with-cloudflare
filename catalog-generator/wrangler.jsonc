@@ -5,6 +5,15 @@
   "observability": {
     "enabled": true
   },
+  "queues": {
+    "consumers": [
+      {
+        "queue": "catalog-generator-queue",
+        "max_batch_size": 100,
+        "max_batch_timeout": 5
+      }
+    ]
+  },
   "r2_buckets": [
     {
       "binding": "DBT_ARTIFACTS",
