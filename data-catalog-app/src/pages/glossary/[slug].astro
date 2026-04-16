@@ -1,0 +1,65 @@
+---
+export const prerender = true;
+
+import Layout from "../../layouts/Layout.astro";
+import { AppSidebar } from "../../components/AppSidebar";
+import { getCollection, render } from "astro:content";
+
+export async function getStaticPaths() {
+  const entries = await getCollection("glossary");
+  return entries.map((entry) => ({
+    params: { slug: entry.id },
+    props: { entry },
+  }));
+}
+
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+---
+
+<Layout title={`${entry.data.term} — 用語集`}>
+  <div class="flex min-h-screen">
+    <AppSidebar client:load />
+    <div class="flex flex-1 flex-col gap-6 p-6 max-w-3xl">
+      <div class="flex items-center gap-4">
+        <a href="/glossary" class="text-kumo-subtle hover:text-kumo-default">
+          ← Back
+        </a>
+        <div>
+          <h1 class="text-2xl font-bold">{entry.data.term}</h1>
+          <p class="text-kumo-subtle text-sm">{entry.data.termEn}</p>
+        </div>
+        <span class="rounded-full border border-kumo-border px-3 py-0.5 text-xs">
+          {entry.data.category}
+        </span>
+      </div>
+
+      {entry.data.relatedModels.length > 0 && (
+        <div class="flex items-center gap-2 flex-wrap">
+          <span class="text-kumo-subtle text-xs">Related models:</span>
+          {entry.data.relatedModels.map((model: string) => (
+            <a
+              href={`/models/${model}`}
+              class="rounded-full border border-kumo-border px-3 py-0.5 text-xs hover:bg-kumo-subtle transition-colors"
+            >
+              {model}
+            </a>
+          ))}
+        </div>
+      )}
+
+      <article class="prose prose-sm max-w-none">
+        <Content />
+      </article>
+
+      {entry.data.owner && (
+        <p class="text-kumo-subtle text-xs">
+          Owner: {entry.data.owner}
+          {entry.data.lastReviewed && (
+            <span> · Last reviewed: {entry.data.lastReviewed.toLocaleDateString("ja-JP")}</span>
+          )}
+        </p>
+      )}
+    </div>
+  </div>
+</Layout>
