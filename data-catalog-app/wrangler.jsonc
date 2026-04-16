@@ -15,5 +15,8 @@
 			"binding": "DBT_ARTIFACTS",
 			"bucket_name": "dbt-artifacts-modeling"
 		}
-	]
+	],
+	"ai": {
+		"binding": "AI"
+	}
 }
