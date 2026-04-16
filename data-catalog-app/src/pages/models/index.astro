@@ -1,0 +1,18 @@
+---
+export const prerender = false;
+
+import Layout from "../../layouts/Layout.astro";
+import { AppSidebar } from "../../components/AppSidebar";
+import { ModelList } from "../../components/ModelList";
+import { loadAllModels } from "../../lib/artifacts";
+
+const bucket = Astro.locals.runtime.env.DBT_ARTIFACTS;
+const models = await loadAllModels(bucket);
+---
+
+<Layout>
+  <div class="flex min-h-screen">
+    <AppSidebar client:load />
+    <ModelList client:load models={models} />
+  </div>
+</Layout>
