@@ -68,3 +68,11 @@ AI Search接続したよ
 ---
 
 https://f36e9790-6644-4d7d-a660-8931e31e9188.search.ai.cloudflare.com/search
+
+---
+
+動作確認できた。PR作って
+
+---
+
+/pr review
