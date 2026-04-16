@@ -2,7 +2,7 @@
 export const prerender = true;
 
 import Layout from "../../layouts/Layout.astro";
-import { AppSidebar } from "../../components/AppSidebar";
+import { AppShell } from "../../components/AppSidebar";
 import { getCollection, render } from "astro:content";
 
 export async function getStaticPaths() {
@@ -18,9 +18,8 @@ const { Content } = await render(entry);
 ---
 
 <Layout title={`${entry.data.term} — 用語集`}>
-  <div class="flex min-h-screen">
-    <AppSidebar client:load />
-    <div class="flex flex-1 flex-col gap-6 p-6 max-w-3xl">
+  <AppShell client:load>
+    <div class="flex flex-col gap-6 max-w-3xl">
       <div class="flex items-center gap-4">
         <a href="/glossary" class="text-kumo-subtle hover:text-kumo-default">
           ← Back
@@ -61,5 +60,5 @@ const { Content } = await render(entry);
         </p>
       )}
     </div>
-  </div>
+  </AppShell>
 </Layout>

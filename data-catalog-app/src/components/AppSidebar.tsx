@@ -5,8 +5,9 @@ import {
   MagnifyingGlassIcon,
   BookIcon,
 } from "@phosphor-icons/react";
+import type { ReactNode } from "react";
 
-export function AppSidebar() {
+export function AppShell({ children }: { children: ReactNode }) {
   return (
     <Sidebar.Provider>
       <Sidebar>
@@ -21,35 +22,21 @@ export function AppSidebar() {
           <Sidebar.Group>
             <Sidebar.GroupContent>
               <Sidebar.Menu>
-                <Sidebar.MenuItem>
-                  <Sidebar.MenuButton asChild>
-                    <a href="/models">
-                      <TableIcon size={20} />
-                      Models
-                    </a>
-                  </Sidebar.MenuButton>
-                </Sidebar.MenuItem>
-                <Sidebar.MenuItem>
-                  <Sidebar.MenuButton asChild>
-                    <a href="/search">
-                      <MagnifyingGlassIcon size={20} />
-                      Search
-                    </a>
-                  </Sidebar.MenuButton>
-                </Sidebar.MenuItem>
-                <Sidebar.MenuItem>
-                  <Sidebar.MenuButton asChild>
-                    <a href="/glossary">
-                      <BookIcon size={20} />
-                      Glossary
-                    </a>
-                  </Sidebar.MenuButton>
-                </Sidebar.MenuItem>
+                <Sidebar.MenuButton icon={TableIcon} href="/models">
+                  Models
+                </Sidebar.MenuButton>
+                <Sidebar.MenuButton icon={MagnifyingGlassIcon} href="/search">
+                  Search
+                </Sidebar.MenuButton>
+                <Sidebar.MenuButton icon={BookIcon} href="/glossary">
+                  Glossary
+                </Sidebar.MenuButton>
               </Sidebar.Menu>
             </Sidebar.GroupContent>
           </Sidebar.Group>
         </Sidebar.Content>
       </Sidebar>
+      <main className="flex-1 p-6">{children}</main>
     </Sidebar.Provider>
   );
 }

@@ -1,12 +1,11 @@
 ---
 import Layout from "../layouts/Layout.astro";
-import { AppSidebar } from "../components/AppSidebar";
+import { AppShell } from "../components/AppSidebar";
 import { SearchPage } from "../components/SearchPage";
 ---
 
 <Layout title="Search — Data Catalog">
-  <div class="flex min-h-screen">
-    <AppSidebar client:load />
-    <SearchPage client:load />
-  </div>
+  <AppShell client:load>
+    <SearchPage />
+  </AppShell>
 </Layout>

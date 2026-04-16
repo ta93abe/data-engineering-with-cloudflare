@@ -3,7 +3,7 @@ export const prerender = false;
 
 import { env } from "cloudflare:workers";
 import Layout from "../../layouts/Layout.astro";
-import { AppSidebar } from "../../components/AppSidebar";
+import { AppShell } from "../../components/AppSidebar";
 import { ModelDetail } from "../../components/ModelDetail";
 import { loadModel } from "../../lib/artifacts";
 
@@ -18,8 +18,7 @@ if (!model) {
 ---
 
 <Layout title={`${model.name} — Data Catalog`}>
-  <div class="flex min-h-screen">
-    <AppSidebar client:load />
-    <ModelDetail client:load model={model} />
-  </div>
+  <AppShell client:load>
+    <ModelDetail model={model} />
+  </AppShell>
 </Layout>

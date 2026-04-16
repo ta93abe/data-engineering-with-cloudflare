@@ -2,7 +2,7 @@
 export const prerender = true;
 
 import Layout from "../../layouts/Layout.astro";
-import { AppSidebar } from "../../components/AppSidebar";
+import { AppShell } from "../../components/AppSidebar";
 import { getCollection } from "astro:content";
 
 const entries = await getCollection("glossary");
@@ -18,9 +18,8 @@ const byCategory = entries.reduce(
 ---
 
 <Layout title="用語集 — Data Catalog">
-  <div class="flex min-h-screen">
-    <AppSidebar client:load />
-    <div class="flex flex-1 flex-col gap-6 p-6">
+  <AppShell client:load>
+    <div class="flex flex-col gap-6">
       <div>
         <h1 class="text-2xl font-bold">用語集</h1>
         <p class="text-kumo-subtle text-sm">
@@ -50,5 +49,5 @@ const byCategory = entries.reduce(
         </div>
       ))}
     </div>
-  </div>
+  </AppShell>
 </Layout>

@@ -3,7 +3,7 @@ export const prerender = false;
 
 import { env } from "cloudflare:workers";
 import Layout from "../../layouts/Layout.astro";
-import { AppSidebar } from "../../components/AppSidebar";
+import { AppShell } from "../../components/AppSidebar";
 import { ModelList } from "../../components/ModelList";
 import { loadAllModels } from "../../lib/artifacts";
 
@@ -11,8 +11,7 @@ const models = await loadAllModels(env.DBT_ARTIFACTS);
 ---
 
 <Layout>
-  <div class="flex min-h-screen">
-    <AppSidebar client:load />
-    <ModelList client:load models={models} />
-  </div>
+  <AppShell client:load>
+    <ModelList models={models} />
+  </AppShell>
 </Layout>
