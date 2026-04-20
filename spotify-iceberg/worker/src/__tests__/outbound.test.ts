@@ -1,4 +1,4 @@
-import { env, SELF } from "cloudflare:test";
+import { env } from "cloudflare:test";
 import { beforeEach, describe, expect, it } from "vitest";
 import { SpotifyContainer } from "../index";
 
@@ -6,7 +6,9 @@ import { SpotifyContainer } from "../index";
 const handler = SpotifyContainer.outboundByHost?.["kv.internal"];
 
 describe("outbound kv.internal handler", () => {
-  const ctx = { containerId: "test", className: "SpotifyContainer" } as unknown as Parameters<NonNullable<typeof handler>>[2];
+  const ctx = { containerId: "test", className: "SpotifyContainer" } as unknown as Parameters<
+    NonNullable<typeof handler>
+  >[2];
 
   beforeEach(async () => {
     await env.SPOTIFY_STATE_KV.delete("refresh_token");
@@ -15,22 +17,14 @@ describe("outbound kv.internal handler", () => {
 
   it("returns 404 when key missing", async () => {
     if (!handler) throw new Error("handler not registered");
-    const res = await handler(
-      new Request("http://kv.internal/refresh_token"),
-      env as Env,
-      ctx
-    );
+    const res = await handler(new Request("http://kv.internal/refresh_token"), env as Env, ctx);
     expect(res.status).toBe(404);
   });
 
   it("returns stored value on GET", async () => {
     if (!handler) throw new Error("handler not registered");
     await env.SPOTIFY_STATE_KV.put("refresh_token", "AQB-xyz");
-    const res = await handler(
-      new Request("http://kv.internal/refresh_token"),
-      env as Env,
-      ctx
-    );
+    const res = await handler(new Request("http://kv.internal/refresh_token"), env as Env, ctx);
     expect(res.status).toBe(200);
     expect(await res.text()).toBe("AQB-xyz");
   });
@@ -61,11 +55,7 @@ describe("outbound kv.internal handler", () => {
 
   it("rejects empty key with 400", async () => {
     if (!handler) throw new Error("handler not registered");
-    const res = await handler(
-      new Request("http://kv.internal/"),
-      env as Env,
-      ctx
-    );
+    const res = await handler(new Request("http://kv.internal/"), env as Env, ctx);
     expect(res.status).toBe(400);
   });
 });

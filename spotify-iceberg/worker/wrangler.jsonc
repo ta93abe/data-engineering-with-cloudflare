@@ -26,13 +26,9 @@
     }
   ],
   "durable_objects": {
-    "bindings": [
-      { "class_name": "SpotifyContainer", "name": "SPOTIFY_CONTAINER" }
-    ]
+    "bindings": [{ "class_name": "SpotifyContainer", "name": "SPOTIFY_CONTAINER" }]
   },
-  "migrations": [
-    { "new_sqlite_classes": ["SpotifyContainer"], "tag": "v1" }
-  ]
+  "migrations": [{ "new_sqlite_classes": ["SpotifyContainer"], "tag": "v1" }]
   // secrets (use `wrangler secret put ...`):
   //   SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET
   //   R2_CATALOG_URI, R2_CATALOG_TOKEN, R2_CATALOG_WAREHOUSE
