@@ -41,8 +41,8 @@ def _build_album(album: dict | None) -> dict | None:
 
 def _build_track(track: dict) -> dict:
     return {
-        "id": track["id"],
-        "name": track["name"],
+        "id": track.get("id"),
+        "name": track.get("name"),
         "uri": track.get("uri"),
         "duration_ms": track.get("duration_ms"),
         "explicit": track.get("explicit"),

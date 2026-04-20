@@ -44,3 +44,9 @@ def test_partition_spec_uses_day_transform() -> None:
 def test_sort_order_sorts_by_played_at() -> None:
     assert len(SORT_ORDER.fields) == 1
     assert SORT_ORDER.fields[0].source_id == 1
+
+
+def test_track_id_is_nullable() -> None:
+    track = RECENTLY_PLAYED_SCHEMA.find_field("track").field_type
+    track_id = track.field_by_name("id")
+    assert track_id.required is False

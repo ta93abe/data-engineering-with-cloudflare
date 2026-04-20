@@ -114,3 +114,23 @@ def test_append_items_empty_is_noop(local_catalog: Catalog) -> None:
         ingested_at=datetime(2026, 4, 20, 10, 5, 0, tzinfo=UTC),
     )
     assert result.rows_written == 0
+
+
+def test_build_arrow_table_handles_null_track_id() -> None:
+    items = [
+        {
+            "track": {
+                "id": None,  # local file
+                "name": "Local Untitled Song",
+                "artists": [{"id": "local-artist", "name": "My Band"}],
+            },
+            "played_at": "2026-04-20T12:00:00.000Z",
+            "context": None,
+        }
+    ]
+    table = build_arrow_table(
+        items, ingested_at=datetime(2026, 4, 20, 12, 1, 0, tzinfo=UTC)
+    )
+    track = table.column("track")[0].as_py()
+    assert track["id"] is None
+    assert track["name"] == "Local Untitled Song"

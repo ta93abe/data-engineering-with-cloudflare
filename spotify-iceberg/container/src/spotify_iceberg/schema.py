@@ -37,7 +37,7 @@ ALBUM_STRUCT = StructType(
 )
 
 TRACK_STRUCT = StructType(
-    NestedField(301, "id", StringType(), required=True),
+    NestedField(301, "id", StringType(), required=False),
     NestedField(302, "name", StringType(), required=True),
     NestedField(303, "uri", StringType(), required=False),
     NestedField(304, "duration_ms", IntegerType(), required=False),
@@ -69,7 +69,7 @@ RECENTLY_PLAYED_SCHEMA = Schema(
     NestedField(4, "context", CONTEXT_STRUCT, required=False),
     NestedField(5, "_raw_json", StringType(), required=True),
     NestedField(6, "_ingested_at", TimestamptzType(), required=True),
-    identifier_field_ids=[1, 301],
+    identifier_field_ids=[1],
 )
 
 PARTITION_SPEC = PartitionSpec(
