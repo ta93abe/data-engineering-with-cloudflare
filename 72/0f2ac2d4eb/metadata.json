@@ -1,0 +1,25 @@
+{
+  "cli_version": "0.5.5",
+  "checkpoint_id": "720f2ac2d4eb",
+  "strategy": "manual-commit",
+  "branch": "feat/spotify-r2-iceberg",
+  "checkpoints_count": 19,
+  "files_touched": [
+    "docs/superpowers/plans/2026-04-20-spotify-r2-iceberg.md"
+  ],
+  "sessions": [
+    {
+      "metadata": "/72/0f2ac2d4eb/0/metadata.json",
+      "transcript": "/72/0f2ac2d4eb/0/full.jsonl",
+      "content_hash": "/72/0f2ac2d4eb/0/content_hash.txt",
+      "prompt": "/72/0f2ac2d4eb/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 201,
+    "cache_creation_tokens": 858927,
+    "cache_read_tokens": 9929560,
+    "output_tokens": 148935,
+    "api_call_count": 61
+  }
+}

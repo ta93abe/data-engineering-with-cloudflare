@@ -1,0 +1,288 @@
+{
+  "cli_version": "0.5.5",
+  "checkpoint_id": "720f2ac2d4eb",
+  "session_id": "c537709e-a934-4878-aba2-41ce0b5122ed",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-20T11:39:41.259639Z",
+  "branch": "feat/spotify-r2-iceberg",
+  "checkpoints_count": 19,
+  "files_touched": [
+    "docs/superpowers/plans/2026-04-20-spotify-r2-iceberg.md"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-7[1m]",
+  "turn_id": "abb360a3a84b",
+  "token_usage": {
+    "input_tokens": 201,
+    "cache_creation_tokens": 858927,
+    "cache_read_tokens": 9929560,
+    "output_tokens": 148935,
+    "api_call_count": 61
+  },
+  "session_metrics": {
+    "turn_count": 19
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-20T11:39:41.229362Z",
+    "agent_lines": 2665,
+    "agent_removed": 0,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 2665,
+    "total_lines_changed": 2665,
+    "agent_percentage": 100,
+    "metric_version": 2
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 1,
+      "user_lines_added": 2131,
+      "user_lines_removed": 6315,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0,
+      "user_added_per_file": {
+        ".claude/settings.local.json": 345,
+        "docs/superpowers/plans/2026-04-16-data-catalog-astro-ui.md": 1572,
+        "scripts/rename_linear_events_table.py": 214
+      },
+      "user_removed_per_file": {
+        "ingestion/.gitignore": 33,
+        "ingestion/README.md": 21,
+        "ingestion/biome.json": 38,
+        "ingestion/package.json": 29,
+        "ingestion/pnpm-lock.yaml": 2479,
+        "ingestion/pnpm-workspace.yaml": 7,
+        "ingestion/src/__tests__/env.d.ts": 12,
+        "ingestion/src/__tests__/index.test.ts": 280,
+        "ingestion/src/__tests__/mock-parquet-encoder.mjs": 22,
+        "ingestion/src/__tests__/oura.test.ts": 623,
+        "ingestion/src/__tests__/parquet.test.ts": 428,
+        "ingestion/src/index.ts": 146,
+        "ingestion/src/services/github.ts": 189,
+        "ingestion/src/services/linear.ts": 259,
+        "ingestion/src/services/oura.ts": 682,
+        "ingestion/src/services/parquet.ts": 327,
+        "ingestion/src/services/withings.ts": 628,
+        "ingestion/src/types.ts": 22,
+        "ingestion/tsconfig.json": 15,
+        "ingestion/vitest.config.node.ts": 7,
+        "ingestion/vitest.config.ts": 21,
+        "ingestion/wrangler.jsonc": 47
+      }
+    },
+    {
+      "checkpoint_number": 2,
+      "user_lines_added": 346,
+      "user_lines_removed": 0,
+      "agent_lines_added": 1786,
+      "agent_lines_removed": 6315,
+      "user_added_per_file": {
+        ".claude/settings.local.json": 346
+      }
+    },
+    {
+      "checkpoint_number": 3,
+      "user_lines_added": 371,
+      "user_lines_removed": 0,
+      "agent_lines_added": 1786,
+      "agent_lines_removed": 6315,
+      "user_added_per_file": {
+        ".claude/settings.local.json": 346,
+        "scripts/rename_linear_events_table.py": 25
+      }
+    },
+    {
+      "checkpoint_number": 4,
+      "user_lines_added": 346,
+      "user_lines_removed": 0,
+      "agent_lines_added": 1845,
+      "agent_lines_removed": 9489,
+      "user_added_per_file": {
+        ".claude/settings.local.json": 346
+      }
+    },
+    {
+      "checkpoint_number": 5,
+      "user_lines_added": 346,
+      "user_lines_removed": 0,
+      "agent_lines_added": 1845,
+      "agent_lines_removed": 9489,
+      "user_added_per_file": {
+        ".claude/settings.local.json": 346
+      }
+    },
+    {
+      "checkpoint_number": 6,
+      "user_lines_added": 346,
+      "user_lines_removed": 0,
+      "agent_lines_added": 1845,
+      "agent_lines_removed": 9489,
+      "user_added_per_file": {
+        ".claude/settings.local.json": 346
+      }
+    },
+    {
+      "checkpoint_number": 7,
+      "user_lines_added": 346,
+      "user_lines_removed": 0,
+      "agent_lines_added": 1845,
+      "agent_lines_removed": 9489,
+      "user_added_per_file": {
+        ".claude/settings.local.json": 346
+      }
+    },
+    {
+      "checkpoint_number": 8,
+      "user_lines_added": 346,
+      "user_lines_removed": 0,
+      "agent_lines_added": 1845,
+      "agent_lines_removed": 9489,
+      "user_added_per_file": {
+        ".claude/settings.local.json": 346
+      }
+    },
+    {
+      "checkpoint_number": 9,
+      "user_lines_added": 346,
+      "user_lines_removed": 0,
+      "agent_lines_added": 1845,
+      "agent_lines_removed": 9489,
+      "user_added_per_file": {
+        ".claude/settings.local.json": 346
+      }
+    },
+    {
+      "checkpoint_number": 10,
+      "user_lines_added": 346,
+      "user_lines_removed": 0,
+      "agent_lines_added": 1845,
+      "agent_lines_removed": 9489,
+      "user_added_per_file": {
+        ".claude/settings.local.json": 346
+      }
+    },
+    {
+      "checkpoint_number": 11,
+      "user_lines_added": 346,
+      "user_lines_removed": 0,
+      "agent_lines_added": 1845,
+      "agent_lines_removed": 9489,
+      "user_added_per_file": {
+        ".claude/settings.local.json": 346
+      }
+    },
+    {
+      "checkpoint_number": 12,
+      "user_lines_added": 346,
+      "user_lines_removed": 0,
+      "agent_lines_added": 1845,
+      "agent_lines_removed": 9489,
+      "user_added_per_file": {
+        ".claude/settings.local.json": 346
+      }
+    },
+    {
+      "checkpoint_number": 13,
+      "user_lines_added": 346,
+      "user_lines_removed": 0,
+      "agent_lines_added": 1845,
+      "agent_lines_removed": 9489,
+      "user_added_per_file": {
+        ".claude/settings.local.json": 346
+      }
+    },
+    {
+      "checkpoint_number": 14,
+      "user_lines_added": 346,
+      "user_lines_removed": 0,
+      "agent_lines_added": 1845,
+      "agent_lines_removed": 9489,
+      "user_added_per_file": {
+        ".claude/settings.local.json": 346
+      }
+    },
+    {
+      "checkpoint_number": 15,
+      "user_lines_added": 346,
+      "user_lines_removed": 0,
+      "agent_lines_added": 1845,
+      "agent_lines_removed": 9489,
+      "user_added_per_file": {
+        ".claude/settings.local.json": 346
+      }
+    },
+    {
+      "checkpoint_number": 16,
+      "user_lines_added": 346,
+      "user_lines_removed": 0,
+      "agent_lines_added": 1845,
+      "agent_lines_removed": 9489,
+      "user_added_per_file": {
+        ".claude/settings.local.json": 346
+      }
+    },
+    {
+      "checkpoint_number": 17,
+      "user_lines_added": 346,
+      "user_lines_removed": 0,
+      "agent_lines_added": 1845,
+      "agent_lines_removed": 9489,
+      "user_added_per_file": {
+        ".claude/settings.local.json": 346
+      }
+    },
+    {
+      "checkpoint_number": 18,
+      "user_lines_added": 346,
+      "user_lines_removed": 0,
+      "agent_lines_added": 4510,
+      "agent_lines_removed": 9489,
+      "user_added_per_file": {
+        ".claude/settings.local.json": 346
+      }
+    },
+    {
+      "checkpoint_number": 19,
+      "user_lines_added": 347,
+      "user_lines_removed": 0,
+      "agent_lines_added": 4510,
+      "agent_lines_removed": 9489,
+      "user_added_per_file": {
+        ".claude/settings.local.json": 347
+      }
+    },
+    {
+      "checkpoint_number": 20,
+      "user_lines_added": 347,
+      "user_lines_removed": 2784,
+      "agent_lines_added": 4510,
+      "agent_lines_removed": 9489,
+      "user_added_per_file": {
+        ".claude/settings.local.json": 347
+      },
+      "user_removed_per_file": {
+        "dlt-github/Dockerfile": 5,
+        "dlt-github/package.json": 21,
+        "dlt-github/pnpm-lock.yaml": 1025,
+        "dlt-github/src/index.ts": 38,
+        "dlt-github/src/services/pipeline-runner.ts": 100,
+        "dlt-github/src/types.ts": 23,
+        "dlt-github/tsconfig.json": 15,
+        "dlt-github/wrangler.jsonc": 44,
+        "dlt/github/.dlt/config.toml": 18,
+        "dlt/github/.dlt/secrets.toml.example": 14,
+        "dlt/github/.gitignore": 6,
+        "dlt/github/github/README.md": 60,
+        "dlt/github/github/__init__.py": 149,
+        "dlt/github/github/helpers.py": 193,
+        "dlt/github/github/queries.py": 115,
+        "dlt/github/github/settings.py": 10,
+        "dlt/github/github_pipeline.py": 61,
+        "dlt/github/pipeline.py": 136,
+        "dlt/github/pyproject.toml": 8,
+        "dlt/github/uv.lock": 743
+      }
+    }
+  ]
+}
