@@ -33,6 +33,10 @@ export default {
     const stub = env.SPOTIFY_CONTAINER.get(id);
     const res = await stub.fetch("http://container/run", { method: "POST" });
     console.log(`container /run status=${res.status}`);
+    if (!res.ok) {
+      const body = await res.text();
+      throw new Error(`container /run failed: ${res.status} ${body}`);
+    }
   },
   async fetch(request, env) {
     if (new URL(request.url).pathname === "/trigger") {
