@@ -6,6 +6,8 @@ import { SpotifyContainer } from "../index";
 const handler = SpotifyContainer.outboundByHost?.["kv.internal"];
 
 describe("outbound kv.internal handler", () => {
+  const ctx = { containerId: "test", className: "SpotifyContainer" } as unknown as Parameters<NonNullable<typeof handler>>[2];
+
   beforeEach(async () => {
     await env.SPOTIFY_STATE_KV.delete("refresh_token");
     await env.SPOTIFY_STATE_KV.delete("cursor");
@@ -16,7 +18,7 @@ describe("outbound kv.internal handler", () => {
     const res = await handler(
       new Request("http://kv.internal/refresh_token"),
       env as Env,
-      {} as ExecutionContext
+      ctx
     );
     expect(res.status).toBe(404);
   });
@@ -27,7 +29,7 @@ describe("outbound kv.internal handler", () => {
     const res = await handler(
       new Request("http://kv.internal/refresh_token"),
       env as Env,
-      {} as ExecutionContext
+      ctx
     );
     expect(res.status).toBe(200);
     expect(await res.text()).toBe("AQB-xyz");
@@ -41,7 +43,7 @@ describe("outbound kv.internal handler", () => {
         body: "1713500400000",
       }),
       env as Env,
-      {} as ExecutionContext
+      ctx
     );
     expect(putRes.status).toBe(204);
     expect(await env.SPOTIFY_STATE_KV.get("cursor")).toBe("1713500400000");
@@ -52,7 +54,7 @@ describe("outbound kv.internal handler", () => {
     const res = await handler(
       new Request("http://kv.internal/refresh_token", { method: "DELETE" }),
       env as Env,
-      {} as ExecutionContext
+      ctx
     );
     expect(res.status).toBe(405);
   });
@@ -62,7 +64,7 @@ describe("outbound kv.internal handler", () => {
     const res = await handler(
       new Request("http://kv.internal/"),
       env as Env,
-      {} as ExecutionContext
+      ctx
     );
     expect(res.status).toBe(400);
   });
