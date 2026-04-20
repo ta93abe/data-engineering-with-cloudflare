@@ -61,3 +61,22 @@ class SpotifyClient:
             access_token=body["access_token"],
             refresh_token=body.get("refresh_token", refresh_token),
         )
+
+    def recently_played(
+        self,
+        access_token: str,
+        after_ms: int,
+        limit: int = 50,
+    ) -> list[dict]:
+        resp = self._http.get(
+            f"{API_BASE}/me/player/recently-played",
+            params={"after": after_ms, "limit": limit},
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
+        if resp.status_code == 401:
+            raise SpotifyError("spotify returned 401; access_token likely expired mid-flight")
+        if resp.status_code == 403:
+            raise SpotifyError(f"spotify forbidden: {resp.text}")
+        if resp.status_code >= 400:
+            raise SpotifyError(f"recently-played {resp.status_code}: {resp.text}")
+        return resp.json().get("items", [])
