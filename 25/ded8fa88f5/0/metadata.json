@@ -1,0 +1,44 @@
+{
+  "cli_version": "0.5.5",
+  "checkpoint_id": "25ded8fa88f5",
+  "session_id": "c537709e-a934-4878-aba2-41ce0b5122ed",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-20T11:41:57.002546Z",
+  "branch": "feat/spotify-r2-iceberg",
+  "checkpoints_count": 2,
+  "files_touched": [],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-7[1m]",
+  "turn_id": "2d67c116ebf9",
+  "token_usage": {
+    "input_tokens": 211,
+    "cache_creation_tokens": 861007,
+    "cache_read_tokens": 11654427,
+    "output_tokens": 150048,
+    "api_call_count": 66
+  },
+  "session_metrics": {
+    "turn_count": 20
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 2,
+      "user_lines_added": 0,
+      "user_lines_removed": 0,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0
+    },
+    {
+      "checkpoint_number": 3,
+      "user_lines_added": 2158,
+      "user_lines_removed": 0,
+      "agent_lines_added": 34,
+      "agent_lines_removed": 12273,
+      "user_added_per_file": {
+        ".claude/settings.local.json": 347,
+        "docs/superpowers/plans/2026-04-16-data-catalog-astro-ui.md": 1572,
+        "scripts/rename_linear_events_table.py": 239
+      }
+    }
+  ]
+}
