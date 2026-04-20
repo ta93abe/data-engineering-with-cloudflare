@@ -4,9 +4,11 @@ import json
 from datetime import datetime
 
 import pyarrow as pa
+from pyiceberg.catalog import Catalog
 from pyiceberg.io.pyarrow import schema_to_pyarrow
+from pyiceberg.table import Table
 
-from .schema import RECENTLY_PLAYED_SCHEMA
+from .schema import PARTITION_SPEC, RECENTLY_PLAYED_SCHEMA, SORT_ORDER, TABLE_PROPERTIES
 
 # Derive the Arrow schema directly from the Iceberg schema so that nullability
 # and field metadata match exactly what PyIceberg expects on append.
@@ -72,3 +74,19 @@ def build_arrow_table(items: list[dict], ingested_at: datetime) -> pa.Table:
             }
         )
     return pa.Table.from_pylist(rows, schema=_ARROW_SCHEMA)
+
+
+def ensure_table(catalog: Catalog, identifier: tuple[str, str]) -> Table:
+    namespace, _ = identifier
+    if (namespace,) not in catalog.list_namespaces():
+        catalog.create_namespace(namespace)
+    try:
+        return catalog.load_table(identifier)
+    except Exception:
+        return catalog.create_table(
+            identifier=identifier,
+            schema=RECENTLY_PLAYED_SCHEMA,
+            partition_spec=PARTITION_SPEC,
+            sort_order=SORT_ORDER,
+            properties=TABLE_PROPERTIES,
+        )

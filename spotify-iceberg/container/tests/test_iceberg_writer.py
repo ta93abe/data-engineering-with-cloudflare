@@ -5,8 +5,9 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
+from pyiceberg.catalog import Catalog
 
-from spotify_iceberg.iceberg_writer import build_arrow_table
+from spotify_iceberg.iceberg_writer import build_arrow_table, ensure_table
 
 FIXTURE = Path(__file__).parent / "fixtures" / "recently_played_sample.json"
 
@@ -72,3 +73,18 @@ def test_build_arrow_table_handles_null_context() -> None:
         items, ingested_at=datetime(2026, 4, 20, 11, 1, 0, tzinfo=UTC)
     )
     assert table.column("context")[0].as_py() is None
+
+
+def test_ensure_table_creates_namespace_and_table(local_catalog: Catalog) -> None:
+    table = ensure_table(local_catalog, ("spotify", "recently_played"))
+    # PyIceberg 0.11.x: table.identifier does not exist; use table.name()
+    assert table.name()[-2:] == ("spotify", "recently_played")
+    again = ensure_table(local_catalog, ("spotify", "recently_played"))
+    assert again.metadata.table_uuid == table.metadata.table_uuid
+
+
+def test_ensure_table_schema_matches(local_catalog: Catalog) -> None:
+    table = ensure_table(local_catalog, ("spotify", "recently_played"))
+    names = [f.name for f in table.schema().fields]
+    assert "played_at" in names
+    assert "_raw_json" in names

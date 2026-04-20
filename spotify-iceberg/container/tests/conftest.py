@@ -14,3 +14,21 @@ os.environ.setdefault("R2_CATALOG_WAREHOUSE", "test-warehouse")
 os.environ.setdefault("R2_ENDPOINT", "http://localhost:9000")
 os.environ.setdefault("R2_ACCESS_KEY_ID", "test-key")
 os.environ.setdefault("R2_SECRET_ACCESS_KEY", "test-secret")
+
+import pytest
+from pyiceberg.catalog import Catalog
+from pyiceberg.catalog.sql import SqlCatalog
+
+
+@pytest.fixture
+def local_catalog(tmp_path) -> Catalog:
+    warehouse = tmp_path / "warehouse"
+    warehouse.mkdir()
+    catalog = SqlCatalog(
+        "test",
+        **{
+            "uri": f"sqlite:///{tmp_path}/catalog.db",
+            "warehouse": f"file://{warehouse}",
+        },
+    )
+    return catalog
