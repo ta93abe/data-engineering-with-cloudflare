@@ -120,3 +120,84 @@ def test_recently_played_gives_up_after_max_retries(client) -> None:
     )
     with pytest.raises(SpotifyError):
         client.recently_played("tok", after_ms=1)
+
+
+@respx.mock
+def test_recently_played_follows_next_url_for_pagination(client) -> None:
+    # Page 1: 50 items + next URL
+    page1 = {
+        "items": [
+            {
+                "track": {"id": f"t{i}", "name": f"s{i}", "artists": []},
+                "played_at": "2026-04-20T10:00:00.000Z",
+            }
+            for i in range(50)
+        ],
+        "next": "https://api.spotify.com/v1/me/player/recently-played?before=1713500000000&limit=50",
+    }
+    # Page 2: 10 items + next=null (exhausted)
+    page2 = {
+        "items": [
+            {
+                "track": {"id": f"u{i}", "name": f"s{i}", "artists": []},
+                "played_at": "2026-04-20T09:00:00.000Z",
+            }
+            for i in range(10)
+        ],
+        "next": None,
+    }
+    # Use params= to match the first request (which has after= param), and a
+    # separate route for the next-URL request (which has before= param).
+    respx.get(
+        "https://api.spotify.com/v1/me/player/recently-played",
+        params={"after": "1", "limit": "50"},
+    ).mock(return_value=httpx.Response(200, json=page1))
+    respx.get(
+        "https://api.spotify.com/v1/me/player/recently-played",
+        params={"before": "1713500000000", "limit": "50"},
+    ).mock(return_value=httpx.Response(200, json=page2))
+
+    items = client.recently_played("tok", after_ms=1, max_pages=10)
+    assert len(items) == 60
+
+
+@respx.mock
+def test_recently_played_respects_max_pages(client) -> None:
+    # Each page returns 50 items + next URL, so loop would be infinite without max_pages
+    full_page_body = {
+        "items": [
+            {
+                "track": {"id": f"t{i}", "name": "s", "artists": []},
+                "played_at": "2026-04-20T10:00:00.000Z",
+            }
+            for i in range(50)
+        ],
+        "next": "https://api.spotify.com/v1/me/player/recently-played?before=1&limit=50",
+    }
+    route = respx.get("https://api.spotify.com/v1/me/player/recently-played").mock(
+        return_value=httpx.Response(200, json=full_page_body)
+    )
+    items = client.recently_played("tok", after_ms=1, max_pages=3)
+    assert len(items) == 150  # 3 pages × 50
+    assert route.call_count == 3
+
+
+@respx.mock
+def test_recently_played_stops_when_items_count_less_than_limit(client) -> None:
+    # 30 items + next URL set — but since items < limit (50), we stop without following next
+    partial_body = {
+        "items": [
+            {
+                "track": {"id": f"t{i}", "name": "s", "artists": []},
+                "played_at": "2026-04-20T10:00:00.000Z",
+            }
+            for i in range(30)
+        ],
+        "next": "https://api.spotify.com/v1/me/player/recently-played?before=1&limit=50",
+    }
+    route = respx.get("https://api.spotify.com/v1/me/player/recently-played").mock(
+        return_value=httpx.Response(200, json=partial_body)
+    )
+    items = client.recently_played("tok", after_ms=1)
+    assert len(items) == 30
+    assert route.call_count == 1

@@ -85,11 +85,31 @@ class SpotifyClient:
         access_token: str,
         after_ms: int,
         limit: int = 50,
+        max_pages: int = 10,
     ) -> list[dict]:
-        url = f"{API_BASE}/me/player/recently-played"
-        params = {"after": after_ms, "limit": limit}
+        items: list[dict] = []
         headers = {"Authorization": f"Bearer {access_token}"}
+        url: str = f"{API_BASE}/me/player/recently-played"
+        params: dict | None = {"after": after_ms, "limit": limit}
 
+        for _page in range(max_pages):
+            resp = self._get_with_retry(url, params=params, headers=headers)
+            body = resp.json()
+            page_items = body.get("items", [])
+            items.extend(page_items)
+
+            next_url = body.get("next")
+            if not next_url or len(page_items) < limit:
+                break
+            # next URL has `before=<oldest_ms>&limit=50` embedded
+            url = next_url
+            params = None
+
+        return items
+
+    def _get_with_retry(
+        self, url: str, *, params: dict | None, headers: dict
+    ) -> httpx.Response:
         for attempt in range(MAX_RETRIES + 1):
             resp = self._http.get(url, params=params, headers=headers)
             if not _should_retry(resp.status_code):
@@ -108,4 +128,4 @@ class SpotifyClient:
             raise SpotifyError(f"spotify forbidden: {resp.text}")
         if resp.status_code >= 400:
             raise SpotifyError(f"recently-played {resp.status_code}: {resp.text}")
-        return resp.json().get("items", [])
+        return resp
