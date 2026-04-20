@@ -54,6 +54,12 @@ def test_run_recently_played_happy_path(sample_items, local_catalog) -> None:
     assert refresh_puts == []
 
 
+# ---------------------------------------------------------------------------
+# Edge-case tests: bootstrap (first run), zero items, token rotation,
+# missing refresh_token (G2)
+# ---------------------------------------------------------------------------
+
+
 def test_run_recently_played_first_run_uses_lookback(local_catalog) -> None:
     state = MagicMock()
     state.get.side_effect = lambda k: {"refresh_token": "rt-initial"}.get(k)
