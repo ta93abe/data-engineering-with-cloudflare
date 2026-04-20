@@ -1,12 +1,30 @@
 from __future__ import annotations
 
 import base64
+import time
 from dataclasses import dataclass
 
 import httpx
 
 TOKEN_URL = "https://accounts.spotify.com/api/token"
 API_BASE = "https://api.spotify.com/v1"
+
+MAX_RETRIES = 3
+BACKOFF_BASE_SEC = 0.5
+
+
+def _should_retry(status_code: int) -> bool:
+    return status_code == 429 or 500 <= status_code < 600
+
+
+def _retry_after_sec(response: httpx.Response) -> float:
+    header = response.headers.get("Retry-After")
+    if header is not None:
+        try:
+            return min(float(header), 30.0)
+        except ValueError:
+            pass
+    return 0.0
 
 
 class SpotifyError(Exception):
@@ -68,11 +86,22 @@ class SpotifyClient:
         after_ms: int,
         limit: int = 50,
     ) -> list[dict]:
-        resp = self._http.get(
-            f"{API_BASE}/me/player/recently-played",
-            params={"after": after_ms, "limit": limit},
-            headers={"Authorization": f"Bearer {access_token}"},
-        )
+        url = f"{API_BASE}/me/player/recently-played"
+        params = {"after": after_ms, "limit": limit}
+        headers = {"Authorization": f"Bearer {access_token}"}
+
+        for attempt in range(MAX_RETRIES + 1):
+            resp = self._http.get(url, params=params, headers=headers)
+            if not _should_retry(resp.status_code):
+                break
+            if attempt == MAX_RETRIES:
+                raise SpotifyError(
+                    f"recently-played failed after {MAX_RETRIES + 1} attempts: "
+                    f"status={resp.status_code}"
+                )
+            sleep_sec = _retry_after_sec(resp) or BACKOFF_BASE_SEC * (2**attempt)
+            time.sleep(sleep_sec)
+
         if resp.status_code == 401:
             raise SpotifyError("spotify returned 401; access_token likely expired mid-flight")
         if resp.status_code == 403:

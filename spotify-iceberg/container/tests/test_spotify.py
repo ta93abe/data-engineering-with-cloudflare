@@ -4,7 +4,7 @@ import httpx
 import pytest
 import respx
 
-from spotify_iceberg.spotify import InvalidGrantError, SpotifyClient
+from spotify_iceberg.spotify import InvalidGrantError, SpotifyClient, SpotifyError
 
 
 @pytest.fixture
@@ -87,3 +87,36 @@ def test_recently_played_sends_after_param(client) -> None:
     call = route.calls[0]
     assert "after=12345" in str(call.request.url)
     assert "limit=50" in str(call.request.url)
+
+
+@respx.mock
+def test_recently_played_retries_on_5xx(client) -> None:
+    route = respx.get("https://api.spotify.com/v1/me/player/recently-played").mock(
+        side_effect=[
+            httpx.Response(503, json={}),
+            httpx.Response(200, json={"items": [], "next": None}),
+        ]
+    )
+    assert client.recently_played("tok", after_ms=1) == []
+    assert route.call_count == 2
+
+
+@respx.mock
+def test_recently_played_retries_on_429_with_retry_after(client) -> None:
+    route = respx.get("https://api.spotify.com/v1/me/player/recently-played").mock(
+        side_effect=[
+            httpx.Response(429, headers={"Retry-After": "0"}),
+            httpx.Response(200, json={"items": [], "next": None}),
+        ]
+    )
+    assert client.recently_played("tok", after_ms=1) == []
+    assert route.call_count == 2
+
+
+@respx.mock
+def test_recently_played_gives_up_after_max_retries(client) -> None:
+    respx.get("https://api.spotify.com/v1/me/player/recently-played").mock(
+        return_value=httpx.Response(503, json={})
+    )
+    with pytest.raises(SpotifyError):
+        client.recently_played("tok", after_ms=1)
