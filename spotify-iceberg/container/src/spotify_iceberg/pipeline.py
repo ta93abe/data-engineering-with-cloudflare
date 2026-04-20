@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import datetime, timezone
-from typing import Callable
+from datetime import UTC, datetime
 
 from pyiceberg.catalog import Catalog
 
@@ -25,7 +25,7 @@ def run_recently_played(
     state: StateStore,
     spotify: SpotifyClient,
     catalog: Catalog,
-    now: Callable[[], datetime] = lambda: datetime.now(tz=timezone.utc),
+    now: Callable[[], datetime] = lambda: datetime.now(tz=UTC),
     first_run_lookback_ms: int = 60 * 60 * 1000,
 ) -> PipelineResult:
     refresh_token = state.get("refresh_token")

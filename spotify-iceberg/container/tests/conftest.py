@@ -17,7 +17,20 @@ os.environ.setdefault("R2_SECRET_ACCESS_KEY", "test-secret")
 
 import pytest
 from pyiceberg.catalog import Catalog
+from pyiceberg.catalog.rest import RestCatalog
 from pyiceberg.catalog.sql import SqlCatalog
+
+
+@pytest.fixture(autouse=True)
+def _no_rest_catalog_network(monkeypatch) -> None:
+    """Prevent RestCatalog.__init__ from making real network calls in tests.
+
+    RestCatalog._fetch_config() is invoked during construction and performs an
+    HTTP request to the catalog server.  Patching it to a no-op lets tests that
+    exercise main.py's /run endpoint instantiate RestCatalog without a live
+    server, while all other catalog behaviour remains intact.
+    """
+    monkeypatch.setattr(RestCatalog, "_fetch_config", lambda self: None)
 
 
 @pytest.fixture

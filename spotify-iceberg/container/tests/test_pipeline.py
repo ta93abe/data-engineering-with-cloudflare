@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from unittest.mock import MagicMock
 
@@ -9,7 +9,6 @@ import pytest
 
 from spotify_iceberg.pipeline import PipelineResult, run_recently_played
 from spotify_iceberg.spotify import TokenResult
-
 
 FIXTURE = Path(__file__).parent / "fixtures" / "recently_played_sample.json"
 
@@ -20,7 +19,7 @@ def sample_items() -> list[dict]:
 
 
 def _fixed_now() -> datetime:
-    return datetime(2026, 4, 20, 10, 5, 0, tzinfo=timezone.utc)
+    return datetime(2026, 4, 20, 10, 5, 0, tzinfo=UTC)
 
 
 def test_run_recently_played_happy_path(sample_items, local_catalog) -> None:
@@ -48,7 +47,7 @@ def test_run_recently_played_happy_path(sample_items, local_catalog) -> None:
     assert result.rows_written == len(sample_items)
     state.put.assert_any_call(
         "cursor",
-        str(int(datetime(2026, 4, 20, 10, 0, 0, tzinfo=timezone.utc).timestamp() * 1000)),
+        str(int(datetime(2026, 4, 20, 10, 0, 0, tzinfo=UTC).timestamp() * 1000)),
     )
     refresh_puts = [c for c in state.put.call_args_list if c.args[0] == "refresh_token"]
     assert refresh_puts == []
