@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 from pyiceberg.catalog import Catalog
 
-from spotify_iceberg.iceberg_writer import build_arrow_table, ensure_table
+from spotify_iceberg.iceberg_writer import append_items, build_arrow_table, ensure_table
 
 FIXTURE = Path(__file__).parent / "fixtures" / "recently_played_sample.json"
 
@@ -88,3 +88,29 @@ def test_ensure_table_schema_matches(local_catalog: Catalog) -> None:
     names = [f.name for f in table.schema().fields]
     assert "played_at" in names
     assert "_raw_json" in names
+
+
+def test_append_items_roundtrip(local_catalog: Catalog, sample_items) -> None:
+    result = append_items(
+        local_catalog,
+        ("spotify", "recently_played"),
+        sample_items,
+        ingested_at=datetime(2026, 4, 20, 10, 5, 0, tzinfo=UTC),
+    )
+    assert result.rows_written == len(sample_items)
+
+    table = local_catalog.load_table(("spotify", "recently_played"))
+    scan = table.scan().to_arrow()
+    assert scan.num_rows == len(sample_items)
+    first = scan.to_pylist()[0]
+    assert first["track"]["id"] == sample_items[0]["track"]["id"]
+
+
+def test_append_items_empty_is_noop(local_catalog: Catalog) -> None:
+    result = append_items(
+        local_catalog,
+        ("spotify", "recently_played"),
+        [],
+        ingested_at=datetime(2026, 4, 20, 10, 5, 0, tzinfo=UTC),
+    )
+    assert result.rows_written == 0

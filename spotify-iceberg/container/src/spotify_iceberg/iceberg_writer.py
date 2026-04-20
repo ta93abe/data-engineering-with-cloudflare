@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from dataclasses import dataclass
 from datetime import datetime
 
 import pyarrow as pa
@@ -90,3 +91,30 @@ def ensure_table(catalog: Catalog, identifier: tuple[str, str]) -> Table:
             sort_order=SORT_ORDER,
             properties=TABLE_PROPERTIES,
         )
+
+
+@dataclass(frozen=True)
+class AppendResult:
+    rows_written: int
+    snapshot_id: int | None
+
+
+def append_items(
+    catalog: Catalog,
+    identifier: tuple[str, str],
+    items: list[dict],
+    ingested_at: datetime,
+) -> AppendResult:
+    if not items:
+        return AppendResult(rows_written=0, snapshot_id=None)
+    table = ensure_table(catalog, identifier)
+    arrow_table = build_arrow_table(items, ingested_at=ingested_at)
+    # Cast to the table's actual Arrow schema so field-ID metadata aligns.
+    table_arrow_schema = schema_to_pyarrow(table.schema())
+    arrow_table = arrow_table.cast(table_arrow_schema)
+    table.append(arrow_table)
+    current = table.current_snapshot()
+    return AppendResult(
+        rows_written=len(items),
+        snapshot_id=current.snapshot_id if current else None,
+    )
