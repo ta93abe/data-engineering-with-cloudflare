@@ -10,7 +10,7 @@ Spec & plan: [Linear TA-469](https://linear.app/ta93abe/issue/TA-469)
 ### 1. Enable R2 Data Catalog
 
 ```bash
-wrangler r2 bucket catalog enable data-lake
+wrangler r2 bucket catalog enable lake
 ```
 
 Note the printed **Catalog URI** and **Warehouse** — you'll need them in step 6.
