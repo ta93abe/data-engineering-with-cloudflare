@@ -1,50 +1,52 @@
 # spotify-iceberg
 
-Cloudflare Worker + Container pipeline that appends Spotify recently-played
-history to an Apache Iceberg table on R2 Data Catalog every hour.
+Spotify の再生履歴（`me/player/recently-played`）を毎時取得し、R2 Data Catalog 上の Apache Iceberg テーブルに追記する Cloudflare Worker + Container パイプライン。
 
-Spec & plan: [Linear TA-469](https://linear.app/ta93abe/issue/TA-469)
+## アーキテクチャ
 
-## Setup (one-time)
+- **Worker** (TypeScript): cron トリガを受けて Durable Object backed Container を起動、KV を `outboundByHost` 経由でコンテナに露出
+- **Container** (Python + FastAPI + PyIceberg): Spotify OAuth refresh、`recently-played` のページング取得、PyArrow テーブル生成、R2 Data Catalog への Iceberg commit
+- **状態管理**: Workers KV に `refresh_token` と `played_at_ms` カーソルを保存
+- **ELT 指向**: Iceberg レイヤは raw ネスト構造 + `_raw_json` 補助列、flatten/集計は dbt 側で実施
 
-### 1. Enable R2 Data Catalog
+## セットアップ（初回のみ）
+
+### 1. R2 Data Catalog を有効化
 
 ```bash
 wrangler r2 bucket catalog enable lake
 ```
 
-Note the printed **Catalog URI** and **Warehouse** — you'll need them in step 6.
+表示される **Catalog URI** と **Warehouse** を控えておく（手順 6 で使用）。
 
-### 2. Create Spotify Developer app
+### 2. Spotify Developer アプリを作成
 
-At <https://developer.spotify.com/dashboard>, create an app and register
-`http://localhost:8888/callback` as a Redirect URI. Note the Client ID and
-Client Secret.
+<https://developer.spotify.com/dashboard> でアプリを作成し、Redirect URI に `http://localhost:8888/callback` を登録。Client ID と Client Secret を控える。
 
-### 3. Obtain refresh_token locally
+### 3. 手元で refresh_token を取得
 
 ```bash
 uv run --with spotipy python scripts/spotify/get_refresh_token.py
 ```
 
-Follow the browser flow; the script prints the refresh_token.
+ブラウザフローに従って同意すると、スクリプトが refresh_token を表示する。
 
-### 4. Create KV namespace
+### 4. KV namespace を作成
 
 ```bash
 cd spotify-iceberg/worker
 wrangler kv namespace create SPOTIFY_STATE_KV
 ```
 
-Copy the printed `id` into `wrangler.jsonc` under `kv_namespaces[0].id`.
+出力された `id` を `wrangler.jsonc` の `kv_namespaces[0].id` に貼り付ける。
 
-### 5. Store refresh_token in KV
+### 5. refresh_token を KV に投入
 
 ```bash
-wrangler kv key put --binding=SPOTIFY_STATE_KV refresh_token "<value-from-step-3>"
+wrangler kv key put --binding=SPOTIFY_STATE_KV refresh_token "<手順 3 の値>"
 ```
 
-### 6. Register secrets (from `spotify-iceberg/worker/`)
+### 6. Secrets を登録（`spotify-iceberg/worker/` で実行）
 
 ```bash
 wrangler secret put SPOTIFY_CLIENT_ID
@@ -57,17 +59,19 @@ wrangler secret put R2_ACCESS_KEY_ID
 wrangler secret put R2_SECRET_ACCESS_KEY
 ```
 
-### 7. Deploy
+必要な Spotify scope は `user-read-recently-played`。
+
+### 7. デプロイ
 
 ```bash
 cd spotify-iceberg/worker && pnpm deploy
 ```
 
-### 8. Verify
+### 8. 動作確認
 
-- Trigger manually: `curl -X POST https://spotify-iceberg.<account>.workers.dev/trigger`
-- Tail logs: `wrangler tail`
-- Query via DuckDB:
+- 手動トリガ: `curl -X POST https://spotify-iceberg.<account>.workers.dev/trigger`
+- ログ確認: `wrangler tail`
+- DuckDB からクエリ:
 
 ```sql
 INSTALL iceberg; LOAD iceberg;
@@ -77,11 +81,14 @@ FROM r2.spotify.recently_played
 ORDER BY played_at DESC LIMIT 10;
 ```
 
-## Development
+## 開発
 
 - Worker: `cd worker && pnpm test:run && pnpm typecheck && pnpm check`
 - Container: `cd container && uv run pytest && uv run ruff check .`
 
-## Open TODOs
+## 運用メモ
 
-See [TA-469 Open Questions](https://linear.app/ta93abe/issue/TA-469).
+- 実行頻度: 毎時（`0 * * * *`）
+- ページング: 1 回の cron で最大 10 ページ（= 500 件）まで `next` URL を追随
+- カーソル初期値: KV に未設定なら直近 1 時間を `after` に指定
+- エラー時: Spotify 5xx/429 は 3 回 exponential backoff、`invalid_grant` は即停止（再認可が必要）、container 500 は scheduled ハンドラで throw して Cloudflare 側に failed 記録
