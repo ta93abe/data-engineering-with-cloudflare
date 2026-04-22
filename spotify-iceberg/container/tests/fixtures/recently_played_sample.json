@@ -1,0 +1,35 @@
+{
+  "items": [
+    {
+      "track": {
+        "id": "11dFghVXANMlKmJXsNCbNl",
+        "name": "Cut To The Feeling",
+        "uri": "spotify:track:11dFghVXANMlKmJXsNCbNl",
+        "duration_ms": 207959,
+        "explicit": false,
+        "popularity": 72,
+        "external_ids": {"isrc": "USUM71703861"},
+        "album": {
+          "id": "0tf4LjPlD2S3ghJLRT2lrc",
+          "name": "Cut To The Feeling",
+          "uri": "spotify:album:0tf4LjPlD2S3ghJLRT2lrc",
+          "album_type": "single",
+          "release_date": "2017-05-26",
+          "total_tracks": 1
+        },
+        "artists": [
+          {
+            "id": "6sFIWsNpZYqfjUpaCgueju",
+            "name": "Carly Rae Jepsen",
+            "uri": "spotify:artist:6sFIWsNpZYqfjUpaCgueju"
+          }
+        ]
+      },
+      "played_at": "2026-04-20T10:00:00.000Z",
+      "context": {
+        "type": "playlist",
+        "uri": "spotify:playlist:37i9dQZF1DXcBWIGoYBM5M"
+      }
+    }
+  ]
+}

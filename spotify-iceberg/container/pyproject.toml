@@ -1,0 +1,42 @@
+[project]
+name = "spotify-iceberg"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+  "fastapi>=0.110",
+  "uvicorn[standard]>=0.27",
+  "pyiceberg[pyarrow,s3fs,sql-sqlite]>=0.7",
+  "pyarrow>=17",
+  "httpx>=0.27",
+  "pydantic-settings>=2.0",
+]
+# Note: `spotipy` is used only by scripts/spotify/get_refresh_token.py (local helper);
+# invoke it with `uv run --with spotipy python scripts/spotify/get_refresh_token.py`
+# to install it ephemerally rather than shipping it in the container image.
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.0",
+  "pytest-asyncio>=0.23",
+  "respx>=0.21",
+  "ruff>=0.4",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/spotify_iceberg"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W", "UP", "B"]

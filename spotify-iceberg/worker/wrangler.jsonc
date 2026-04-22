@@ -1,0 +1,36 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "spotify-iceberg",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-04-20",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  },
+  "triggers": {
+    "crons": ["0 * * * *"]
+  },
+  "kv_namespaces": [
+    {
+      "binding": "SPOTIFY_STATE_KV",
+      "id": "0000000000000000000000000000000000000000000000000000000000000000"
+    }
+  ],
+  "containers": [
+    {
+      "class_name": "SpotifyContainer",
+      "image": "../container/Dockerfile",
+      "max_instances": 1,
+      "instance_type": "basic"
+    }
+  ],
+  "durable_objects": {
+    "bindings": [{ "class_name": "SpotifyContainer", "name": "SPOTIFY_CONTAINER" }]
+  },
+  "migrations": [{ "new_sqlite_classes": ["SpotifyContainer"], "tag": "v1" }]
+  // secrets (use `wrangler secret put ...`):
+  //   SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET
+  //   R2_CATALOG_URI, R2_CATALOG_TOKEN, R2_CATALOG_WAREHOUSE
+  //   R2_ENDPOINT, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY
+}

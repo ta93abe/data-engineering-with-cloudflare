@@ -36,6 +36,9 @@ node_modules/
 .wrangler/
 .dev.vars
 
+# Git worktrees
+.worktrees/
+
 # dbt
 dbt/target/
 dbt/dbt_packages/
